@@ -1,0 +1,8 @@
+{
+        'tables' : [
+                'sotm_seo_status',
+                'sotm_manufacturers_type',
+                'sotm_product_status',
+                'sotm_product'
+         ]
+}
