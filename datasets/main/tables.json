@@ -1,8 +1,8 @@
 {
         'tables' : [
-                'sotm_seo_status',
-                'sotm_manufacturers_type',
-                'sotm_product_status',
-                'sotm_product'
+                'managers_groups',
+                'managers',
+                'managers_perms',
+                'groups_perms'
          ]
 }
