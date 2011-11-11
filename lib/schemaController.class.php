@@ -17,9 +17,8 @@ class schemaController extends DatasetsController {
 
         if (!empty($datasets)) {
             $json = $this->loadDatasetInfo();
-            die();
             foreach ($json['reqs'] as $dataset) {
-                foreach ($dataset['tables'] as $tablename => $description) {
+                foreach ($dataset['tables'] as $tablename) {
                     $this->_queries[$tablename] = 1;
                 }
             }
@@ -30,12 +29,13 @@ class schemaController extends DatasetsController {
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
             throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
         }
+        
         $handle = opendir($schemadir);
         chdir($schemadir);
         while ($file = readdir($handle)) {
             if ($file != '.' && $file != '..' && is_file($file)) {
                 $tablename = pathinfo($file, PATHINFO_FILENAME);
-                if ($exclude && !isset($datafiles[$tablename])) {
+                if ($exclude && !isset($this->_queries[$tablename])) {
                     continue;
                 }
                 if (is_readable($file)) {

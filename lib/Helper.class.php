@@ -86,15 +86,13 @@ class Helper {
 
             $handle = opendir($dsdir);
             chdir($dsdir);
-            $data = array();
 
             while ($dir = readdir($handle)) {
                 if (isset($datasets[$dir]) && is_dir($dir) && is_readable($dir)) {
-                    $tablesFileName = $dir . Helper::get('reqtables');
-
+                    $tablesFileName = $dir . DIR_SEP . Helper::get('reqtables');
                     if (is_file($tablesFileName) && is_readable($tablesFileName)) {
-                        self::$_datasets['reqs'][$dir] = json_encode(file_get_contents($tablesFileName));
-                        $datafile = $dir . self::get('reqdata');
+                        self::$_datasets['reqs'][$dir] = json_decode(file_get_contents($tablesFileName), true);
+                        $datafile = $dir . DIR_SEP . self::get('reqdata');
                         if ($loadDatasetContent && is_file($datafile) && is_readable($datafile)) {
                             self::$_datasets['sqlContent'][$dir] = file_get_contents($datafile);
                         }
@@ -104,7 +102,7 @@ class Helper {
 
             closedir($handle);
             if (empty(self::$_datasets) || ( $loadDatasetContent && empty(self::$_datasets['sqlContent']) )) {
-                throw new \Exception('Не найдены данные для разворачивания');
+                throw new \Exception('Не найдены данные1 для разворачивания');
             }
             
         }

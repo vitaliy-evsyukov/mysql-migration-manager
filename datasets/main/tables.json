@@ -1,8 +1,9 @@
 {
-        'tables' : [
-                'managers_groups',
-                'managers',
-                'managers_perms',
-                'groups_perms'
+        
+        "tables" : [
+                "managers_groups",
+                "managers",
+                "managers_perms",
+                "groups_perms"
          ]
 }
