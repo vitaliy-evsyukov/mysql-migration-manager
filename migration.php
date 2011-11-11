@@ -21,6 +21,11 @@ if (file_exists($cli_params['options']['config'])) {
 
 Helper::setConfig($config);
 
+//
+//$diff = new lib\dbDiff('a', 'b');
+//$diff->getDifference();
+//die();
+
 try {
     $controller = Helper::getController($cli_params['command']['name'], $cli_params['command']['args']);
     $controller->runStrategy();
