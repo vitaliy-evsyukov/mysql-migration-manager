@@ -12,29 +12,61 @@ class dbDiff {
      * @var array
      */
     private $difference = array('up' => array(), 'down' => array());
+    private $_tables = array();
 
     public function __construct($current, $temp) {
         $this->_currentTable = $current;
         $this->_tempTable = $temp;
     }
 
-    private function up($sql) {
-        if (!strlen($sql))
-            return;
-        $this->difference['up'][] = $sql;
-    }
+    /**
+     * Парсит вывод mysqldiff, составляет список использованных и неиспользованных таблиц
+     * @param array $output Вывод mysqldiff
+     * @return array 
+     */
+    private function parseDiff(array $output = array()) {
+        $comment = '';
+        $tmp = array();
+        $result = array();
+        $index = 0;
 
-    private function down($sql) {
-        if (!strlen($sql))
-            return;
-        $this->difference['down'][] = $sql;
+        foreach ($output as $line) {
+            $line = trim($line);
+            if (empty($line))
+                continue;
+            if (strpos($line, '--') === 0) {
+                // это комментарий с именем таблицы
+                $comment = explode('|', trim(substr($line, 2)));
+                if (is_array($comment)) {
+                    // множество зависимых таблиц
+                    $tableName = array_shift($comment);
+                    foreach ($comment as $table) {
+                        $this->_tables['unused'][$table] = 1;
+                    }
+                    $comment = $tableName;
+                }
+                $this->_tables['used'][$comment] = 1;
+                $tmp = array();
+                $index = 0;
+                isset($result[$comment]) && ($index = sizeof($result[$comment]));
+            } else {
+                $tmp[] = $line;
+                if (!empty($comment)) {
+                    // добавим предыдущие собранные данные в результирующий массив
+                    $result[$comment][$index] = implode("\n", $tmp);
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
      * Делегирует работу mysqldiff 
+     * @param array $tablesList Список таблиц
      * @return array 
      */
-    public function getDifference() {
+    public function getDifference(array $tablesList = array()) {
         $params = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
@@ -43,19 +75,19 @@ class dbDiff {
                 $params_str[] = "--{$param}={$value}";
             }
         }
-        
-        $toogle = array('--list-tables', '');
 
         $tables = array($this->_currentTable, $this->_tempTable);
+        $dirs = array('up', 'down');
         $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
 
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
-            $last_line = exec($command . "{$toogle[$i]} {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
-            print_r($output);
+            $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
+            $this->difference[$dirs[$i]] = $this->parseDiff($output);
         }
-        die();
+        
+        $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
 
         return $this->difference;
     }
