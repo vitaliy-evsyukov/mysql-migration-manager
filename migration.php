@@ -26,6 +26,5 @@ try {
     $controller->runStrategy();
 } catch (Exception $e) {
     Output::error($e->getMessage());
-    Helper::getController('help')->runStrategy();
     exit(1);
 }

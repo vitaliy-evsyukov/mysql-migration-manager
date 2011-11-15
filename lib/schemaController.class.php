@@ -49,8 +49,7 @@ class schemaController extends DatasetsController {
 
         // Создадим структуру базы
         foreach ($this->_queries as $tablename => $query) {
-            echo "$query\n";
-            $this->db->query("DROP TABLE IF EXISTS {$tablename};");
+            printf("%s\n", $tablename);
             $this->db->query($query);
         }
     }
