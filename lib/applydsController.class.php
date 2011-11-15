@@ -39,8 +39,6 @@ class applydsController extends DatasetsController {
                 throw new \Exception("Произошла ошибка\n{$e->getMessage()} ({$e->getCode()})");
             }
         }
-
-        $this->db->query('SET foreign_key_checks = 1;');
     }
 
 }

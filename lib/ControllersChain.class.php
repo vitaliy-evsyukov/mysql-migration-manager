@@ -18,7 +18,7 @@ class ControllersChain implements IController {
     protected $_controller = null;
 
     /**
-     *
+     * Следующий элемент цепочки
      * @var ControllersChain 
      */
     protected $_next = null;
@@ -27,26 +27,39 @@ class ControllersChain implements IController {
         $this->_next = $handler;
     }
 
+    /**
+     * Установить выполняемый в элементе цепочки контроллер
+     * @param DatasetsController $controller 
+     */
     public function setController(DatasetsController $controller) {
         $this->_controller = $controller;
     }
 
     /**
-     *
+     * Вернуть контроллер
      * @return DatasetsController 
      */
     public function getController() {
         return $this->_controller;
     }
 
+    /**
+     * Запускает цепочку
+     * @param int $state Состояние элемента, определяющее поведение
+     */
     public function runStrategy($state = 0) {
+        $state = (int) $state;
         if ($this->_controller) {
             if ($state === self::FK_OFF) {
-                
+                $this->_controller->toogleFK($state);
             }
-            $this->_controller->runStrategy();
+            $state++;
             if ($this->_next) {
                 $this->_next->runStrategy($state);
+            }
+            $this->_controller->runStrategy();
+            if ($state == self::FK_ON) {
+                $this->_controller->toogleFK($state);
             }
         }
     }

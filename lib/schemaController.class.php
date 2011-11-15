@@ -47,15 +47,12 @@ class schemaController extends DatasetsController {
         }
         closedir($handle);
 
-        // Создадим структуру базы, отключив проверки внешних ключей
-        !$this->_controller && $this->db->query('SET foreign_key_checks = 0;');
+        // Создадим структуру базы
         foreach ($this->_queries as $tablename => $query) {
             echo "$query\n";
             $this->db->query("DROP TABLE IF EXISTS {$tablename};");
             $this->db->query($query);
         }
-        !$this->_controller && $this->db->query('SET foreign_key_checks = 1;');
-        parent::runStrategy();
     }
 
     public function _runStrategy() {

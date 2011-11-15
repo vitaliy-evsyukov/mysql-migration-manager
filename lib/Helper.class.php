@@ -126,7 +126,7 @@ class Helper {
 
         $ctrl = 'lib\\' . $name . 'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
         try {
-            $class = new $ctrl(self::getDbObject(), $args);
+            $ctrl = new $ctrl(self::getDbObject(), $args);
             if ($ctrl instanceof DatasetsController) {
                 // обернем его в цепочку
                 $chain = new ControllersChain();
@@ -136,7 +136,7 @@ class Helper {
             }
             return $ctrl;
         } catch (\Exception $e) {
-            throw new \Exception("Неопознанная команда: $name\n");
+            throw new \Exception("Команда $name не опознана\n");
         }
     }
 
