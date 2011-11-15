@@ -14,9 +14,17 @@ class dbDiff {
     private $difference = array('up' => array(), 'down' => array());
     private $_tables = array();
 
-    public function __construct($current, $temp) {
-        $this->_currentTable = $current;
-        $this->_tempTable = $temp;
+    public function __construct(Mysqli $current, Mysqli $temp) {
+        $this->_currentTable = $this->getDbName($current);
+        $this->_tempTable = $this->getDbName($temp);
+    }
+
+    private function getDbName(Mysqli $connection) {
+        $sql = "SELECT DATABASE() as dbname";
+        $res = $connection->query($sql);
+        $row = $res->fetch_array(MYSQLI_ASSOC);
+        $res->free_result();
+        return $row['dbname'];
     }
 
     /**
@@ -86,7 +94,7 @@ class dbDiff {
             $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
             $this->difference[$dirs[$i]] = $this->parseDiff($output);
         }
-        
+
         $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
 
         return $this->difference;

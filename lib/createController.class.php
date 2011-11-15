@@ -5,8 +5,16 @@ namespace lib;
 class createController extends AbstractController {
 
     protected $queries = array();
-
+    
     public function runStrategy() {
+        $tempDb = Helper::getTmpDbObject();
+        Helper::loadTmpDb($tempDb);
+        $diffObj = new dbDiff($this->db, $tempDb);
+        print_r($diffObj->getDifference());
+        die();
+    }
+
+    public function _runStrategy() {
 
         $db = Helper::getDbObject();
         $tmpdb = Helper::getTmpDbObject();

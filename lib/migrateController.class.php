@@ -7,6 +7,7 @@ class migrateController extends DatasetsController {
     protected $queries = array();
 
     public function runStrategy() {
+        
         return true;
     }
 

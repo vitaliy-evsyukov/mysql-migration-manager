@@ -52,6 +52,8 @@ class schemaController extends DatasetsController {
             printf("%s\n", $tablename);
             $this->db->query($query);
         }
+        
+        $this->writeInFile();
     }
 
     public function _runStrategy() {
@@ -74,20 +76,14 @@ class schemaController extends DatasetsController {
         $this->writeInFile();
     }
 
-    protected function writeInFile() {
-        $content = "<?php\n" .
-                "class Schema extends AbstractSchema\n" .
-                "{\n" .
-                "  protected \$queries = array(\n";
-        foreach ($this->queries as $q) {
-            $content .= "    '{$q}',\n";
-        }
-        $content.="  );\n" .
-                "}\n" .
-                "\n";
-        $fname = Helper::get('savedir') . '/schema.php';
+    protected function writeInFile($tpl = 'tpl/schema.tpl') {
+        $content = file_get_contents(DIR . $tpl);
+        
+        $search = '%%queries%%';
+        $replace = "array(\n\"".implode("\",\n\"", $this->_queries)."\"\n)";
+        $fname = DIR . Helper::get('savedir') . '/Schema.class.php';
         $this->askForRewrite($fname);
-        file_put_contents($fname, $content);
+        file_put_contents($fname, str_replace($search, $replace, $content));
     }
 
     protected function askForRewrite($fname) {

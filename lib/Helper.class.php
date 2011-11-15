@@ -104,7 +104,6 @@ class Helper {
             if (empty(self::$_datasets) || ( $loadDatasetContent && empty(self::$_datasets['sqlContent']) )) {
                 throw new \Exception('Не найдены данные1 для разворачивания');
             }
-            
         }
 
         return self::$_datasets;
@@ -176,7 +175,12 @@ class Helper {
         return isset(self::$config[$key]) ? self::$config[$key] : false;
     }
 
-    static function getTmpDbObject() {
+    /**
+     * Создает объект соединения для временной БД
+     * TODO: объединить методы создания соединения
+     * @return Mysqli 
+     */
+    public static function getTmpDbObject() {
         $config = self::getConfig();
         $tmpname = $config['db'] . '_' . self::getCurrentVersion();
         $config['db'] = $tmpname;
@@ -184,10 +188,9 @@ class Helper {
         $db->query("create database `{$config['db']}`");
         $tmpdb = self::getDbObject($config);
         register_shutdown_function(function() use($config, $tmpdb) {
-                    Output::verbose("Shutdown: database {$config['db']} has been dropped");
                     $tmpdb->query("DROP DATABASE `{$config['db']}`");
-                })
-        ;
+                    Output::verbose("Временная база данных {$config['db']} была удалена");
+                });
         return $tmpdb;
     }
 
@@ -242,7 +245,7 @@ class Helper {
         return $result;
     }
 
-    static function applyMigration($revision, $db, $direction = 'Up') {
+    public static function applyMigration($revision, $db, $direction = 'Up') {
         $classname = self::get('savedir') . '\Migration' . $revision;
         $migration = new $classname($db);
         $method = 'run' . $direction;
@@ -261,13 +264,11 @@ class Helper {
         return $result;
     }
 
-    static function loadTmpDb($db) {
-        $fname = self::get('savedir') . '/Schema.php';
-        if (!file_exists($fname)) {
-            echo "File: {$fname} does not exist!\n";
-            exit;
-        }
-
+    /**
+     * Загружает начальную схему в базу и накатывает все миграции
+     * @param Mysqli $db Соединение с сервером БД
+     */
+    public static function loadTmpDb($db) {
         $db->query('SET foreign_key_checks = 0;');
         $classname = self::get('savedir') . '\Schema';
         $sc = new $classname;
@@ -284,7 +285,7 @@ class Helper {
         $result = array();
         foreach ($a as $direction => $data) {
             foreach ($data as $table => $queries) {
-                $result['tmp'][] = "'$table' => array(\n'" . implode("',\n'", $queries) . "'\n)";
+                $result['tmp'][] = "'$table' => array(\n\"" . implode("\",\n\"", $queries) . "\"\n)";
             }
             $result[$direction] = "array(\n" . implode(",\n", $result['tmp']) . "\n)";
             unset($result['tmp']);
