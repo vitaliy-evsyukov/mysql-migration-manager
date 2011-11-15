@@ -2,6 +2,8 @@
 
 namespace lib;
 
+use \Mysqli;
+
 class dbDiff {
 
     protected $_currentTable;
@@ -85,17 +87,20 @@ class dbDiff {
         }
 
         $tables = array($this->_currentTable, $this->_tempTable);
-        $dirs = array('up', 'down');
+        $dirs = array('down', 'up');
         $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
 
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
+            echo $command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}\n";
             $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
             $this->difference[$dirs[$i]] = $this->parseDiff($output);
         }
 
-        $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
+        if (isset($this->_tables['unused'])) {
+            $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
+        }
 
         return $this->difference;
     }

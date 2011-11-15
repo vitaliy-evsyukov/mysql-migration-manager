@@ -185,7 +185,7 @@ class Helper {
         $tmpname = $config['db'] . '_' . self::getCurrentVersion();
         $config['db'] = $tmpname;
         $db = self::getDbObject();
-        $db->query("create database `{$config['db']}`");
+        $db->query("CREATE DATABASE `{$config['db']}`  DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
         $tmpdb = self::getDbObject($config);
         register_shutdown_function(function() use($config, $tmpdb) {
                     $tmpdb->query("DROP DATABASE `{$config['db']}`");
@@ -252,7 +252,35 @@ class Helper {
         $migration->$method();
     }
 
-    static function getAllMigrations() {
+    /**
+     * Возвращает список всех миграций и связанных с ними данных
+     * @return array 
+     */
+    public static function getAllMigrations() {
+        $migrationsDir = DIR . self::get('savedir') . DIR_SEP;
+        $migrationsListFile = $migrationsDir . self::get('versionfile');
+        $result = array(
+            'migrations' => array(),
+            'data' => array()
+        );
+        if (is_file($migrationsListFile) && !is_readable($migrationsListFile)) {
+            $handler = fopen($migrationsListFile);
+            while (!feof($handler)) {
+                $line = trim(fgets($handler));
+                if (empty($line))
+                    continue;
+                $parts = explode('|');
+                $result['migrations'][] = $parts[0];
+                $result['data'][$parts[0]] = array(
+                    'date' => $parts[1],
+                    'time' => $parts[2]
+                );
+            }
+        }
+        return $result;
+    }
+
+    static function _getAllMigrations() {
         $dir = self::get('savedir');
         $files = glob($dir . '/Migration*.php');
         $result = array();
@@ -275,7 +303,7 @@ class Helper {
         $sc->load($db);
 
         $migrations = self::getAllMigrations();
-        foreach ($migrations as $revision) {
+        foreach ($migrations['migrations'] as $revision) {
             self::applyMigration($revision, $db);
         }
         $db->query('SET foreign_key_checks = 1;');
