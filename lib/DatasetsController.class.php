@@ -10,7 +10,12 @@ namespace lib;
 abstract class DatasetsController extends AbstractController {
 
     protected $_datasetInfo = array();
-
+    /**
+     *
+     * @var ControllersChain 
+     */
+    protected $_chain = null;
+    
     public function __construct($db, $args) {
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
@@ -36,6 +41,26 @@ abstract class DatasetsController extends AbstractController {
         }
 
         parent::__construct($db, $args);
+    }
+    
+    /**
+     * Дает добавить к текущей цепи дополнительные элементы
+     * @param ControllersChain $chain 
+     */
+    public function setChain(ControllersChain $chain) {
+        $this->_chain = $chain;
+    }
+    
+    /**
+     * Переключает проверку внешних ключей
+     * @param int $state 
+     */
+    public function toogleFK($state) {
+        $state = (int)$state;
+        if (!in_array($state, array(0, 1))) {
+            throw new \Exception("Неверный статус проверки внешних ключей: {$state}\n");
+        }
+        $this->db->query("SET foreign_key_checks = {$state};");
     }
 
     /**

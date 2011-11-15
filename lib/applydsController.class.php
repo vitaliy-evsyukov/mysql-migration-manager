@@ -15,7 +15,6 @@ class applydsController extends DatasetsController {
             throw new \Exception("Не указаны наборы данных\n");
         }
         $datasets = $this->loadDatasetInfo();
-        $this->db->query('SET foreign_key_checks = 0;');
         $this->db->query('START TRANSACTION;');
         // вынести хранимки для автороллбека транзакций в шаблон
         foreach ($datasets['sqlContent'] as $dataset => $query) {

@@ -5,9 +5,9 @@ namespace lib;
 class migrateController extends AbstractController {
 
     protected $queries = array();
-    
+
     public function runStrategy() {
-        return true;
+        
     }
 
     public function _runStrategy() {
