@@ -19,7 +19,7 @@ class createController extends AbstractController {
             throw new \Exception(sprintf("Ревизия %d уже существует, файл: %s\n", $revision, $migrationFileName));
         }
         file_put_contents($migrationFileName, $content);
-        printf("Ревизия %d создана успешно и сохранена в файле %s", $revision, $migrationFileName);
+        printf("Ревизия %d создана успешно и сохранена в файле %s\n", $revision, $migrationFileName);
     }
 
     public function _runStrategy() {

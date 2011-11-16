@@ -13,8 +13,7 @@ class dbDiff {
      * Запросы в обе стороны
      * @var array
      */
-    private $difference = array('up' => array(), 'down' => array());
-    private $_tables = array();
+    private $_difference = array('up' => array(), 'down' => array(), 'tables' => array());
 
     public function __construct(Mysqli $current, Mysqli $temp) {
         $this->_currentTable = $this->getDbName($current);
@@ -51,19 +50,19 @@ class dbDiff {
                     // множество зависимых таблиц
                     $tableName = array_shift($comment);
                     foreach ($comment as $table) {
-                        $this->_tables['unused'][$table] = 1;
+                        $result['unused'][$table] = 1;
                     }
                     $comment = $tableName;
                 }
-                $this->_tables['used'][$comment] = 1;
+                $result['used'][$comment] = 1;
                 $tmp = array();
                 $index = 0;
-                isset($result[$comment]) && ($index = sizeof($result[$comment]));
+                isset($result['desc'][$comment]) && ($index = sizeof($result['desc'][$comment]));
             } else {
                 $tmp[] = $line;
                 if (!empty($comment)) {
                     // добавим предыдущие собранные данные в результирующий массив
-                    $result[$comment][$index] = implode("\n", $tmp);
+                    $result['desc'][$comment][$index] = implode("\n", $tmp);
                 }
             }
         }
@@ -89,20 +88,32 @@ class dbDiff {
         $tables = array($this->_currentTable, $this->_tempTable);
         $dirs = array('down', 'up');
         $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
-
+        
+        $tablesList = array();
+        
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
-            echo $command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}\n";
             $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
-            $this->difference[$dirs[$i]] = $this->parseDiff($output);
+            $result = $this->parseDiff($output);
+            $this->_difference[$dirs[$i]] = $result['desc'];
+            unset($result['desc']);
+            $tablesList[$i] = $result;
         }
 
+        foreach ($tablesList as $direction => $types) {
+            if (isset($types['unused'])) {
+                $tmp = array_diff_key($types['unused'], $types['used']);
+                // Получить данные для таблицы
+                
+            }
+        }
+        
         if (isset($this->_tables['unused'])) {
             $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
         }
-
-        return $this->difference;
+        
+        return $this->_difference;
     }
 
 }

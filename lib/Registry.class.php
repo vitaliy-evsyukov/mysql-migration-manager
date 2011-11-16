@@ -4,7 +4,7 @@ namespace lib;
 
 /**
  * Registry
- * Срхраняет список миграций
+ * Сохраняет список миграций
  * @author guyfawkes
  */
 class Registry {

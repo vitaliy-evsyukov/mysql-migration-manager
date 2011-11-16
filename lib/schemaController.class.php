@@ -29,7 +29,7 @@ class schemaController extends DatasetsController {
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
             throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
         }
-        
+
         $handle = opendir($schemadir);
         chdir($schemadir);
         while ($file = readdir($handle)) {
@@ -46,13 +46,13 @@ class schemaController extends DatasetsController {
             }
         }
         closedir($handle);
-
+        
         // Создадим структуру базы
         foreach ($this->_queries as $tablename => $query) {
             printf("%s\n", $tablename);
             $this->db->query($query);
         }
-        
+
         $this->writeInFile();
     }
 
@@ -76,11 +76,21 @@ class schemaController extends DatasetsController {
         $this->writeInFile();
     }
 
+    /**
+     * TODO: объединить с записью миграции й
+     * @param string $tpl 
+     */
     protected function writeInFile($tpl = 'tpl/schema.tpl') {
         $content = file_get_contents(DIR . $tpl);
-        
-        $search = '%%queries%%';
-        $replace = "array(\n\"".implode("\",\n\"", $this->_queries)."\"\n)";
+        $search = array('queries', 'tables');
+        foreach ($search as &$value) {
+            $value = '%%' . $value . '%%';
+        }
+        $sep = "\",\n\"";
+        $replace = array(
+            '"' . implode($sep, $this->_queries) . '"',
+            '"' . implode($sep, array_keys($this->_queries)) . '"'
+        );
         $fname = DIR . Helper::get('savedir') . '/Schema.class.php';
         $this->askForRewrite($fname);
         file_put_contents($fname, str_replace($search, $replace, $content));

@@ -331,7 +331,7 @@ class Helper {
         $classname = self::get('savedir') . '\Schema';
         $sc = new $classname;
         $sc->load($db);
-
+        $tables = $sc->getTables();
         $migrations = self::getAllMigrations();
         foreach ($migrations['migrations'] as $revision) {
             self::applyMigration($revision, $db);
