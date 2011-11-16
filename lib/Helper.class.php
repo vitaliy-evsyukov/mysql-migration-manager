@@ -27,6 +27,7 @@ class Helper {
         'verbose' => null,
         'versiontable' => null
     );
+    private static $_lastRevision;
 
     static function setConfig($cnf) {
         self::$config = array_replace(self::$config, $cnf);
@@ -275,9 +276,38 @@ class Helper {
                     'date' => $parts[1],
                     'time' => $parts[2]
                 );
+                self::$_lastRevision = $parts[0];
             }
         }
         return $result;
+    }
+
+    /**
+     * Получить номер ожидаемой ревизии
+     * @return int 
+     */
+    public static function getLastRevision() {
+        if (!self::$_lastRevision) {
+            self::getAllMigrations();
+        }
+        return++self::$_lastRevision;
+    }
+
+    /**
+     * Записывает информацию о ревизии
+     * @param int $revision Номер ревизии
+     * @return int Таймстаймп для ревизии
+     */
+    public static function writeRevisionFile($revision) {
+        $filename = DIR . self::get('savedir') . DIR_SEP . self::get('versionfile');
+        if (is_file($filename) && !is_writable($filename)) {
+            throw new \Exception(sprinf("Файл %s защищен от записи\n", $filename));
+        }
+        $handler = fopen($filename, 'a');
+        $ts = time();
+        fwrite($handler, sprintf("%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts));
+        fclose($handler);
+        return $ts;
     }
 
     static function _getAllMigrations() {
@@ -325,15 +355,16 @@ class Helper {
      * Создает класс миграции
      * @param int $version Ревизия
      * @param array $diff Массив различий
+     * @param int $ts timestamp
      * @param string $tpl Шаблон класса
      * @return string Контент файла класса
      */
-    public static function createMigrationContent($version, array $diff, $tpl = 'tpl/migration.tpl') {
+    public static function createMigrationContent($version, array $diff, $ts, $tpl = 'tpl/migration.tpl') {
         $version = (int) $version;
         $content = file_get_contents(DIR . $tpl);
         $search = array('revision', 'up', 'down', 'meta');
         $metadata = array(
-            'timestamp' => time(),
+            'timestamp' => $ts,
             'tables' => "array(\n'" . implode("',\n'", $diff['tables']) . "'\n)",
             'revision' => $version
         );

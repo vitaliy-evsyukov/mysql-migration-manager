@@ -10,8 +10,16 @@ class createController extends AbstractController {
         $tempDb = Helper::getTmpDbObject();
         Helper::loadTmpDb($tempDb);
         $diffObj = new dbDiff($this->db, $tempDb);
-        print_r($diffObj->getDifference());
-        die();
+        $diff = $diffObj->getDifference();
+        $revision = Helper::getLastRevision();
+        $timestamp = Helper::writeRevisionFile($revision);
+        $content = Helper::createMigrationContent($revision, $diff, $timestamp);
+        $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
+        if (is_file($migrationFileName)) {
+            throw new \Exception(sprintf("Ревизия %d уже существует, файл: %s\n", $revision, $migrationFileName));
+        }
+        file_put_contents($migrationFileName, $content);
+        printf("Ревизия %d создана успешно и сохранена в файле %s", $revision, $migrationFileName);
     }
 
     public function _runStrategy() {
