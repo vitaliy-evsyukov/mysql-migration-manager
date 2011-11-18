@@ -20,6 +20,23 @@ class Registry {
         
     }
 
+    /**
+     * Добавляет список миграций
+     * @param array $migrationsList
+     * @param array $tablesList 
+     */
+    public static function addMigrations(array $migrationsList = array(), array $tablesList = array()) {
+        foreach ($migrationsList as $migrationClass) {
+            self::set($migrationClass, $tablesList);
+        }
+    }
+
+    /**
+     * Добавляет миграцию
+     * @param AbstractMigration $migrationClass
+     * @param array $tablesList
+     * @return bool 
+     */
     public static function set(AbstractMigration $migrationClass, array $tablesList = array()) {
         // проверяем, подходит ли класс
         $metadata = $migrationClass->getMetadata();

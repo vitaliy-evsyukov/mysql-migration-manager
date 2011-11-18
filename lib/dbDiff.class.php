@@ -50,11 +50,11 @@ class dbDiff {
                     // множество зависимых таблиц
                     $tableName = array_shift($comment);
                     foreach ($comment as $table) {
-                        $result['unused'][$table] = 1;
+                        $this->_difference['refs'][$tableName][$table] = 1;
                     }
                     $comment = $tableName;
                 }
-                $result['used'][$comment] = 1;
+                $this->_difference['used'][$comment] = 1;
                 $tmp = array();
                 $index = 0;
                 isset($result['desc'][$comment]) && ($index = sizeof($result['desc'][$comment]));
@@ -72,10 +72,9 @@ class dbDiff {
 
     /**
      * Делегирует работу mysqldiff 
-     * @param array $tablesList Список таблиц
      * @return array 
      */
-    public function getDifference(array $tablesList = array()) {
+    public function getDifference() {
         $params = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
@@ -89,7 +88,7 @@ class dbDiff {
         $dirs = array('down', 'up');
         $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
         
-        $tablesList = array();
+        $tablesList = array('used' => array(), 'refs' => array());
         
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
@@ -97,20 +96,6 @@ class dbDiff {
             $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
             $result = $this->parseDiff($output);
             $this->_difference[$dirs[$i]] = $result['desc'];
-            unset($result['desc']);
-            $tablesList[$i] = $result;
-        }
-
-        foreach ($tablesList as $direction => $types) {
-            if (isset($types['unused'])) {
-                $tmp = array_diff_key($types['unused'], $types['used']);
-                // Получить данные для таблицы
-                
-            }
-        }
-        
-        if (isset($this->_tables['unused'])) {
-            $this->_tables['unused'] = array_diff_key($this->_tables['unused'], $this->_tables['used']);
         }
         
         return $this->_difference;

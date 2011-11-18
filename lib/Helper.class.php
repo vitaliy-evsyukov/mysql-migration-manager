@@ -67,12 +67,14 @@ class Helper {
     /**
      * Возвращает массив с данными по датасетам
      * Массив состоит из ключей:
+     * <pre>
      * reqs -------
      *            |- dataset1 -> JSON1
      *            |- dataset2 -> JSON2
      * sqlContent -
      *            |- dataset1 -> SQL1
      *            |- dataset2 -> SQL2
+     * </pre>
      * @param array $dataset Массив имен датасетов
      * @param bool $loadDatasetContent Загружать ли содержимое SQL датасетов
      * @return array 
@@ -138,6 +140,29 @@ class Helper {
         } catch (\Exception $e) {
             throw new \Exception("Команда $name не опознана\n");
         }
+    }
+
+    /**
+     * Возвращает связанные со списком таблицы
+     * @param array $refs
+     * @param array $tablesList
+     * @return array 
+     */
+    public static function getRefs(array $refs = array(), array $tablesList = array()) {
+        $res = array();
+
+        $closure = function ($arr) use(&$closure, &$res) {
+                    foreach ($arr as $table => $value) {
+                        $res[$table] = 1;
+                        if (is_array($value)) {
+                            $closure($value);
+                        }
+                    }
+                };
+
+        $closure($refs);
+        
+        return array_diff_key($res, $tablesList);
     }
 
     /**
@@ -264,19 +289,24 @@ class Helper {
             'migrations' => array(),
             'data' => array()
         );
-        if (is_file($migrationsListFile) && !is_readable($migrationsListFile)) {
-            $handler = fopen($migrationsListFile);
-            while (!feof($handler)) {
-                $line = trim(fgets($handler));
-                if (empty($line))
-                    continue;
-                $parts = explode('|');
-                $result['migrations'][] = $parts[0];
-                $result['data'][$parts[0]] = array(
-                    'date' => $parts[1],
-                    'time' => $parts[2]
-                );
-                self::$_lastRevision = $parts[0];
+        if (is_file($migrationsListFile) && is_readable($migrationsListFile)) {
+            $handler = fopen($migrationsListFile, 'r');
+            if ($handler) {
+                while (!feof($handler)) {
+                    $line = trim(fgets($handler));
+                    if (empty($line))
+                        continue;
+                    $parts = explode('|', $line);
+                    $result['migrations'][] = $parts[0];
+                    $result['data'][$parts[0]] = array(
+                        'date' => $parts[1],
+                        'time' => $parts[2]
+                    );
+                    self::$_lastRevision = $parts[0];
+                }
+            }
+            else {
+                throw new \Exception(sprintf("Не удается открыть файл %s\n", $migrationsListFile));
             }
         }
         return $result;
@@ -305,7 +335,7 @@ class Helper {
         }
         $handler = fopen($filename, 'a');
         $ts = time();
-        fwrite($handler, sprintf("%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts));
+        fwrite($handler, sprintf("%d|%s|%d\n", $revision, date('d.m.Y H:i:s', $ts), $ts));
         fclose($handler);
         return $ts;
     }
