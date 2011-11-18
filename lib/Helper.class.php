@@ -144,9 +144,9 @@ class Helper {
 
     /**
      * Возвращает связанные со списком таблицы
-     * @param array $refs
-     * @param array $tablesList
-     * @return array 
+     * @param array $refs Хеш, где ключ - имя таблицы, значение - хеш вида имя_связанной_таблицы => 1
+     * @param array $tablesList Хеш вида имя_таблицы => 1
+     * @return array Связанные таблицы, не входящие в список
      */
     public static function getRefs(array $refs = array(), array $tablesList = array()) {
         $res = array();
@@ -161,7 +161,7 @@ class Helper {
                 };
 
         $closure($refs);
-        
+
         return array_diff_key($res, $tablesList);
     }
 
@@ -369,7 +369,42 @@ class Helper {
         $db->query('SET foreign_key_checks = 1;');
     }
 
-    private function sqlImplode(array $a) {
+    /**
+     * Рекурсивно разбивает массив (почти как print_r, дабы не парсить его вывод)
+     * @param array $a
+     * @param type $level
+     * @return type 
+     */
+    public static function recursiveImplode(array $a, $level = 1, $spacer = ' ') {
+        $result = array();
+        $depth = str_repeat($spacer, $level * 3);
+        $depth2 = str_repeat($spacer, ($level - 1) * 3);
+        foreach ($a as $k => $v) {
+            $tmp = $depth;
+            if (!is_int($k)) {
+                $tmp = sprintf('%s"%s" => ', $depth, $k);
+            }
+            if (is_array($v)) {
+                $tmp .= self::recursiveImplode($v, ($level + 1), $spacer);
+            } else {
+                if (is_string($v)) {
+                    $tmp .= '"' . $v . '"';
+                } else {
+                    $tmp .= $v;
+                }
+            }
+            $result[] = $tmp;
+        }
+        $sep = ",\n";
+        return sprintf("array(\n%s\n%s)", implode($sep, $result), $depth2);
+    }
+
+    /**
+     * Возможно deprecated в будущем
+     * @param array $a
+     * @return string 
+     */
+    private static function sqlImplode(array $a) {
         $result = array();
         foreach ($a as $direction => $data) {
             foreach ($data as $table => $queries) {
@@ -393,16 +428,18 @@ class Helper {
         $version = (int) $version;
         $content = file_get_contents(DIR . $tpl);
         $search = array('revision', 'up', 'down', 'meta');
+
+        $tablesFormat = "array(\n\"%s\"\n)";
+        $sep = "\",\n";
+
         $metadata = array(
             'timestamp' => $ts,
-            'tables' => "array(\n'" . implode("',\n'", $diff['tables']) . "'\n)",
+            'tables' => $diff['tables']['used'],
+            'refs' => $diff['tables']['used'],
             'revision' => $version
         );
-        foreach ($metadata as $key => &$metaitem) {
-            $metaitem = "'$key' =>  $metaitem";
-        }
         unset($diff['tables']);
-        $sql = self::sqlImplode($diff);
+        
         $replace = array(
             $version,
             $sql['up'],

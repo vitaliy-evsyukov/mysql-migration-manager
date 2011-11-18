@@ -1,6 +1,3 @@
-[submodule "sotm-db-data"]
-	path = sotm-db-data
-	url = ssh://git@dev-01.sotmarket.ru:522/opt/git/sotm-db-data.git
 [submodule "data"]
 	path = data
 	url = ssh://git@dev-01.sotmarket.ru:522/opt/git/sotm-db-data.git

@@ -10,10 +10,17 @@ class dbDiff {
     protected $_tempTable;
 
     /**
-     * Запросы в обе стороны
+     * Запросы в обе стороны, связанные и использованные таблицы
      * @var array
      */
-    private $_difference = array('up' => array(), 'down' => array(), 'tables' => array());
+    private $_difference = array(
+        'up' => array(),
+        'down' => array(),
+        'tables' => array(
+            'used' => array(),
+            'refs' => array()
+        )
+    );
 
     public function __construct(Mysqli $current, Mysqli $temp) {
         $this->_currentTable = $this->getDbName($current);
@@ -50,11 +57,11 @@ class dbDiff {
                     // множество зависимых таблиц
                     $tableName = array_shift($comment);
                     foreach ($comment as $table) {
-                        $this->_difference['refs'][$tableName][$table] = 1;
+                        $this->_difference['tables']['refs'][$tableName][$table] = 1;
                     }
                     $comment = $tableName;
                 }
-                $this->_difference['used'][$comment] = 1;
+                $this->_difference['tables']['used'][$comment] = 1;
                 $tmp = array();
                 $index = 0;
                 isset($result['desc'][$comment]) && ($index = sizeof($result['desc'][$comment]));
@@ -87,9 +94,9 @@ class dbDiff {
         $tables = array($this->_currentTable, $this->_tempTable);
         $dirs = array('down', 'up');
         $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
-        
+
         $tablesList = array('used' => array(), 'refs' => array());
-        
+
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
@@ -97,7 +104,7 @@ class dbDiff {
             $result = $this->parseDiff($output);
             $this->_difference[$dirs[$i]] = $result['desc'];
         }
-        
+
         return $this->_difference;
     }
 

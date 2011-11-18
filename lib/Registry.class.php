@@ -10,7 +10,6 @@ namespace lib;
 class Registry {
 
     private static $_migrations = array();
-    private static $_sorted = false;
 
     private function __construct() {
         
@@ -20,47 +19,46 @@ class Registry {
         
     }
 
-    /**
-     * Добавляет список миграций
-     * @param array $migrationsList
-     * @param array $tablesList 
-     */
-    public static function addMigrations(array $migrationsList = array(), array $tablesList = array()) {
-        foreach ($migrationsList as $migrationClass) {
-            self::set($migrationClass, $tablesList);
+    private static function prepareMap() {
+        // Вначале соберем все данные из папки схемы
+        $schemadir = DIR . Helper::get('schemadir');
+        if (!is_dir($schemadir) || !is_readable($schemadir)) {
+            throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
         }
+
+        $handle = opendir($schemadir);
+        chdir($schemadir);
+        while ($file = readdir($handle)) {
+            if ($file != '.' && $file != '..' && is_file($file)) {
+                $tablename = pathinfo($file, PATHINFO_FILENAME);
+                if (is_readable($file)) {
+                    $queries[$tablename][0] = file_get_contents($file);
+                }
+            }
+        }
+        closedir($handle);
+
+        $migratedir = DIR . Helper::get('savedira');
+        if (is_dir($schemadir) && is_readable($migratedir)) {
+            chdir($migratedir);
+            $files = glob('Migration*.php');
+            foreach ($files as $file) {
+                $className = 'lib\\' . pathinfo($file, PATHINFO_FILENAME);
+                $class = new $className;
+                if ($class instanceof AbstractMigration) {
+                    $metadata = $class->getMetadata();
+                    $tables = $metadata['tables'];
+                    
+                }
+            }
+        }
+        
+
+        //$handler = opendir()
     }
 
-    /**
-     * Добавляет миграцию
-     * @param AbstractMigration $migrationClass
-     * @param array $tablesList
-     * @return bool 
-     */
-    public static function set(AbstractMigration $migrationClass, array $tablesList = array()) {
-        // проверяем, подходит ли класс
-        $metadata = $migrationClass->getMetadata();
-        if (!isset($metadata['timestamp']) || !isset($metadata['tables'])) {
-            throw new \Exception('Класс миграции сформирован неверно');
-        }
-        if (in_array($needle, $haystackarray)) {
-            self::$_migrations[$metadata['timestamp']] = $migrationClass;
-            self::$_sorted = false;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Возвращает список доступных миграций
-     * @return array 
-     */
-    public static function getList() {
-        if (!self::$_sorted) {
-            ksort(self::$_migrations);
-            self::$_sorted = true;
-        }
-        return self::$_migrations;
+    public static function getMap() {
+        
     }
 
 }
