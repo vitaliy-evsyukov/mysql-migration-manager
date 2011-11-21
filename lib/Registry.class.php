@@ -10,6 +10,7 @@ namespace lib;
 class Registry {
 
     private static $_migrations = array();
+    private static $_refsMap = array();
 
     private function __construct() {
         
@@ -32,13 +33,13 @@ class Registry {
             if ($file != '.' && $file != '..' && is_file($file)) {
                 $tablename = pathinfo($file, PATHINFO_FILENAME);
                 if (is_readable($file)) {
-                    $queries[$tablename][0] = file_get_contents($file);
+                    self::$_migrations[$tablename][0] = file_get_contents($file);
                 }
             }
         }
         closedir($handle);
 
-        $migratedir = DIR . Helper::get('savedira');
+        $migratedir = DIR . Helper::get('savedir');
         if (is_dir($schemadir) && is_readable($migratedir)) {
             chdir($migratedir);
             $files = glob('Migration*.php');
@@ -47,14 +48,14 @@ class Registry {
                 $class = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
-                    $tables = $metadata['tables'];
-                    
+                    foreach ($metadata['tables'] as $tablename => $tmp) {
+                        self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
+                    }
+                    self::$_refsMap = array_merge(self::$_refsMap, $metadata['refs']);
                 }
             }
         }
         
-
-        //$handler = opendir()
     }
 
     public static function getMap() {

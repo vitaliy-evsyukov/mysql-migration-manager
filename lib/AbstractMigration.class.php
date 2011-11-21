@@ -1,6 +1,7 @@
 <?php
 
 namespace lib;
+
 use \Mysqli;
 
 abstract class AbstractMigration {
@@ -26,9 +27,16 @@ abstract class AbstractMigration {
     public function runDown() {
         return true;
     }
-    
+
     public function getMetadata() {
         return $this->_metadata;
+    }
+
+    public function getStatements() {
+        return array(
+            'up' => $this->up,
+            'down' => $this->down
+        );
     }
 
 }

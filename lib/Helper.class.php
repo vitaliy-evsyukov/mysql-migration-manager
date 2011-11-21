@@ -370,10 +370,10 @@ class Helper {
     }
 
     /**
-     * Рекурсивно разбивает массив (почти как print_r, дабы не парсить его вывод)
-     * @param array $a
-     * @param type $level
-     * @return type 
+     * Рекурсивно превращает массив в строку
+     * @param array $a Массив (любой вложенности)
+     * @param int $level Уровень отступа
+     * @return string Строка 
      */
     public static function recursiveImplode(array $a, $level = 1, $spacer = ' ') {
         $result = array();
@@ -429,25 +429,22 @@ class Helper {
         $content = file_get_contents(DIR . $tpl);
         $search = array('revision', 'up', 'down', 'meta');
 
-        $tablesFormat = "array(\n\"%s\"\n)";
-        $sep = "\",\n";
-
         $metadata = array(
             'timestamp' => $ts,
             'tables' => $diff['tables']['used'],
-            'refs' => $diff['tables']['used'],
+            'refs' => $diff['tables']['refs'],
             'revision' => $version
         );
         unset($diff['tables']);
-        
+
         $replace = array(
             $version,
-            $sql['up'],
-            $sql['down'],
-            "array(\n" . implode(",\n", $metadata) . "\n)"
+            self::recursiveImplode($diff['up'], 2),
+            self::recursiveImplode($diff['down'], 2),
+            self::recursiveImplode($metadata, 2)
         );
         foreach ($search as &$placeholder) {
-            $placeholder = '%%' . $placeholder . '%%';
+            $placeholder = "%%{$placeholder}%%";
         }
         return str_replace($search, $replace, $content);
     }

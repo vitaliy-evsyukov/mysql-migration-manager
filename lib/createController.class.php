@@ -11,8 +11,8 @@ class createController extends AbstractController {
         Helper::loadTmpDb($tempDb);
         $diffObj = new dbDiff($this->db, $tempDb);
         $diff = $diffObj->getDifference();
-        $revision = 2;//Helper::getLastRevision();
-        $timestamp = time();//Helper::writeRevisionFile($revision);
+        $revision = Helper::getLastRevision();
+        $timestamp = Helper::writeRevisionFile($revision);
         $content = Helper::createMigrationContent($revision, $diff, $timestamp);
         $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
         if (is_file($migrationFileName)) {
