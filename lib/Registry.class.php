@@ -20,6 +20,31 @@ class Registry {
         
     }
 
+    private function __wakeup() {
+        
+    }
+
+    /**
+     * Собирает данные в виде 
+     * <code>
+     * self::$_migrations = array(
+     *      'table1' => array(
+     *              111111 => 1,
+     *              111112 => 2
+     *      )
+     * );
+     * 
+     * self::$_refsMap = array(
+     *      'table1' => array(
+     *              'table2' => 1,
+     *              'table3' => 1
+     *      )
+     * );
+     * </code>
+     * 
+     * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
+     * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
+     */
     private static function prepareMap() {
         // Вначале соберем все данные из папки схемы
         $schemadir = DIR . Helper::get('schemadir');
@@ -27,6 +52,7 @@ class Registry {
             throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
         }
 
+        // SQL считается первой ревизией
         $handle = opendir($schemadir);
         chdir($schemadir);
         while ($file = readdir($handle)) {
@@ -44,22 +70,48 @@ class Registry {
             chdir($migratedir);
             $files = glob('Migration*.php');
             foreach ($files as $file) {
-                $className = 'lib\\' . pathinfo($file, PATHINFO_FILENAME);
+                $className = Helper::get('savedir') . '\\' . pathinfo(pathinfo($file, PATHINFO_FILENAME), PATHINFO_FILENAME);
                 $class = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
                     foreach ($metadata['tables'] as $tablename => $tmp) {
                         self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
                     }
-                    self::$_refsMap = array_merge(self::$_refsMap, $metadata['refs']);
+                    foreach ($metadata['refs'] as $refTable => $tables) {
+                        if (!isset(self::$_refsMap[$refTable])) {
+                            self::$_refsMap[$refTable] = array();
+                        }
+                        self::$_refsMap[$refTable] = array_merge(self::$_refsMap[$refTable], $tables);
+                    }
                 }
             }
         }
-        
+
+        foreach (self::$_migrations as &$data) {
+            ksort($data);
+        }
     }
 
-    public static function getMap() {
-        
+    /**
+     * Возвращает картину миграций
+     * @return array 
+     */
+    public static function getAllMigrations() {
+        if (empty(self::$_migrations)) {
+            self::prepareMap();
+        }
+        return self::$_migrations;
+    }
+
+    /**
+     * Возвращает карту ссылок 
+     * @return array 
+     */
+    public static function getAllRefs() {
+        if (empty(self::$_refsMap)) {
+            self::prepareMap();
+        }
+        return self::$_refsMap;
     }
 
 }

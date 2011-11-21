@@ -27,7 +27,9 @@ class Helper {
         'verbose' => null,
         'versiontable' => null
     );
+    private static $_revisionLines = array();
     private static $_lastRevision;
+    private static $_currRevision = 0;
 
     static function setConfig($cnf) {
         self::$config = array_replace(self::$config, $cnf);
@@ -271,6 +273,30 @@ class Helper {
         return $result;
     }
 
+    /**
+     * Возвращает информацию о 
+     * @param array $tablesList
+     * @return array 
+     */
+    public static function getTimeline(array $tablesList = array()) {
+        $migrations = Registry::getAllMigrations();
+        if (!empty($tablesList)) {
+            $refs = Registry::getAllRefs();
+            $tablesToAdd = self::getRefs($refs, $tablesList);
+            $tablesList = array_merge($tablesList, $tablesToAdd);
+        } else {
+            $tablesList = array_keys($migrations);
+        }
+        $timeline = array();
+        foreach ($tablesList as $tableName) {
+            foreach ($migrations[$tableName] as $timestamp => $revision) {
+                $timeline[$timestamp][$tableName] = $revision;
+            }
+        }
+        ksort($timeline);
+        return $timeline;
+    }
+
     public static function applyMigration($revision, $db, $direction = 'Up') {
         $classname = self::get('savedir') . '\Migration' . $revision;
         $migration = new $classname($db);
@@ -296,18 +322,26 @@ class Helper {
                     $line = trim(fgets($handler));
                     if (empty($line))
                         continue;
-                    $parts = explode('|', $line);
-                    $result['migrations'][] = $parts[0];
-                    $result['data'][$parts[0]] = array(
-                        'date' => $parts[1],
-                        'time' => $parts[2]
-                    );
-                    self::$_lastRevision = $parts[0];
+                    if (strpos($line, '#') === 0) {
+                        // это номер текущей ревизии
+                        self::$_currRevision = (int) substr($line, 1);
+                    } else {
+                        self::$_revisionLines[] = $line;
+                        $parts = explode('|', $line);
+                        $result['migrations'][] = $parts[0];
+                        $result['data'][$parts[0]] = array(
+                            'date' => $parts[1],
+                            'time' => $parts[2]
+                        );
+                        self::$_lastRevision = $parts[0];
+                    }
                 }
-            }
-            else {
+            } else {
                 throw new \Exception(sprintf("Не удается открыть файл %s\n", $migrationsListFile));
             }
+        }
+        if (!self::$_currRevision) {
+            self::$_currRevision = self::$_lastRevision;
         }
         return $result;
     }
@@ -333,10 +367,11 @@ class Helper {
         if (is_file($filename) && !is_writable($filename)) {
             throw new \Exception(sprinf("Файл %s защищен от записи\n", $filename));
         }
-        $handler = fopen($filename, 'a');
         $ts = time();
-        fwrite($handler, sprintf("%d|%s|%d\n", $revision, date('d.m.Y H:i:s', $ts), $ts));
-        fclose($handler);
+        $lines = self::$_revisionLines;
+        $lines[] = sprintf("%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts);
+        $lines[] = "#{$revision}";
+        file_put_contents($filename, implode("\n", $lines));
         return $ts;
     }
 
@@ -357,16 +392,24 @@ class Helper {
      * @param Mysqli $db Соединение с сервером БД
      */
     public static function loadTmpDb($db) {
-        $db->query('SET foreign_key_checks = 0;');
-        $classname = self::get('savedir') . '\Schema';
-        $sc = new $classname;
-        $sc->load($db);
-        $tables = $sc->getTables();
-        $migrations = self::getAllMigrations();
-        foreach ($migrations['migrations'] as $revision) {
-            self::applyMigration($revision, $db);
+        $db->query("SET foreign_key_checks = 0;");
+        $timeline = self::getTimeline();
+        $usedMigrations = array();
+        foreach ($timeline as $tables) {
+            foreach ($tables as $tablename => $revision) {
+                if (is_int($revision)) {
+                    // обратимся к нужному классу
+                    if (!isset($usedMigrations[$revision])) {
+                        self::applyMigration($revision, $db);
+                        $usedMigrations[$revision] = 1;
+                    }
+                } else {
+                    // это SQL-запрос
+                    $db->query($revision);
+                }
+            }
         }
-        $db->query('SET foreign_key_checks = 1;');
+        $db->query("SET foreign_key_checks = 1;");
     }
 
     /**
