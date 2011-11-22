@@ -101,7 +101,7 @@ class dbDiff {
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
-            $last_line = exec($command . " --list-tables {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
+            $last_line = exec($command . " --list-tables --no-old-defs --save-quotes {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
             if (!empty($output)) {
                 $result = $this->parseDiff($output);
                 $this->_difference[$dirs[$i]] = $result['desc'];

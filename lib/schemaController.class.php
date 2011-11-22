@@ -15,45 +15,58 @@ class schemaController extends DatasetsController {
         $exclude = false;
         $datasets = $this->args['datasets'];
 
+        $dshash = '';
+        $json = array();
         if (!empty($datasets)) {
+            ksort($datasets);
             $json = $this->loadDatasetInfo();
-            foreach ($json['reqs'] as $dataset) {
-                foreach ($dataset['tables'] as $tablename) {
-                    $this->_queries[$tablename] = 1;
+            $dshash = md5(implode('', array_keys($datasets)));
+        }
+
+        $classname = sprintf("%s\Schema%s", Helper::get('savedir'), $dshash);
+        $fname = DIR . Helper::get('savedir') . DIR_SEP . "Schema{$dshash}.class.php";
+
+        if ($this->askForRewrite($fname)) {
+
+            if (!empty($datasets)) {
+                foreach ($json['reqs'] as $dataset) {
+                    foreach ($dataset['tables'] as $tablename) {
+                        $this->_queries[$tablename] = 1;
+                    }
+                }
+                $exclude = true;
+            }
+
+            $schemadir = DIR . Helper::get('schemadir');
+            if (!is_dir($schemadir) || !is_readable($schemadir)) {
+                throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
+            }
+
+            $handle = opendir($schemadir);
+            chdir($schemadir);
+            while ($file = readdir($handle)) {
+                if ($file != '.' && $file != '..' && is_file($file)) {
+                    $tablename = pathinfo($file, PATHINFO_FILENAME);
+                    if ($exclude && !isset($this->_queries[$tablename])) {
+                        continue;
+                    }
+                    if (is_readable($file)) {
+                        $this->_queries[$tablename] = file_get_contents($file);
+                    } else {
+                        throw new \Exception("SQL-файла описания таблицы {$tablename} не существует\n");
+                    }
                 }
             }
-            $exclude = true;
-        }
-
-        $schemadir = DIR . Helper::get('schemadir');
-        if (!is_dir($schemadir) || !is_readable($schemadir)) {
-            throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
-        }
-
-        $handle = opendir($schemadir);
-        chdir($schemadir);
-        while ($file = readdir($handle)) {
-            if ($file != '.' && $file != '..' && is_file($file)) {
-                $tablename = pathinfo($file, PATHINFO_FILENAME);
-                if ($exclude && !isset($this->_queries[$tablename])) {
-                    continue;
-                }
-                if (is_readable($file)) {
-                    $this->_queries[$tablename] = file_get_contents($file);
-                } else {
-                    throw new \Exception("SQL-файла описания таблицы {$tablename} не существует\n");
-                }
+            closedir($handle);
+            // Создадим структуру базы
+            foreach ($this->_queries as $tablename => $query) {
+                $this->db->query($query);
             }
+            $this->writeInFile($fname, $dshash);
+        } else {
+            $class = new $classname;
+            $class->load($this->db);
         }
-        closedir($handle);
-        
-        // Создадим структуру базы
-        foreach ($this->_queries as $tablename => $query) {
-            printf("%s\n", $tablename);
-            $this->db->query($query);
-        }
-
-        $this->writeInFile();
     }
 
     public function _runStrategy() {
@@ -80,37 +93,36 @@ class schemaController extends DatasetsController {
      * TODO: объединить с записью миграции й
      * @param string $tpl 
      */
-    protected function writeInFile($tpl = 'tpl/schema.tpl') {
+    protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
         $content = file_get_contents(DIR . $tpl);
-        $search = array('queries', 'tables');
+        $search = array('queries', 'tables', 'name');
         foreach ($search as &$value) {
             $value = '%%' . $value . '%%';
         }
         $sep = "\",\n\"";
         $replace = array(
             '"' . implode($sep, $this->_queries) . '"',
-            '"' . implode($sep, array_keys($this->_queries)) . '"'
+            '"' . implode($sep, array_keys($this->_queries)) . '"',
+            $name
         );
-        $fname = DIR . Helper::get('savedir') . '/Schema.class.php';
-        $this->askForRewrite($fname);
         file_put_contents($fname, str_replace($search, $replace, $content));
     }
 
     protected function askForRewrite($fname) {
         if (!file_exists($fname))
-            return;
+            return true;
         $c = '';
         do {
-            if ($c != "\n")
-                echo "File: {$fname} already exists! Can I rewrite it [y/n]? ";
+            if ($c != "\n") {
+                printf("Файл схемы %s уже существует. Перезаписать? [y/n]\n", $fname);
+            }
             $c = fread(STDIN, 1);
 
             if ($c === 'Y' or $c === 'y') {
-                return;
+                return true;
             }
             if ($c === 'N' or $c === 'n') {
-                echo "\nExit without saving\n";
-                exit;
+                return false;
             }
         } while (true);
     }

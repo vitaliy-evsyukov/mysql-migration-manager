@@ -4,7 +4,7 @@ namespace db;
 
 use lib\AbstractSchema;
 
-class Schema extends AbstractSchema {
+class Schema%%name%% extends AbstractSchema {
 
     protected $tables = array(
         %%tables%%

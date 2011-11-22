@@ -14,9 +14,13 @@ class applydsController extends DatasetsController {
         if (empty($datasets)) {
             throw new \Exception("Не указаны наборы данных\n");
         }
+        if (!isset($this->args['loadData']))  {
+            $this->args['loadData'] = true;
+        }
         $datasets = $this->loadDatasetInfo();
         $this->db->query('START TRANSACTION;');
         // вынести хранимки для автороллбека транзакций в шаблон
+        
         foreach ($datasets['sqlContent'] as $dataset => $query) {
             // если кто-то знает решение обработки ошибок лучше - подскажите
             $this->multiQuery($query, true);

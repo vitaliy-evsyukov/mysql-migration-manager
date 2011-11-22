@@ -213,7 +213,7 @@ class Helper {
         $tmpname = $config['db'] . '_' . self::getCurrentVersion();
         $config['db'] = $tmpname;
         $db = self::getDbObject();
-        $db->query("CREATE DATABASE `{$config['db']}`  DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
+        $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
         $tmpdb = self::getDbObject($config);
         if (!$tmpdb->set_charset("utf8")) {
             throw new \Exception(sprintf("Ошибка установки CHARACTER SET utf8: %s\n", $tmpdb->error));
@@ -277,7 +277,7 @@ class Helper {
     }
 
     /**
-     * Возвращает информацию о 
+     * Возвращает информацию о изменениях таблиц в базе с течением времени
      * @param array $tablesList
      * @return array 
      */

@@ -79,6 +79,7 @@ abstract class DatasetsController extends AbstractController {
      * @param bool $inTransaction Запросы исполняются в транзакции
      */
     protected function multiQuery($query, $inTransaction = false) {
+        $counter = 1;
         try {
             $ret = $this->db->multi_query($query);
             $text = $this->db->error;
@@ -87,7 +88,7 @@ abstract class DatasetsController extends AbstractController {
                 throw new \Exception($text, $code);
             }
             do {
-                
+                $counter++;
             } while ($this->db->next_result());
             $text = $this->db->error;
             $code = $this->db->errno;
@@ -97,7 +98,7 @@ abstract class DatasetsController extends AbstractController {
             $inTransaction && $this->db->query('COMMIT;');
         } catch (\Exception $e) {
             $inTransaction && $this->db->query('ROLLBACK;');
-            throw new \Exception("Произошла ошибка: {$e->getMessage()} ({$e->getCode()})");
+            throw new \Exception("Произошла ошибка: {$e->getMessage()} ({$e->getCode()}). Строка: {$counter}");
         }
     }
 
