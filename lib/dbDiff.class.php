@@ -45,12 +45,8 @@ class dbDiff {
         $tmp = array();
         $result = array();
         $index = 0;
-        print_r($output);die();
         foreach ($output as $line) {
-            var_dump($line);
-            var_dump(mb_detect_encoding($line));
             $line = trim($line);
-            var_dump(mb_detect_encoding($line));
             if (empty($line))
                 continue;
             if (strpos($line, '--') === 0) {
@@ -69,7 +65,6 @@ class dbDiff {
                 $index = 0;
                 isset($result['desc'][$comment]) && ($index = sizeof($result['desc'][$comment]));
             } else {
-                
                 $tmp[] = $line;
                 if (!empty($comment)) {
                     // добавим предыдущие собранные данные в результирующий массив
@@ -77,7 +72,6 @@ class dbDiff {
                 }
             }
         }
-        die();
 
         return $result;
     }
@@ -87,6 +81,7 @@ class dbDiff {
      * @return array 
      */
     public function getDifference() {
+        
         $params = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
@@ -105,7 +100,7 @@ class dbDiff {
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
-            $last_line = exec($command . " --list-tables -n {$tables[$i]} {$tables[1 - $i]}", $output, $return_status); // to utf8!
+            $last_line = exec($command . " --list-tables {$tables[$i]} {$tables[1 - $i]}", $output, $return_status); // to utf8!
             $result = $this->parseDiff($output);
             $this->_difference[$dirs[$i]] = $result['desc'];
         }
