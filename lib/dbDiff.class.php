@@ -46,9 +46,10 @@ class dbDiff {
         $result = array();
         $index = 0;
         foreach ($output as $line) {
-            $line = trim($line);
-            if (empty($line))
+            $line = addslashes(trim($line));
+            if (empty($line)) {
                 continue;
+            }
             if (strpos($line, '--') === 0) {
                 // это комментарий с именем таблицы
                 $comment = explode('|', trim(substr($line, 2)));
@@ -81,7 +82,7 @@ class dbDiff {
      * @return array 
      */
     public function getDifference() {
-        
+
         $params = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
@@ -100,9 +101,11 @@ class dbDiff {
         for ($i = 0; $i < 2; $i++) {
             $return_status = 0;
             $output = array();
-            $last_line = exec($command . " --list-tables {$tables[$i]} {$tables[1 - $i]}", $output, $return_status); // to utf8!
-            $result = $this->parseDiff($output);
-            $this->_difference[$dirs[$i]] = $result['desc'];
+            $last_line = exec($command . " --list-tables {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
+            if (!empty($output)) {
+                $result = $this->parseDiff($output);
+                $this->_difference[$dirs[$i]] = $result['desc'];
+            }
         }
 
         return $this->_difference;

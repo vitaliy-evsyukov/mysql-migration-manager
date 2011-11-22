@@ -14,22 +14,51 @@ abstract class AbstractMigration {
     protected $up = array();
     protected $down = array();
     protected $rev = 0;
-    protected $_metadata = array();
+    protected $metadata = array();
+    protected $_tables = array();
 
-    public function __construct(mysqli $db) {
+    public function __construct(mysqli $db = null) {
         $this->db = $db;
     }
 
+    public function setTables(array $tablesList = array()) {
+        $this->_tables = $tablesList;
+    }
+
+    private function runDirection($direction) {
+        if (!empty($this->_tables)) {
+            $direction = array_diff_key($this->_tables, $direction);
+        }
+        $query = array();
+        foreach ($direction as $statements) {
+            $query[] = implode("\n", $statements);
+        }
+        $ret = $this->db->multi_query(stripslashes(implode('', $query)));
+        $text = $this->db->error;
+        $code = $this->db->errno;
+        if (!$ret) {
+            throw new \Exception($text, $code);
+        }
+        do {
+            
+        } while ($this->db->next_result());
+        $text = $this->db->error;
+        $code = $this->db->errno;
+        if ($code) {
+            throw new \Exception($text, $code);
+        }
+    }
+
     public function runUp() {
-        return true;
+        $this->runDirection($this->up);
     }
 
     public function runDown() {
-        return true;
+        $this->runDirection($this->down);
     }
 
     public function getMetadata() {
-        return $this->_metadata;
+        return $this->metadata;
     }
 
     public function getStatements() {

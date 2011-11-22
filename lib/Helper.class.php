@@ -398,6 +398,7 @@ class Helper {
         $db->query("SET foreign_key_checks = 0;");
         $timeline = self::getTimeline();
         $usedMigrations = array();
+        
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
                 if (is_int($revision)) {

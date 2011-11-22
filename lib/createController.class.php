@@ -5,21 +5,25 @@ namespace lib;
 class createController extends AbstractController {
 
     protected $queries = array();
-    
+
     public function runStrategy() {
         $tempDb = Helper::getTmpDbObject();
         Helper::loadTmpDb($tempDb);
         $diffObj = new dbDiff($this->db, $tempDb);
         $diff = $diffObj->getDifference();
-        $revision = Helper::getLastRevision();
-        $timestamp = Helper::writeRevisionFile($revision);
-        $content = Helper::createMigrationContent($revision, $diff, $timestamp);
-        $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
-        if (is_file($migrationFileName)) {
-            throw new \Exception(sprintf("Ревизия %d уже существует, файл: %s\n", $revision, $migrationFileName));
+        if (!empty($diff['up']) || !empty($diff['down'])) {
+            $revision = Helper::getLastRevision();
+            $timestamp = Helper::writeRevisionFile($revision);
+            $content = Helper::createMigrationContent($revision, $diff, $timestamp);
+            $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
+            if (is_file($migrationFileName)) {
+                throw new \Exception(sprintf("Ревизия %d уже существует, файл: %s\n", $revision, $migrationFileName));
+            }
+            file_put_contents($migrationFileName, $content);
+            printf("Ревизия %d создана успешно и сохранена в файле %s\n", $revision, $migrationFileName);
+        } else {
+            printf("На данный момент не обнаружено изменений в структуре базы данных\n");
         }
-        file_put_contents($migrationFileName, $content);
-        printf("Ревизия %d создана успешно и сохранена в файле %s\n", $revision, $migrationFileName);
     }
 
     public function _runStrategy() {
