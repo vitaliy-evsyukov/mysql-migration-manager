@@ -53,6 +53,7 @@ class dbDiff {
             if (strpos($line, '--') === 0) {
                 // это комментарий с именем таблицы
                 $comment = explode('|', trim(substr($line, 2)));
+                $comment = str_replace('`', '', $comment);
                 if (is_array($comment)) {
                     // множество зависимых таблиц
                     $tableName = array_shift($comment);

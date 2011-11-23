@@ -152,19 +152,22 @@ class Helper {
      */
     public static function getRefs(array $refs = array(), array $tablesList = array()) {
         $res = array();
+        $existsRefs = array_intersect_key($refs, $tablesList);
 
-        $closure = function ($arr) use(&$closure, &$res) {
+        $closure = function ($arr) use(&$closure, &$res, $refs) {
                     foreach ($arr as $table => $value) {
-                        $res[$table] = 1;
-                        if (is_array($value)) {
-                            $closure($value);
+                        if (!isset($res[$table])) {
+                            $res[$table] = 1;
+                            if (isset($refs[$table]) && is_array($refs[$table])) {
+                                $closure($refs[$table]);
+                            }
                         }
                     }
                 };
 
-        $closure($refs);
+        $closure($existsRefs);
 
-        return array_diff_key($res, $tablesList);
+        return $res;
     }
 
     /**
@@ -288,10 +291,10 @@ class Helper {
             $tablesToAdd = self::getRefs($refs, $tablesList);
             $tablesList = array_merge($tablesList, $tablesToAdd);
         } else {
-            $tablesList = array_keys($migrations);
+            $tablesList = $migrations;
         }
         $timeline = array();
-        foreach ($tablesList as $tableName) {
+        foreach ($tablesList as $tableName => $t) {
             foreach ($migrations[$tableName] as $timestamp => $revision) {
                 $timeline[$timestamp][$tableName] = $revision;
             }
@@ -398,7 +401,7 @@ class Helper {
         $db->query("SET foreign_key_checks = 0;");
         $timeline = self::getTimeline();
         $usedMigrations = array();
-        
+
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
                 if (is_int($revision)) {
