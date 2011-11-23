@@ -55,15 +55,20 @@ class Registry {
         // SQL считается первой ревизией
         $handle = opendir($schemadir);
         chdir($schemadir);
+        $queries = array();
         while ($file = readdir($handle)) {
             if ($file != '.' && $file != '..' && is_file($file)) {
                 $tablename = pathinfo($file, PATHINFO_FILENAME);
                 if (is_readable($file)) {
-                    self::$_migrations[$tablename][0] = file_get_contents($file);
+                    $q = file_get_contents($file);
+                    $queries[] = $q;
+                    self::$_migrations[$tablename][0] = $q;
                 }
             }
         }
         closedir($handle);
+        self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
+        unset($queries);
 
         $migratedir = DIR . Helper::get('savedir');
         if (is_dir($schemadir) && is_readable($migratedir)) {

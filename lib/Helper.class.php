@@ -211,9 +211,11 @@ class Helper {
      * TODO: объединить методы создания соединения
      * @return Mysqli 
      */
-    public static function getTmpDbObject() {
+    public static function getTmpDbObject($tmpname = '') {
         $config = self::getConfig();
-        $tmpname = $config['db'] . '_' . self::getCurrentVersion();
+        if (empty($tmpname)) {
+            $tmpname = $config['db'] . '_' . self::getCurrentVersion();
+        }
         $config['db'] = $tmpname;
         $db = self::getDbObject();
         $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
@@ -280,8 +282,74 @@ class Helper {
     }
 
     /**
+     * Выполняет запросы DDL
+     * @param Mysqli $db
+     * @param string $queries 
+     */
+    public static function queryMultipleDDL(Mysqli $db, $queries) {
+        $ret = $db->multi_query($queries);
+        $text = $db->error;
+        $code = $db->errno;
+        if (!$ret) {
+            throw new \Exception($text, $code);
+        }
+        do {
+            
+        } while ($db->next_result());
+        $text = $db->error;
+        $code = $db->errno;
+        if ($code) {
+            throw new \Exception($text, $code);
+        }
+    }
+
+    /**
+     *
+     * @param type $data
+     * @return array 
+     */
+    public static function getInitialRefs($data) {
+        $dbName = 'db_' . md5(time());
+        $db = self::getTmpDbObject($dbName);
+        $db->query("SET foreign_key_checks = 0;");
+        self::queryMultipleDDL($db, $data);
+        $db->query("SET foreign_key_checks = 1;");
+
+        $params = array('host', 'user', 'password');
+        $params_str = array();
+        foreach ($params as $param) {
+            $value = Helper::get($param);
+            if (!empty($value)) {
+                $params_str[] = "--{$param}={$value}";
+            }
+        }
+        $command = sprintf(
+                "%s %s  --no-old-defs --refs %s", self::get('mysqldiff_command'), implode(' ', $params_str), $dbName
+        );
+        $output = array();
+        $status = -1;
+        exec($command, $output, $status);
+        if (empty($output)) {
+            throw new \Exception(sprintf("Ошибка в команде %s, код возврата %d", $command, $status));
+        }
+        $result = array();
+        foreach ($output as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+            $tables = explode('|', $line);
+            $tableName = array_shift($tables);
+            foreach ($tables as $table) {
+                $result[$tableName][$table] = 1;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Возвращает информацию о изменениях таблиц в базе с течением времени
-     * @param array $tablesList
+     * @param array $tablesList 
      * @return array 
      */
     public static function getTimeline(array $tablesList = array()) {

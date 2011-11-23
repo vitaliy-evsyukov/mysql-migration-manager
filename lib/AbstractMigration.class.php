@@ -33,20 +33,7 @@ abstract class AbstractMigration {
         foreach ($direction as $statements) {
             $query[] = implode("\n", $statements);
         }
-        $ret = $this->db->multi_query(stripslashes(implode('', $query)));
-        $text = $this->db->error;
-        $code = $this->db->errno;
-        if (!$ret) {
-            throw new \Exception($text, $code);
-        }
-        do {
-            
-        } while ($this->db->next_result());
-        $text = $this->db->error;
-        $code = $this->db->errno;
-        if ($code) {
-            throw new \Exception($text, $code);
-        }
+        Helper::queryMultipleDDL($this->db, stripslashes(implode("\n", $query)));
     }
 
     public function runUp() {
