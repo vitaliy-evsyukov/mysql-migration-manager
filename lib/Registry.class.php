@@ -51,8 +51,9 @@ class Registry {
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
             throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
         }
-
+        
         // SQL считается первой ревизией
+        printf("Ищуется начальные миграции\n");
         $handle = opendir($schemadir);
         chdir($schemadir);
         $queries = array();
@@ -67,9 +68,10 @@ class Registry {
             }
         }
         closedir($handle);
+        printf("Ищутся начальные связи\n");
         self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
         unset($queries);
-
+        printf("Составляются карты миграций и связей\n");
         $migratedir = DIR . Helper::get('savedir');
         if (is_dir($schemadir) && is_readable($migratedir)) {
             chdir($migratedir);

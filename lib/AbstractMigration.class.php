@@ -21,19 +21,26 @@ abstract class AbstractMigration {
         $this->db = $db;
     }
 
+    /**
+     * Устанавливает таблицы, операторы для которых необходимо выполнять
+     * @param array $tablesList 
+     */
     public function setTables(array $tablesList = array()) {
         $this->_tables = $tablesList;
     }
 
     private function runDirection($direction) {
         if (!empty($this->_tables)) {
-            $direction = array_diff_key($this->_tables, $direction);
+            $direction = array_intersect_key($direction, $this->_tables);
         }
         $query = array();
         foreach ($direction as $statements) {
             $query[] = implode("\n", $statements);
         }
-        Helper::queryMultipleDDL($this->db, stripslashes(implode("\n", $query)));
+        if (!empty($query)) {
+            Helper::queryMultipleDDL($this->db,
+                    stripslashes(implode("\n", $query)));
+        }
     }
 
     public function runUp() {

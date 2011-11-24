@@ -28,8 +28,8 @@ class Helper {
         'versiontable' => null
     );
     private static $_revisionLines = array();
-    private static $_lastRevision;
-    private static $_currRevision = 0;
+    private static $_lastRevision = 0;
+    private static $_currRevision = -1;
 
     static function setConfig($cnf) {
         self::$config = array_replace(self::$config, $cnf);
@@ -96,7 +96,8 @@ class Helper {
                 if (isset($datasets[$dir]) && is_dir($dir) && is_readable($dir)) {
                     $tablesFileName = $dir . DIR_SEP . Helper::get('reqtables');
                     if (is_file($tablesFileName) && is_readable($tablesFileName)) {
-                        self::$_datasets['reqs'][$dir] = json_decode(file_get_contents($tablesFileName), true);
+                        self::$_datasets['reqs'][$dir] = json_decode(file_get_contents($tablesFileName),
+                                true);
                         $datafile = $dir . DIR_SEP . self::get('reqdata');
                         if ($loadDatasetContent && is_file($datafile) && is_readable($datafile)) {
                             self::$_datasets['sqlContent'][$dir] = file_get_contents($datafile);
@@ -107,7 +108,7 @@ class Helper {
 
             closedir($handle);
             if (empty(self::$_datasets) || ( $loadDatasetContent && empty(self::$_datasets['sqlContent']) )) {
-                throw new \Exception('Не найдены данные1 для разворачивания');
+                throw new \Exception('Не найдены данные для разворачивания');
             }
         }
 
@@ -139,7 +140,8 @@ class Helper {
                 return $chain;
             }
             return $ctrl;
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             throw new \Exception("Команда $name не опознана\n");
         }
     }
@@ -183,7 +185,8 @@ class Helper {
             foreach ($config as $option => $value) {
                 $conf[$option] = $value;
             }
-        } else {
+        }
+        else {
             if ($db)
                 return $db;
             $db = new Mysqli($conf['host'], $conf['user'], $conf['password'], $conf['db']);
@@ -221,7 +224,8 @@ class Helper {
         $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
         $tmpdb = self::getDbObject($config);
         if (!$tmpdb->set_charset("utf8")) {
-            throw new \Exception(sprintf("Ошибка установки CHARACTER SET utf8: %s\n", $tmpdb->error));
+            throw new \Exception(sprintf("Ошибка установки CHARACTER SET utf8: %s\n",
+                            $tmpdb->error));
         }
         register_shutdown_function(function() use($config, $tmpdb) {
                     $tmpdb->query("DROP DATABASE `{$config['db']}`");
@@ -295,7 +299,8 @@ class Helper {
         }
         do {
             
-        } while ($db->next_result());
+        }
+        while ($db->next_result());
         $text = $db->error;
         $code = $db->errno;
         if ($code) {
@@ -324,13 +329,16 @@ class Helper {
             }
         }
         $command = sprintf(
-                "%s %s  --no-old-defs --refs %s", self::get('mysqldiff_command'), implode(' ', $params_str), $dbName
+                "%s %s  --no-old-defs --refs %s",
+                self::get('mysqldiff_command'), implode(' ', $params_str),
+                $dbName
         );
         $output = array();
         $status = -1;
         exec($command, $output, $status);
         if (empty($output)) {
-            throw new \Exception(sprintf("Ошибка в команде %s, код возврата %d", $command, $status));
+            throw new \Exception(sprintf("Ошибка в команде %s, код возврата %d",
+                            $command, $status));
         }
         $result = array();
         foreach ($output as $line) {
@@ -358,7 +366,8 @@ class Helper {
             $refs = Registry::getAllRefs();
             $tablesToAdd = self::getRefs($refs, $tablesList);
             $tablesList = array_merge($tablesList, $tablesToAdd);
-        } else {
+        }
+        else {
             $tablesList = $migrations;
         }
         $timeline = array();
@@ -371,9 +380,10 @@ class Helper {
         return $timeline;
     }
 
-    public static function applyMigration($revision, $db, $direction = 'Up') {
+    public static function applyMigration($revision, $db, $direction = 'Up', array $tablesList = array()) {
         $classname = self::get('savedir') . '\Migration' . $revision;
         $migration = new $classname($db);
+        $migration->setTables($tablesList);
         $method = 'run' . $direction;
         $migration->$method();
     }
@@ -399,24 +409,33 @@ class Helper {
                     if (strpos($line, '#') === 0) {
                         // это номер текущей ревизии
                         self::$_currRevision = (int) substr($line, 1);
-                    } else {
+                    }
+                    else {
                         self::$_revisionLines[] = $line;
                         $parts = explode('|', $line);
-                        $result['migrations'][] = $parts[0];
+                        $result['migrations'][] = (int) $parts[0];
                         $result['data'][$parts[0]] = array(
                             'date' => $parts[1],
-                            'time' => $parts[2]
+                            'time' => (int) $parts[2]
                         );
-                        self::$_lastRevision = $parts[0];
+                        self::$_lastRevision = (int) $parts[0];
                     }
                 }
-            } else {
-                throw new \Exception(sprintf("Не удается открыть файл %s\n", $migrationsListFile));
+            }
+            else {
+                throw new \Exception(sprintf("Не удается открыть файл %s\n",
+                                $migrationsListFile));
             }
         }
-        if (!self::$_currRevision) {
+        if (self::$_currRevision === -1) {
             self::$_currRevision = self::$_lastRevision;
         }
+        usort(
+                $result['migrations'],
+                function ($a, $b) use ($result) {
+                    return ($result['data'][$a]['time'] > $result['data'][$b]['time']) ? 1 : -1;
+                }
+        );
         return $result;
     }
 
@@ -431,6 +450,13 @@ class Helper {
         return++self::$_lastRevision;
     }
 
+    public static function getCurrentRevision() {
+        if (self::$_currRevision === -1) {
+            self::getAllMigrations();
+        }
+        return self::$_currRevision;
+    }
+
     /**
      * Записывает информацию о ревизии
      * @param int $revision Номер ревизии
@@ -443,8 +469,20 @@ class Helper {
         }
         $ts = time();
         $lines = self::$_revisionLines;
-        $lines[] = sprintf("%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts);
+        $b = false;
+        foreach ($lines as $line) {
+            $data = explode('|', $line);
+            if ((int) $data[0] === $revision) {
+                $b = true;
+            }
+        }
+        if (!$b) {
+            $lines[] = sprintf(
+                    "%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts
+            );
+        }
         $lines[] = "#{$revision}";
+        //print_r($lines);
         file_put_contents($filename, implode("\n", $lines));
         return $ts;
     }
@@ -465,11 +503,10 @@ class Helper {
      * Загружает начальную схему в базу и накатывает все миграции
      * @param Mysqli $db Соединение с сервером БД
      */
-    public static function loadTmpDb($db) {
+    public static function loadTmpDb(Mysqli $db) {
         $db->query("SET foreign_key_checks = 0;");
         $timeline = self::getTimeline();
         $usedMigrations = array();
-
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
                 if (is_int($revision)) {
@@ -478,12 +515,13 @@ class Helper {
                         self::applyMigration($revision, $db);
                         $usedMigrations[$revision] = 1;
                     }
-                } else {
+                }
+                else {
                     // это SQL-запрос
                     $db->query($revision);
                 }
             }
-        }
+        };
         $db->query("SET foreign_key_checks = 1;");
     }
 
@@ -504,10 +542,12 @@ class Helper {
             }
             if (is_array($v)) {
                 $tmp .= self::recursiveImplode($v, ($level + 1), $spacer);
-            } else {
+            }
+            else {
                 if (is_string($v)) {
                     $tmp .= '"' . $v . '"';
-                } else {
+                }
+                else {
                     $tmp .= $v;
                 }
             }
@@ -526,7 +566,8 @@ class Helper {
         $result = array();
         foreach ($a as $direction => $data) {
             foreach ($data as $table => $queries) {
-                $result['tmp'][] = "'$table' => array(\n\"" . implode("\",\n\"", $queries) . "\"\n)";
+                $result['tmp'][] = "'$table' => array(\n\"" . implode("\",\n\"",
+                                $queries) . "\"\n)";
             }
             $result[$direction] = "array(\n" . implode(",\n", $result['tmp']) . "\n)";
             unset($result['tmp']);
