@@ -61,7 +61,10 @@ class migrateController extends DatasetsController {
         }
 
         $timeline = Helper::getTimeline($tablesList);
-        $timestamp = $migrations['data'][$revision]['time'];
+        $timestamp = 0;
+        if ($revision > 0) {
+            $timestamp = $migrations['data'][$revision]['time'];
+        }
 
 //        var_dump($maxMigration);
 //        var_dump($minMigration);
@@ -73,14 +76,15 @@ class migrateController extends DatasetsController {
         if ($target_migration > 0) {
             $target_str = date('d.m.Y H:i:s', $target_migration);
         }
+        $start_str = date('d.m.Y H:i:s', $timestamp);
 
         if ($revision === $maxMigration && $target_migration >= $timestamp) {
             printf("Более новые миграции отсутствуют\n");
             return false;
         }
         else {
-            printf("Начинается миграция от %s (ревизия %d) до %s\n",
-                    date('d.m.Y H:i:s', $timestamp), $revision, $target_str
+            printf("Начинается миграция от %s (ревизия %d) до %s\n", $start_str,
+                    $revision, $target_str
             );
         }
 
@@ -91,7 +95,10 @@ class migrateController extends DatasetsController {
         }
         $usedMigrations = array();
         foreach ($timeline as $time => $tables) {
-            $time_str = date('d.m.Y H:i:s', $time);
+            $time_str = 'начальную ревизию (SQL)';
+            if ($time > 0) {
+                $time_str = date('d.m.Y H:i:s', $time);
+            }
             if ($direction == 'Down') {
                 /*
                  * Если ревизия произошла после таймпстампа, от которого мы
@@ -104,15 +111,16 @@ class migrateController extends DatasetsController {
                 /*
                  * Если прошли минимально подходящую ревизию, остановимся
                  */
-                if ($time < $target_migration) {
-                    printf("%s уже не подходит, т.к. меньше %s\n", $time_str,
-                            $target_str);
+                if ($time <= $target_migration) {
+                    printf("%s уже не подходит, т.к. меньше либо равно %s\n",
+                            $time_str, $target_str);
                     break;
                 }
             }
             else {
-                if ($time < $timestamp) {
-                    printf("Пропускаем %s\n", $time_str);
+                if ($time <= $timestamp) {
+                    printf("Пропускаем %s, т.к. меньше либо равно %s\n",
+                            $time_str, $start_str);
                     continue;
                 }
                 if ($time > $target_migration) {
@@ -121,23 +129,43 @@ class migrateController extends DatasetsController {
                     break;
                 }
             }
+
+            $revision = $time;
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
                     printf("Выполняем ревизию от %s (№ %d)\n", $time_str, $rev);
-                    $revision = $rev;
-                    if ($time !== $target_migration) {
-                        // обратимся к нужному классу
-                        if (!isset($usedMigrations[$revision])) {
-                            Helper::applyMigration($revision, $this->db,
-                                    $direction, $tablesList);
-                            $usedMigrations[$revision] = 1;
-                        }
+                    // обратимся к нужному классу
+                    if (!isset($usedMigrations[$rev])) {
+                        Helper::applyMigration($rev, $this->db, $direction,
+                                $tablesList);
+                        $usedMigrations[$rev] = 1;
                     }
                 }
                 else {
                     // это SQL-запрос
                     printf("Выполняем SQL для %s\n", $tablename);
                     $this->db->query($rev);
+                }
+            }
+        }
+
+        if ($target_migration === 0) {
+            $revision = 0;
+        }
+        else {
+            foreach ($migrations['data'] as $num => $migration) {
+                if ($migration['time'] === $revision) {
+                    foreach ($migrations['migrations'] as $k => $v) {
+                        if ($v === $num) {
+                            $revision = $num;
+                            $direction == 'Down' ? $k-- : $k++;
+                            if (isset($migrations['migrations'][$k])) {
+                                $revision = $migrations['migrations'][$k];
+                            }
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
         }

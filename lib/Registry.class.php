@@ -53,7 +53,7 @@ class Registry {
         }
         
         // SQL считается первой ревизией
-        printf("Ищуется начальные миграции\n");
+        printf("Ищутся начальные миграции\n");
         $handle = opendir($schemadir);
         chdir($schemadir);
         $queries = array();
