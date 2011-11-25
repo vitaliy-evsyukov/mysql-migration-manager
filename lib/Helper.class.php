@@ -416,7 +416,8 @@ class Helper {
                         $result['migrations'][] = (int) $parts[0];
                         $result['data'][$parts[0]] = array(
                             'date' => $parts[1],
-                            'time' => (int) $parts[2]
+                            'time' => (int) $parts[2],
+                            'revn' => (int) $parts[0]
                         );
                         self::$_lastRevision = (int) $parts[0];
                     }
@@ -469,7 +470,7 @@ class Helper {
         }
         $ts = time();
         $lines = self::$_revisionLines;
-        $b = false;
+        $b = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
             if ((int) $data[0] === $revision) {
