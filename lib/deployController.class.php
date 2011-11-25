@@ -11,18 +11,6 @@ namespace lib;
  */
 class deployController extends DatasetsController {
 
-    private function dropAllTables() {
-        $res = $this->db->query('SHOW TABLES;');
-        $queries = array();
-        while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            $queries[] = "DROP TABLE {$row[0]};";
-        }
-        $res->free_result();
-        if (!empty($queries)) {
-            $this->multiQuery(implode('', $queries));
-        }
-    }
-
     public function runStrategy() {
 
         $this->dropAllTables();

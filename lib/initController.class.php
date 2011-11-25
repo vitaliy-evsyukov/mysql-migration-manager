@@ -1,38 +1,44 @@
 <?php
 
-class initController extends AbstractController
-{
+namespace lib;
 
-  public function runStrategy()
-  {
-    $fname = Helper::get('savedir').'/schema.php';
-    if(!file_exists($fname))
-    {
-      echo "File: {$fname} does not exist!\n";
-      exit;
+class initController extends DatasetsController {
+
+    public function runStrategy() {
+        if ($this->askForRewriteInformation()) {
+            $this->dropAllTables();
+            $datasets = $this->args['datasets'];
+            $dshash = '';
+            if (!empty($datasets)) {
+                ksort($datasets);
+                $dshash = md5(implode('', array_keys($datasets)));
+            }
+            $classname = sprintf("%s\Schema%s", Helper::get('savedir'), $dshash);
+            $schema = new $classname;
+            $schema->load($this->db);
+            printf("Схема %s была успешно развернута\n", $classname);
+            Helper::writeRevisionFile(0);
+        }
+        else {
+            printf("Выход без изменений\n");
+        }
     }
-    $this->askForRewriteInformation();
-    require_once $fname;
-    $sc = new Schema();
-    $sc->load(Helper::getDbObject());
-    
-  }
 
-  public function askForRewriteInformation()
-  {
-    $c='';
-    do{
-      if($c!="\n") echo "Can I rewrite tables in database (all data will be lost) [y/n]? ";
-      $c = fread(STDIN, 1);
+    private function askForRewriteInformation() {
+        $c = '';
+        do {
+            if ($c != "\n")
+                echo "Вы точно уверены, что желаете перезаписать все таблицы в БД? [y/n] ";
+            $c = fread(STDIN, 1);
 
-      if($c ==='Y' or $c==='y' ){
-        return;
-      }
-      if($c ==='N' or $c==='n' ){
-        echo "\nExit without changing shema\n";
-        exit;
-      }
+            if ($c === 'Y' or $c === 'y') {
+                return true;
+            }
+            if ($c === 'N' or $c === 'n') {
+                return false;
+            }
+        }
+        while (true);
+    }
 
-    }while(true);
-  }
 }

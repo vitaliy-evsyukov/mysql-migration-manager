@@ -37,7 +37,8 @@ abstract class DatasetsController extends AbstractController {
                     $args['datasets'][trim($dataset)] = 1;
                 }
             }
-        } else {
+        }
+        else {
             $args['datasets'] = array();
         }
 
@@ -89,16 +90,30 @@ abstract class DatasetsController extends AbstractController {
             }
             do {
                 $counter++;
-            } while ($this->db->next_result());
+            }
+            while ($this->db->next_result());
             $text = $this->db->error;
             $code = $this->db->errno;
             if ($code) {
                 throw new \Exception($text, $code);
             }
             $inTransaction && $this->db->query('COMMIT;');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             $inTransaction && $this->db->query('ROLLBACK;');
             throw new \Exception("Произошла ошибка: {$e->getMessage()} ({$e->getCode()}). Строка: {$counter}");
+        }
+    }
+
+    protected function dropAllTables() {
+        $res = $this->db->query('SHOW TABLES;');
+        $queries = array();
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
+            $queries[] = "DROP TABLE {$row[0]};";
+        }
+        $res->free_result();
+        if (!empty($queries)) {
+            $this->multiQuery(implode('', $queries));
         }
     }
 
