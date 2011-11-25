@@ -32,8 +32,6 @@ class listController extends AbstractController {
             }
         }
 
-        print_r($cell_lengths);
-
         $bar = '+';
         $header = '|';
 
