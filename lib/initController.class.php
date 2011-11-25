@@ -27,9 +27,10 @@ class initController extends DatasetsController {
     private function askForRewriteInformation() {
         $c = '';
         do {
-            if ($c != "\n")
-                echo "Вы точно уверены, что желаете перезаписать все таблицы в БД? [y/n] ";
-            $c = fread(STDIN, 1);
+            if ($c != "\n") {
+                printf("Вы точно уверены, что желаете перезаписать все таблицы в БД? [y/n] ");
+            }
+            $c = trim(fgets(STDIN));
 
             if ($c === 'Y' or $c === 'y') {
                 return true;

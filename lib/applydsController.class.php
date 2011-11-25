@@ -22,9 +22,11 @@ class applydsController extends DatasetsController {
         // вынести хранимки для автороллбека транзакций в шаблон
         
         foreach ($datasets['sqlContent'] as $dataset => $query) {
+            printf("Разворачивается набор данных %s\n", $dataset);
             // если кто-то знает решение обработки ошибок лучше - подскажите
             $this->multiQuery($query, true);
         }
+        printf("Разворачивание наборов данных успешно завершено\n");
     }
 
 }

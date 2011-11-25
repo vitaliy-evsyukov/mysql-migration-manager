@@ -116,8 +116,7 @@ class schemaController extends DatasetsController {
             if ($c != "\n") {
                 printf("Файл схемы %s уже существует. Перезаписать? [y/n] ", $fname);
             }
-            $c = fread(STDIN, 1);
-
+            $c = trim(fgets(STDIN));
             if ($c === 'Y' or $c === 'y') {
                 return true;
             }
