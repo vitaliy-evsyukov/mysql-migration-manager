@@ -136,9 +136,15 @@ class migrateController extends DatasetsController {
                     printf("Выполняем ревизию от %s (№ %d)\n", $time_str, $rev);
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
-                        Helper::applyMigration($rev, $this->db, $direction,
-                                $tablesList);
+                        printf(
+                                "Выполняется миграция для следующих таблиц:\n--- %s\n",
+                                implode("\n--- ", array_keys($tables))
+                        );
+                        Helper::applyMigration(
+                                $rev, $this->db, $direction, $tables
+                        );
                         $usedMigrations[$rev] = 1;
+                        break;
                     }
                 }
                 else {
