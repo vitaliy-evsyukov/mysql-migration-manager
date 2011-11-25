@@ -31,7 +31,10 @@ class deployController extends DatasetsController {
                 'datasets' => $this->args['datasets'],
                 'loadData' => true
             ),
-            'migrate' => array(),
+            'migrate' => array(
+                'datasets' => $this->args['datasets'],
+                'revision' => 0
+            ),
             'applyds' => array('datasets' => $this->args['datasets'])
         );
 
@@ -42,7 +45,6 @@ class deployController extends DatasetsController {
             $start->setController(new $controllerName($this->db, $arguments));
         }
         $start->runStrategy();
-        die();
     }
 
 }

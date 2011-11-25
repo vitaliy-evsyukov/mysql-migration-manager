@@ -15,7 +15,12 @@ class migrateController extends DatasetsController {
         $minMigration = current($migrations['migrations']);
         $maxMigration = end($migrations['migrations']);
 
-        $revision = Helper::getCurrentRevision();
+        if (!isset($this->args['revision'])) {
+            $revision = Helper::getCurrentRevision();
+        }
+        else {
+            $revision = $this->args['revision'];
+        }
 
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
@@ -66,17 +71,16 @@ class migrateController extends DatasetsController {
             $timestamp = $migrations['data'][$revision]['time'];
         }
 
-//        var_dump($maxMigration);
-//        var_dump($minMigration);
-//        var_dump($revision);
-//        var_dump($target_migration);
-//        var_dump($migrations['data'][$revision]['time']);
-
         $target_str = 'начальной миграции (SQL)';
         if ($target_migration > 0) {
             $target_str = date('d.m.Y H:i:s', $target_migration);
         }
-        $start_str = date('d.m.Y H:i:s', $timestamp);
+        if ($timestamp > 0) {
+            $start_str = date('d.m.Y H:i:s', $timestamp);
+        }
+        else {
+            $start_str = 'начальной ревизии';
+        }
 
         if ($revision === $maxMigration && $target_migration >= $timestamp) {
             printf("Более новые миграции отсутствуют\n");
@@ -88,7 +92,10 @@ class migrateController extends DatasetsController {
             );
         }
 
-        $direction = $migrations['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
+        $direction = 'Up';
+        if ($revision > 0) {
+            $direction = $migrations['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
+        }
 
         if ($direction === 'Down') {
             $timeline = array_reverse($timeline, true);
