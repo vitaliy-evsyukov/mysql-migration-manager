@@ -12,7 +12,8 @@ class applydsController extends DatasetsController {
     public function runStrategy() {
         $datasets = $this->args['datasets'];
         if (empty($datasets)) {
-            throw new \Exception("Не указаны наборы данных\n");
+            printf("Не указаны наборы данных\n");
+            return false;
         }
         if (!isset($this->args['loadData']))  {
             $this->args['loadData'] = true;
