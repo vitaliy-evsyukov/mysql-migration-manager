@@ -27,7 +27,6 @@ class schemaController extends DatasetsController {
         $fname = DIR . Helper::get('savedir') . DIR_SEP . "Schema{$dshash}.class.php";
 
         if ($this->askForRewrite($fname)) {
-
             if (!empty($datasets)) {
                 foreach ($json['reqs'] as $dataset) {
                     foreach ($dataset['tables'] as $tablename) {
@@ -60,10 +59,12 @@ class schemaController extends DatasetsController {
             closedir($handle);
             // Создадим структуру базы
             foreach ($this->_queries as $tablename => $query) {
+                printf("Разворачиваем таблицу '%s'\n", $tablename);
                 $this->db->query($query);
             }
             $this->writeInFile($fname, $dshash);
         } else {
+            printf("Разворачиваем схему\n");
             $class = new $classname;
             $class->load($this->db);
         }

@@ -45,39 +45,42 @@ class Registry {
      * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
      * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
      */
-    private static function prepareMap() {
-        // Вначале соберем все данные из папки схемы
-        $schemadir = DIR . Helper::get('schemadir');
-        if (!is_dir($schemadir) || !is_readable($schemadir)) {
-            throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
-        }
-        
-        // SQL считается первой ревизией
-        printf("Ищутся начальные миграции\n");
-        $handle = opendir($schemadir);
-        chdir($schemadir);
-        $queries = array();
-        while ($file = readdir($handle)) {
-            if ($file != '.' && $file != '..' && is_file($file)) {
-                $tablename = pathinfo($file, PATHINFO_FILENAME);
-                if (is_readable($file)) {
-                    $q = file_get_contents($file);
-                    $queries[] = $q;
-                    self::$_migrations[$tablename][0] = $q;
+    private static function prepareMap($loadSQL = true) {
+        if ($loadSQL) {
+            // Вначале соберем все данные из папки схемы
+            $schemadir = DIR . Helper::get('schemadir');
+            if (!is_dir($schemadir) || !is_readable($schemadir)) {
+                throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
+            }
+
+            // SQL считается первой ревизией
+            printf("Ищутся начальные миграции\n");
+            $handle = opendir($schemadir);
+            chdir($schemadir);
+            $queries = array();
+            while ($file = readdir($handle)) {
+                if ($file != '.' && $file != '..' && is_file($file)) {
+                    $tablename = pathinfo($file, PATHINFO_FILENAME);
+                    if (is_readable($file)) {
+                        $q = file_get_contents($file);
+                        $queries[] = $q;
+                        self::$_migrations[$tablename][0] = $q;
+                    }
                 }
             }
+            closedir($handle);
+            printf("Ищутся начальные связи\n");
+            self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
+            unset($queries);
         }
-        closedir($handle);
-        printf("Ищутся начальные связи\n");
-        self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
-        unset($queries);
         printf("Составляются карты миграций и связей\n");
         $migratedir = DIR . Helper::get('savedir');
-        if (is_dir($schemadir) && is_readable($migratedir)) {
+        if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
             $files = glob('Migration*.php');
             foreach ($files as $file) {
-                $className = Helper::get('savedir') . '\\' . pathinfo(pathinfo($file, PATHINFO_FILENAME), PATHINFO_FILENAME);
+                $className = Helper::get('savedir') . '\\' . pathinfo(pathinfo($file,
+                                        PATHINFO_FILENAME), PATHINFO_FILENAME);
                 $class = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
@@ -88,7 +91,8 @@ class Registry {
                         if (!isset(self::$_refsMap[$refTable])) {
                             self::$_refsMap[$refTable] = array();
                         }
-                        self::$_refsMap[$refTable] = array_merge(self::$_refsMap[$refTable], $tables);
+                        self::$_refsMap[$refTable] = array_merge(self::$_refsMap[$refTable],
+                                $tables);
                     }
                 }
             }
@@ -103,9 +107,9 @@ class Registry {
      * Возвращает картину миграций
      * @return array 
      */
-    public static function getAllMigrations() {
+    public static function getAllMigrations($loadSQL = true) {
         if (empty(self::$_migrations)) {
-            self::prepareMap();
+            self::prepareMap($loadSQL);
         }
         return self::$_migrations;
     }

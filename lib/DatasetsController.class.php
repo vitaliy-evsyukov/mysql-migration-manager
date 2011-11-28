@@ -113,6 +113,7 @@ abstract class DatasetsController extends AbstractController {
         }
         $res->free_result();
         if (!empty($queries)) {
+            printf("Удаляются таблицы\n");
             $this->multiQuery(implode('', $queries));
         }
     }

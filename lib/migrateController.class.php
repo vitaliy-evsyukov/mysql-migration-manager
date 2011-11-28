@@ -7,13 +7,13 @@ class migrateController extends DatasetsController {
     protected $queries = array();
 
     public function runStrategy() {
-        $migrations = Helper::getAllMigrations();
+        $mHelper = Helper::getAllMigrations();
 
-        if (empty($migrations)) {
+        if (empty($mHelper['migrations'])) {
             throw new \Exception("Никаких ревизий еще не было создано");
         }
-        $minMigration = current($migrations['migrations']);
-        $maxMigration = end($migrations['migrations']);
+        $minMigration = current($mHelper['migrations']);
+        $maxMigration = end($mHelper['migrations']);
 
         if (!isset($this->args['revision'])) {
             $revision = Helper::getCurrentRevision();
@@ -68,7 +68,7 @@ class migrateController extends DatasetsController {
         $timeline = Helper::getTimeline($tablesList);
         $timestamp = 0;
         if ($revision > 0) {
-            $timestamp = $migrations['data'][$revision]['time'];
+            $timestamp = $mHelper['data'][$revision]['time'];
         }
 
         $target_str = 'начальной миграции (SQL)';
@@ -94,7 +94,7 @@ class migrateController extends DatasetsController {
 
         $direction = 'Up';
         if ($revision > 0) {
-            $direction = $migrations['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
+            $direction = $mHelper['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
         }
 
         if ($direction === 'Down') {
@@ -166,14 +166,14 @@ class migrateController extends DatasetsController {
             $revision = 0;
         }
         else {
-            foreach ($migrations['data'] as $num => $migration) {
+            foreach ($mHelper['data'] as $num => $migration) {
                 if ($migration['time'] === $revision) {
-                    foreach ($migrations['migrations'] as $k => $v) {
+                    foreach ($mHelper['migrations'] as $k => $v) {
                         if ($v === $num) {
                             $revision = $num;
                             $direction == 'Down' ? $k-- : $k++;
-                            if (isset($migrations['migrations'][$k])) {
-                                $revision = $migrations['migrations'][$k];
+                            if (isset($mHelper['migrations'][$k])) {
+                                $revision = $mHelper['migrations'][$k];
                             }
                             break;
                         }
