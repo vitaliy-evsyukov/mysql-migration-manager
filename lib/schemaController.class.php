@@ -23,7 +23,7 @@ class schemaController extends DatasetsController {
             $dshash = md5(implode('', array_keys($datasets)));
         }
 
-        $classname = sprintf("%s\Schema%s", Helper::get('savedir'), $dshash);
+        $classname = sprintf("%s\Schema%s", str_replace('/', '\\', Helper::get('savedir')), $dshash);
         $fname = DIR . Helper::get('savedir') . DIR_SEP . "Schema{$dshash}.class.php";
 
         if ($this->askForRewrite($fname)) {
@@ -67,6 +67,7 @@ class schemaController extends DatasetsController {
             printf("Разворачиваем схему\n");
             $class = new $classname;
             $class->load($this->db);
+            printf("Разворачивание окончено!\n");
         }
     }
 
@@ -96,7 +97,7 @@ class schemaController extends DatasetsController {
      */
     protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
         $content = file_get_contents(DIR . $tpl);
-        $search = array('queries', 'tables', 'name');
+        $search = array('queries', 'tables', 'name', 'ns');
         foreach ($search as &$value) {
             $value = '%%' . $value . '%%';
         }
@@ -104,7 +105,8 @@ class schemaController extends DatasetsController {
         $replace = array(
             '"' . implode($sep, $this->_queries) . '"',
             '"' . implode($sep, array_keys($this->_queries)) . '"',
-            $name
+            $name,
+            str_replace('/', '\\', Helper::get('savedir'))
         );
         file_put_contents($fname, str_replace($search, $replace, $content));
     }

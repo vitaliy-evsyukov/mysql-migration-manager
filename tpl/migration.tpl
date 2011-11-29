@@ -1,6 +1,6 @@
 <?php
 
-namespace db;
+namespace %%ns%%;
 
 use lib\AbstractMigration;
 

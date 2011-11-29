@@ -79,7 +79,7 @@ class Registry {
             chdir($migratedir);
             $files = glob('Migration*.php');
             foreach ($files as $file) {
-                $className = Helper::get('savedir') . '\\' . pathinfo(pathinfo($file,
+                $className = str_replace('/', '\\', Helper::get('savedir')) . '\\' . pathinfo(pathinfo($file,
                                         PATHINFO_FILENAME), PATHINFO_FILENAME);
                 $class = new $className;
                 if ($class instanceof AbstractMigration) {

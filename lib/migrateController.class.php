@@ -31,7 +31,7 @@ class migrateController extends DatasetsController {
             $search_migration = (int) $str;
             if ($search_migration !== 0) {
                 $class = sprintf(
-                        '%s\Migration%d', Helper::get('savedir'),
+                        '%s\Migration%d', str_replace('/', '\\', Helper::get('savedir')),
                         $search_migration
                 );
                 $o = new $class;

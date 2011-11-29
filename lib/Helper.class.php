@@ -381,7 +381,7 @@ class Helper {
     }
 
     public static function applyMigration($revision, $db, $direction = 'Up', array $tablesList = array()) {
-        $classname = self::get('savedir') . '\Migration' . $revision;
+        $classname = str_replace('/', '\\', self::get('savedir')) . '\Migration' . $revision;
         $migration = new $classname($db);
         $migration->setTables($tablesList);
         $method = 'run' . $direction;
@@ -586,7 +586,7 @@ class Helper {
     public static function createMigrationContent($version, array $diff, $ts, $tpl = 'tpl/migration.tpl') {
         $version = (int) $version;
         $content = file_get_contents(DIR . $tpl);
-        $search = array('revision', 'up', 'down', 'meta');
+        $search = array('revision', 'up', 'down', 'meta', 'ns');
 
         $metadata = array(
             'timestamp' => $ts,
@@ -600,7 +600,8 @@ class Helper {
             $version,
             self::recursiveImplode($diff['up'], 2),
             self::recursiveImplode($diff['down'], 2),
-            self::recursiveImplode($metadata, 2)
+            self::recursiveImplode($metadata, 2),
+            str_replace('/', '\\', self::get('savedir'))
         );
         foreach ($search as &$placeholder) {
             $placeholder = "%%{$placeholder}%%";
