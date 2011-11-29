@@ -10,7 +10,7 @@ class migrateController extends DatasetsController {
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
-            printf("Никаких ревизий еще не было создано");
+            printf("Никаких ревизий еще не было создано\n");
             return false;
         }
         $minMigration = current($mHelper['migrations']);
