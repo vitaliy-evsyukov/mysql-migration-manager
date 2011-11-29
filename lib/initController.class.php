@@ -6,7 +6,6 @@ class initController extends DatasetsController {
 
     public function runStrategy() {
         if ($this->askForRewriteInformation()) {
-            $this->dropAllTables();
             $datasets = $this->args['datasets'];
             $dshash = '';
             if (!empty($datasets)) {
@@ -18,6 +17,7 @@ class initController extends DatasetsController {
                         "%s\Schema%s", Helper::get('savedir'), $dshash
                 );
                 $schema = new $classname;
+                $this->dropAllTables();
                 $schema->load($this->db);
                 printf("Схема %s была успешно развернута\n", $classname);
                 Helper::writeRevisionFile(0);
