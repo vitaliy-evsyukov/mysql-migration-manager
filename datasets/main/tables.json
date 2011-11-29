@@ -1,9 +1,0 @@
-{
-        
-        "tables" : [
-                "managers_groups",
-                "managers",
-                "managers_perms",
-                "groups_perms"
-         ]
-}
