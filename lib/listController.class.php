@@ -8,6 +8,9 @@ class listController extends AbstractController {
 
     public function runStrategy() {
         $migrations = Helper::getAllMigrations();
+        if (empty($migrations['migrations'])) {
+            throw new \Exception("Ревизий нет\n");
+        }
         $current = Helper::getCurrentRevision();
         printf("Сейчас вы находитесь на ревизии %d\n\n", $current);
         printf(
