@@ -483,6 +483,7 @@ class Helper {
             );
         }
         $lines[] = "#{$revision}";
+        print_r($lines);
         file_put_contents($filename, implode("\n", $lines));
         return $ts;
     }

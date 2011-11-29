@@ -120,6 +120,9 @@ class migrateController extends DatasetsController {
                  * Если прошли минимально подходящую ревизию, остановимся
                  */
                 if ($time <= $target_migration) {
+                    if ($time === 0) {
+                        $revision = 0;
+                    }
                     printf("%s уже не подходит, т.к. меньше либо равно %s\n",
                             $time_str, $target_str);
                     break;
