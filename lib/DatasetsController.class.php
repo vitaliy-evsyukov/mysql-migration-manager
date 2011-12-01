@@ -106,10 +106,11 @@ abstract class DatasetsController extends AbstractController {
     }
 
     protected function dropAllTables() {
-        $res = $this->db->query('SHOW TABLES;');
+        $res = $this->db->query('SHOW FULL TABLES;');
         $queries = array();
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            $queries[] = "DROP TABLE {$row[0]};";
+            $what = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
+            $queries[] = sprintf("DROP %s %s;", $what, $row[0]);
         }
         $res->free_result();
         if (!empty($queries)) {

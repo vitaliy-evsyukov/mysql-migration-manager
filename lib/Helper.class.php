@@ -221,7 +221,7 @@ class Helper {
         }
         $config['db'] = $tmpname;
         $db = self::getDbObject();
-        $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
+        $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
         $tmpdb = self::getDbObject($config);
         if (!$tmpdb->set_charset("utf8")) {
             throw new \Exception(sprintf("Ошибка установки CHARACTER SET utf8: %s\n",
