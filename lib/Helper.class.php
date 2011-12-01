@@ -413,13 +413,17 @@ class Helper {
                     else {
                         self::$_revisionLines[] = $line;
                         $parts = explode('|', $line);
-                        $result['migrations'][] = (int) $parts[0];
-                        $result['data'][$parts[0]] = array(
+                        // TODO: упростить структуру данных
+                        $migrationId = (int) $parts[0];
+                        $time = (int) $parts[2];
+                        $result['migrations'][] = $migrationId;
+                        $result['data'][$migrationId] = array(
                             'date' => $parts[1],
-                            'time' => (int) $parts[2],
-                            'revn' => (int) $parts[0]
+                            'time' => $time,
+                            'revn' => $migrationId
                         );
-                        self::$_lastRevision = (int) $parts[0];
+                        $result['timestamps'][$time] = $migrationId;
+                        self::$_lastRevision = $migrationId;
                     }
                 }
             }
@@ -457,6 +461,13 @@ class Helper {
         }
         return self::$_currRevision;
     }
+    
+    public static function getRevisionLines() {
+        if (empty(self::$_revisionLines)) {
+            self::getAllMigrations();
+        }
+        return self::$_revisionLines;
+    }
 
     /**
      * Записывает информацию о ревизии
@@ -469,7 +480,8 @@ class Helper {
             throw new \Exception(sprinf("Файл %s защищен от записи\n", $filename));
         }
         $ts = time();
-        $lines = self::$_revisionLines;
+        $lines = self::getRevisionLines();
+        //print_r($lines);
         $b = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
