@@ -134,6 +134,9 @@ class GetOpt {
                     if (strpos($arg, '=') !== false)
                         return substr(strstr($arg, '='), 1);
                     break;
+               case 'no_val':
+                   return 1;
+                   break;
             }
         }
 

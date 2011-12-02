@@ -60,7 +60,7 @@ abstract class DatasetsController extends AbstractController {
     public function toogleFK($state) {
         $state = (int) $state;
         if (!in_array($state, array(0, 1))) {
-            throw new \Exception("Неверный статус проверки внешних ключей: {$state}\n");
+            throw new \Exception("Invalid foreign keys checks status: {$state}\n");
         }
         $this->db->query("SET foreign_key_checks = {$state};");
     }
@@ -101,7 +101,7 @@ abstract class DatasetsController extends AbstractController {
         }
         catch (\Exception $e) {
             $inTransaction && $this->db->query('ROLLBACK;');
-            throw new \Exception("Произошла ошибка: {$e->getMessage()} ({$e->getCode()}). Строка: {$counter}");
+            throw new \Exception("An error was occured: {$e->getMessage()} ({$e->getCode()}). Line: {$counter}");
         }
     }
 
@@ -110,11 +110,13 @@ abstract class DatasetsController extends AbstractController {
         $queries = array();
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             $what = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
-            $queries[] = sprintf("DROP %s %s;", $what, $row[0]);
+            $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
         }
         $res->free_result();
         if (!empty($queries)) {
-            printf("Удаляются таблицы\n");
+            Output::verbose("Views and tables are dropping now", 1);
+            Output::verbose(sprintf("--- %s",
+                            implode("\n--- ", array_keys($queries))), 2);
             $this->multiQuery(implode('', $queries));
         }
     }

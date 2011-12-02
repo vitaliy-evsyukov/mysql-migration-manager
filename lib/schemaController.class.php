@@ -23,7 +23,8 @@ class schemaController extends DatasetsController {
             $dshash = md5(implode('', array_keys($datasets)));
         }
 
-        $classname = sprintf("%s\Schema%s", str_replace('/', '\\', Helper::get('savedir')), $dshash);
+        $classname = sprintf("%s\Schema%s",
+                str_replace('/', '\\', Helper::get('savedir')), $dshash);
         $fname = DIR . Helper::get('savedir') . DIR_SEP . "Schema{$dshash}.class.php";
 
         if ($this->askForRewrite($fname)) {
@@ -38,7 +39,10 @@ class schemaController extends DatasetsController {
 
             $schemadir = DIR . Helper::get('schemadir');
             if (!is_dir($schemadir) || !is_readable($schemadir)) {
-                throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
+                throw new \Exception(
+                        sprintf('Directory %s with tables definitions does not exists',
+                                $schemadir)
+                );
             }
 
             $handle = opendir($schemadir);
@@ -51,48 +55,35 @@ class schemaController extends DatasetsController {
                     }
                     if (is_readable($file)) {
                         $this->_queries[$tablename] = file_get_contents($file);
-                    } else {
-                        throw new \Exception("SQL-файла описания таблицы {$tablename} не существует\n");
+                    }
+                    else {
+                        throw new \Exception(
+                                sprintf("SQL-file with %s descriptions does not exists",
+                                        $tablename)
+                        );
                     }
                 }
             }
             closedir($handle);
             // Создадим структуру базы
+            Output::verbose('Deploy tables...', 1);
             foreach ($this->_queries as $tablename => $query) {
-                printf("Разворачиваем таблицу '%s'\n", $tablename);
+                Output::verbose(sprintf("Deploy table '%s'", $tablename), 2);
                 $this->db->query($query);
             }
+            Output::verbose('Tables deploy finished', 1);
             $this->writeInFile($fname, $dshash);
-        } else {
-            printf("Разворачиваем схему\n");
+        }
+        else {
+            Output::verbose('Deploy schema', 1);
             $class = new $classname;
             $class->load($this->db);
-            printf("Разворачивание окончено!\n");
+            Output::verbose('Schema deploy finished', 1);
         }
-    }
-
-    public function _runStrategy() {
-        Helper::initDirForSavedMigrations();
-        Helper::initVersionTable();
-
-        $db = Helper::getDbObject();
-        $result = $db->query('show tables');
-
-        while ($row = $result->fetch_array(MYSQLI_NUM)) {
-            $table = $row[0];
-            $query = Helper::getSqlForTableCreation($table, $db);
-            $this->queries[] = "DROP TABLE IF EXISTS `{$table}`";
-            $this->queries[] = $query;
-        }
-        $vtab = Helper::get('versiontable');
-        $res = $db->query("SELECT MAX(rev) FROM `{$vtab}`");
-        $row = $res->fetch_array(MYSQLI_NUM);
-        $this->queries[] = "INSERT INTO `{$vtab}` SET rev={$row[0]}";
-        $this->writeInFile();
     }
 
     /**
-     * TODO: объединить с записью миграции й
+     * TODO: объединить с записью миграциий
      * @param string $tpl 
      */
     protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
@@ -112,12 +103,13 @@ class schemaController extends DatasetsController {
     }
 
     protected function askForRewrite($fname) {
-        if (!file_exists($fname))
+        if (Helper::get('quiet') || !file_exists($fname))
             return true;
         $c = '';
         do {
             if ($c != "\n") {
-                printf("Файл схемы %s уже существует. Перезаписать? [y/n] ", $fname);
+                printf("Schema's file %s already exists. Do you want to override it? [y/n] ",
+                        $fname);
             }
             $c = trim(fgets(STDIN));
             if ($c === 'Y' or $c === 'y') {
@@ -126,7 +118,8 @@ class schemaController extends DatasetsController {
             if ($c === 'N' or $c === 'n') {
                 return false;
             }
-        } while (true);
+        }
+        while (true);
     }
 
 }

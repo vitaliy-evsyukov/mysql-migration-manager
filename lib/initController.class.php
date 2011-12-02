@@ -14,28 +14,33 @@ class initController extends DatasetsController {
             }
             try {
                 $classname = sprintf(
-                        "%s\Schema%s", str_replace('/', '\\', Helper::get('savedir')), $dshash
+                        "%s\Schema%s",
+                        str_replace('/', '\\', Helper::get('savedir')), $dshash
                 );
                 $schema = new $classname;
                 $this->dropAllTables();
                 $schema->load($this->db);
-                printf("Схема %s была успешно развернута\n", $classname);
+                printf("Schema %s was successfully deployed\n", $classname);
                 Helper::writeRevisionFile(0);
             }
             catch (\Exception $e) {
-                printf("Не найдена схема данных\n");
+                Output::verbose('Schema not found', 1);
+                Output::verbose($e->getMessage(), 2);
             }
         }
         else {
-            printf("Выход без изменений\n");
+            Output::verbose("Exit without any changes", 1);
         }
     }
 
     private function askForRewriteInformation() {
+        if (Helper::get('quiet')) {
+            return true;
+        }
         $c = '';
         do {
             if ($c != "\n") {
-                printf("Вы точно уверены, что желаете перезаписать все таблицы в БД? [y/n] ");
+                printf("Are you really shure you want to delete ALL tables in DB [y/n] ");
             }
             $c = trim(fgets(STDIN));
 

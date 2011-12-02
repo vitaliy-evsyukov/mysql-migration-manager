@@ -10,7 +10,8 @@ function mmpAutoload($class) {
 
     if (file_exists($filename)) {
         require_once $filename;
-    } else {
+    }
+    else {
         $backtrace = array_reverse(debug_backtrace());
         $debug = array();
         $order = array('file', 'line', 'class', 'function');
@@ -18,16 +19,23 @@ function mmpAutoload($class) {
             $tmp = array();
             foreach ($order as $field) {
                 if (empty($item[$field])) {
-                    $tmp[$field] = '<отсутствует>';
-                } else {
+                    $tmp[$field] = '<empty>';
+                }
+                else {
                     $tmp[$field] = $item[$field];
                 }
             }
-            $debug[] = vsprintf("Файл %s, строка: %d. Класс:%s, функция: %s.", $tmp);
+            $debug[] = vsprintf("File %s, line: %d. Class: %s, function: %s.",
+                    $tmp);
         }
-        echo sprintf("Класс %s не найден в %s\n\n", $class, DIR);
-        echo implode("\n", $debug);
-        die("\n");
+        throw new Exception(
+                sprintf(
+                        "Класс %s не найден в %s\nBack trace:\n%s\n", $class,
+                        DIR,
+                        implode("\n", $debug
+                        )
+                )
+        );
     }
 }
 

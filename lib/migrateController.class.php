@@ -10,7 +10,7 @@ class migrateController extends DatasetsController {
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
-            printf("Никаких ревизий еще не было создано\n");
+            Output::vebose("No revision has been created", 1);
             return false;
         }
         $minMigration = current($mHelper['migrations']);
@@ -49,7 +49,7 @@ class migrateController extends DatasetsController {
 
         if (false === $target_migration) {
             throw new \Exception(
-                    sprintf("Переданное значение миграции %s неверно", $str)
+                    sprintf("Incorrect migration value %s", $str)
             );
         }
 
@@ -73,7 +73,7 @@ class migrateController extends DatasetsController {
             $timestamp = $mHelper['data'][$revision]['time'];
         }
 
-        $target_str = 'начальной миграции (SQL)';
+        $target_str = 'initial revision (SQL)';
         if ($target_migration > 0) {
             $target_str = date('d.m.Y H:i:s', $target_migration);
         }
@@ -81,16 +81,18 @@ class migrateController extends DatasetsController {
             $start_str = date('d.m.Y H:i:s', $timestamp);
         }
         else {
-            $start_str = 'начальной ревизии';
+            $start_str = 'initial revision';
         }
 
         if ($revision === $maxMigration && $target_migration >= $timestamp) {
-            printf("Более новые миграции отсутствуют\n");
+            Output::verbose('There are no newer migrations', 1);
             return false;
         }
         else {
-            printf("Начинается миграция от %s (ревизия %d) до %s\n", $start_str,
-                    $revision, $target_str
+            Output::verbose(
+                    sprintf("Starting migration from %s (revision %d) to %s\n",
+                            $start_str, $revision, $target_str
+                    ), 1
             );
         }
 
@@ -104,11 +106,7 @@ class migrateController extends DatasetsController {
         }
         $usedMigrations = array();
         foreach ($timeline as $time => $tables) {
-            if (!isset($mHelper['timestamps'][$time])) {
-                // пропустим миграцию, если она не перечислена в файле контроля ревизий
-                continue;
-            }
-            $time_str = 'начальную ревизию (SQL)';
+            $time_str = 'initial revision';
             if ($time > 0) {
                 $time_str = date('d.m.Y H:i:s', $time);
             }
@@ -118,7 +116,10 @@ class migrateController extends DatasetsController {
                  * спускаемся вниз, пропускаем
                  */
                 if ($time > $timestamp) {
-                    printf("Пропускаем %s\n", $time_str);
+                    Output::verbose(
+                            sprintf("%s skipped, because is is lesser %s",
+                                    $time_str, $start_str), 2
+                    );
                     continue;
                 }
                 /*
@@ -128,20 +129,26 @@ class migrateController extends DatasetsController {
                     if ($time === 0) {
                         $revision = 0;
                     }
-                    printf("%s уже не подходит, т.к. меньше либо равно %s\n",
-                            $time_str, $target_str);
+                    Output::verbose(
+                            sprintf("%s skipped, because is less or equal %s",
+                                    $time_str, $target_str), 2
+                    );
                     break;
                 }
             }
             else {
                 if ($time <= $timestamp) {
-                    printf("Пропускаем %s, т.к. меньше либо равно %s\n",
-                            $time_str, $start_str);
+                    Output::verbose(
+                            sprintf("%s skipped, because is less or equal %s\n",
+                                    $time_str, $start_str), 2
+                    );
                     continue;
                 }
                 if ($time > $target_migration) {
-                    printf("%s уже не подходит, т.к. больше %s\n", $time_str,
-                            $target_str);
+                    Output::verbose(
+                            sprintf("%s skipped, because is greater %s\n",
+                                    $time_str, $target_str), 2
+                    );
                     break;
                 }
             }
@@ -149,13 +156,14 @@ class migrateController extends DatasetsController {
             $revision = $time;
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
-                    printf("Выполняем ревизию от %s (№ %d)\n", $time_str, $rev);
+                    Ouput::verbose(sprintf("Executing migration for %s (# %d)\n",
+                                    $time_str, $rev), 1);
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
-                        printf(
-                                "Выполняется миграция для следующих таблиц:\n--- %s\n",
-                                implode("\n--- ", array_keys($tables))
-                        );
+                        Output::verbose(sprintf(
+                                        "Execute migration for tables:\n--- %s",
+                                        implode("\n--- ", array_keys($tables))
+                                ), 2);
                         Helper::applyMigration(
                                 $rev, $this->db, $direction, $tables
                         );
@@ -165,7 +173,8 @@ class migrateController extends DatasetsController {
                 }
                 else {
                     // это SQL-запрос
-                    printf("Выполняем SQL для %s\n", $tablename);
+                    Output::verbose(sprintf("Executing SQL for table: %s",
+                                    $tablename), 1);
                     $this->db->query($rev);
                 }
             }
@@ -196,78 +205,4 @@ class migrateController extends DatasetsController {
         return true;
     }
 
-    public function _runStrategy() {
-        $revision = 0;
-        $db = Helper::getDbObject();
-
-
-        if (empty($this->args))
-            $this->args[] = 'now';
-
-        $str = implode(' ', $this->args);
-
-        $target_migration = strtotime($str);
-
-        if (false === $target_migration)
-            throw new \Exception("Time is not correct");
-
-        $migrations = Helper::getAllMigrations();
-
-        $revisions = Helper::getDatabaseVersions($db);
-        if ($revisions === false)
-            throw new \Exception('Could not access revisions table');
-
-        if (!empty($revisions)) {
-            $revision = max($revisions);
-        }
-        else {
-            Output::error('Revision table is empty. Initial schema not applied properly?');
-            exit(1);
-        }
-
-        $unapplied_migrations = array_diff($migrations, $revisions);
-
-        if (empty($unapplied_migrations) && $revision == max($migrations) && $target_migration > $revision) {
-            echo 'No new migrations available';
-            return;
-        }
-        elseif ($revision < min($migrations) && $target_migration < $revision) {
-            echo 'No older migrations available';
-            return;
-        }
-        else {
-            echo "Will migrate to: " . date('r', $target_migration) . PHP_EOL . PHP_EOL;
-        }
-
-        $direction = $revision <= $target_migration ? 'Up' : 'Down';
-
-        if ($direction === 'Down') {
-            $migrations = array_reverse($migrations);
-
-            foreach ($migrations as $migration) {
-                if ($migration > $revision)
-                    continue;
-                //Rollback only applied revisions, skip the others
-                if (!in_array($migration, $revisions))
-                    continue;
-                if ($migration < $target_migration)
-                    break;
-                echo "ROLLBACK: " . date('r', $migration) . "\n";
-                Helper::applyMigration($migration, $db, $direction);
-            }
-        }
-        else {
-            foreach ($migrations as $migration) {
-                //Apply previously unapplied revisions to "catch up"
-                if ($migration <= $revision && in_array($migration, $revisions))
-                    continue;
-                if ($migration > $target_migration)
-                    break;
-                echo "APPLY: " . date('r', $migration) . "\n";
-                Helper::applyMigration($migration, $db, $direction);
-            }
-        }
-    }
-
 }
-

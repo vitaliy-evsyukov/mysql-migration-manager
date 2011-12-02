@@ -50,11 +50,11 @@ class Registry {
             // Вначале соберем все данные из папки схемы
             $schemadir = DIR . Helper::get('schemadir');
             if (!is_dir($schemadir) || !is_readable($schemadir)) {
-                throw new \Exception("Директории {$schemadir} с описаниями таблиц не существует\n");
+                throw new \Exception("Directory {$schemadir} with tables definitions is not exists\n");
             }
 
             // SQL считается первой ревизией
-            printf("Ищутся начальные миграции\n");
+            Output::verbose('Starting to search initial revisions', 1);
             $handle = opendir($schemadir);
             chdir($schemadir);
             $queries = array();
@@ -69,14 +69,15 @@ class Registry {
                 }
             }
             closedir($handle);
-            printf("Ищутся начальные связи\n");
+            Output::verbose('Starting to search initial references', 1);
             self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
             unset($queries);
         }
-        printf("Составляются карты миграций и связей\n");
+        Output::verbose('Collecting maps of revisions and references', 1);
         $migratedir = DIR . Helper::get('savedir');
         if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
+            $mHelper = Helper::getAllMigrations();
             $files = glob('Migration*.php');
             foreach ($files as $file) {
                 $className = str_replace('/', '\\', Helper::get('savedir')) . '\\' . pathinfo(pathinfo($file,
@@ -84,6 +85,12 @@ class Registry {
                 $class = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
+                    if (!isset($mHelper['timestamps'][$metadata['timestamp']])) {
+                        continue;
+                    }
+                    Output::verbose(
+                            sprintf('Add migration %s to list', $file), 2
+                    );
                     foreach ($metadata['tables'] as $tablename => $tmp) {
                         self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
                     }
@@ -101,6 +108,7 @@ class Registry {
         foreach (self::$_migrations as &$data) {
             ksort($data);
         }
+        Output::verbose('Collecting completed', 1);
     }
 
     /**

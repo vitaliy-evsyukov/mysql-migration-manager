@@ -15,7 +15,8 @@ class Helper {
         'db' => array('req_val'),
         'savedir' => array('req_val'),
         'verbose' => array('req_val'),
-        'versiontable' => array('req_val')
+        'versiontable' => array('req_val'),
+        'quiet' => array('short' => 'q', 'no_val')
     );
     static protected $config = array(
         'config' => null, //path to alternate config file
@@ -50,7 +51,7 @@ class Helper {
         array_shift($args);
         $opts = GetOpt::extractLeft($args, self::$config_tpl);
         if ($opts === false) {
-            Output::error('mmp: ' . reset(GetOpt::errors()));
+            Output::error('mmm: ' . reset(GetOpt::errors()));
             exit(1);
         }
         else
@@ -86,7 +87,10 @@ class Helper {
             $dsdir = DIR . Helper::get('datasetsdir');
             // получить данные
             if (!is_dir($dsdir) || !is_readable($dsdir)) {
-                throw new \Exception("Директории {$dsdir} с наборами данных не существует");
+                throw new \Exception(
+                        sprintf("Directory %s with datasets is not exists",
+                                $dsdir)
+                );
             }
 
             $handle = opendir($dsdir);
@@ -108,7 +112,7 @@ class Helper {
 
             closedir($handle);
             if (empty(self::$_datasets) || ( $loadDatasetContent && empty(self::$_datasets['sqlContent']) )) {
-                throw new \Exception('Не найдены данные для разворачивания');
+                throw new \Exception('Data for deploy not found');
             }
         }
 
@@ -142,7 +146,8 @@ class Helper {
             return $ctrl;
         }
         catch (\Exception $e) {
-            throw new \Exception("Команда $name не опознана\n");
+            Output::verbose($e->getMessage(), 2);
+            throw new \Exception("Command $name was not recognized");
         }
     }
 
@@ -172,6 +177,21 @@ class Helper {
         return $res;
     }
 
+    public static function prepareDb(Mysqli $connection, $dbName) {
+        $res = $connection->query('SHOW DATABASES;');
+        $dbs = array();
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
+            if ($row[0] === $dbName) {
+                Output::verbose(
+                        sprintf('Found database %s in current databases',
+                                $dbName), 2
+                );
+                return;
+            }
+        }
+        $connection->query("CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
+    }
+
     /**
      * Возвращает объект соединения
      * @staticvar <type> $db
@@ -189,10 +209,15 @@ class Helper {
         else {
             if ($db)
                 return $db;
-            $db = new Mysqli($conf['host'], $conf['user'], $conf['password'], $conf['db']);
+            $db = new Mysqli($conf['host'], $conf['user'], $conf['password']);
+            self::prepareDb($db, $conf['db']);
+            $db->select_db($conf['db']);
             return $db;
         }
-        return new Mysqli($conf['host'], $conf['user'], $conf['password'], $conf['db']);
+        $t = new Mysqli($conf['host'], $conf['user'], $conf['password']);
+        self::prepareDb($t, $conf['db']);
+        $t->select_db($conf['db']);
+        return $t;
     }
 
     /**
@@ -224,12 +249,13 @@ class Helper {
         $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
         $tmpdb = self::getDbObject($config);
         if (!$tmpdb->set_charset("utf8")) {
-            throw new \Exception(sprintf("Ошибка установки CHARACTER SET utf8: %s\n",
+            throw new \Exception(sprintf("SET CHARACTER SET utf8 error: %s\n",
                             $tmpdb->error));
         }
         register_shutdown_function(function() use($config, $tmpdb) {
                     $tmpdb->query("DROP DATABASE `{$config['db']}`");
-                    Output::verbose("Временная база данных {$config['db']} была удалена");
+                    Output::verbose("Temporary database {$config['db']} was deleted",
+                            2);
                 });
         return $tmpdb;
     }
@@ -337,8 +363,10 @@ class Helper {
         $status = -1;
         exec($command, $output, $status);
         if (empty($output)) {
-            throw new \Exception(sprintf("Ошибка в команде %s, код возврата %d",
-                            $command, $status));
+            throw new \Exception(
+                    sprintf("An error was occured in command %s, return code %d",
+                            $command, $status)
+            );
         }
         $result = array();
         foreach ($output as $line) {
@@ -428,7 +456,7 @@ class Helper {
                 }
             }
             else {
-                throw new \Exception(sprintf("Не удается открыть файл %s\n",
+                throw new \Exception(sprintf("Failed to open file %s",
                                 $migrationsListFile));
             }
         }
@@ -461,7 +489,7 @@ class Helper {
         }
         return self::$_currRevision;
     }
-    
+
     public static function getRevisionLines() {
         if (empty(self::$_revisionLines)) {
             self::getAllMigrations();
@@ -477,7 +505,7 @@ class Helper {
     public static function writeRevisionFile($revision) {
         $filename = DIR . self::get('savedir') . DIR_SEP . self::get('versionfile');
         if (is_file($filename) && !is_writable($filename)) {
-            throw new \Exception(sprinf("Файл %s защищен от записи\n", $filename));
+            throw new \Exception(sprinf("File %s is write-protected", $filename));
         }
         $ts = time();
         $lines = self::getRevisionLines();
@@ -516,12 +544,15 @@ class Helper {
      * @param Mysqli $db Соединение с сервером БД
      */
     public static function loadTmpDb(Mysqli $db) {
+        Output::verbose("Deploy temporary database", 1);
         $db->query("SET foreign_key_checks = 0;");
         $timeline = self::getTimeline();
         $usedMigrations = array();
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
                 if (is_int($revision)) {
+                    $what = sprintf("migration %d for table %s", $revision,
+                            $tablename);
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$revision])) {
                         self::applyMigration($revision, $db);
@@ -529,12 +560,17 @@ class Helper {
                     }
                 }
                 else {
+                    $what = sprintf("sql for %s", $tablename);
                     // это SQL-запрос
                     $db->query($revision);
+                }
+                if (!Helper::get('quiet')) {
+                    Output::verbose($what, 2);
                 }
             }
         };
         $db->query("SET foreign_key_checks = 1;");
+        Output::verbose("Deploy was finished\n", 1);
     }
 
     /**

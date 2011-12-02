@@ -30,7 +30,7 @@ class recoverController implements IController {
         $lines[] = "#{$max_revision}";
         $filename = DIR . Helper::get('savedir') . DIR_SEP . Helper::get('versionfile');
         file_put_contents($filename, implode("\n", $lines));
-        printf("Файл %s был успешно восстановлен\n", $filename);
+        Output::verbose(sprintf("File %s was successfully restored\n", $filename), 1);
     }
 
 }

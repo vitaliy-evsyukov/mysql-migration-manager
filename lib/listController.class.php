@@ -9,18 +9,24 @@ class listController extends AbstractController {
     public function runStrategy() {
         $migrations = Helper::getAllMigrations();
         if (empty($migrations['migrations'])) {
-            throw new \Exception("Ревизий нет\n");
+            throw new \Exception('There are no revisions');
         }
         $current = Helper::getCurrentRevision();
-        printf("Сейчас вы находитесь на ревизии %d\n\n", $current);
+        printf("Current revision: %d\n\n", $current);
         printf(
                 $this->draw_text_table(
                         $migrations['data'],
-                        array('revn' => '№', 'date' => 'Дата', 'time' => 'Метка времени')
+                        array('revn' => '#', 'date' => 'Date&Time', 'time' => 'Timestamp')
                 )
         );
     }
 
+    /**
+     * Отрисовывает ASCII-таблицу
+     * @param array $table Двумерный массив
+     * @param array $headers Заголовки колонок
+     * @return string Строка с таблицей
+     */
     private function draw_text_table(array $table, array $headers) {
         $cell_lengths = array();
         foreach ($table AS $row) {
@@ -68,27 +74,4 @@ class listController extends AbstractController {
         return $output;
     }
 
-    public function _runStrategy() {
-
-        $db = Helper::getDbObject();
-
-        $migrations = Helper::getAllMigrations();
-
-        $revisions = Helper::getDatabaseVersions($db);
-        $revision = Helper::getDatabaseVersion($db);
-
-        foreach ($migrations as $migration) {
-            $prefix = ($migration == $revision) ? ' *** ' : '     ';
-
-            //Mark any unapplied revisions
-            if ($migration < $revision && !in_array($migration, $revisions))
-                $prefix .= '[n] ';
-            else
-                $prefix .= '    ';
-
-            echo $prefix . date('r', $migration) . "\n";
-        }
-    }
-
 }
-
