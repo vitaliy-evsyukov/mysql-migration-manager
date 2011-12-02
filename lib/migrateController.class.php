@@ -10,7 +10,7 @@ class migrateController extends DatasetsController {
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
-            Output::vebose("No revision has been created", 1);
+            Output::verbose("No revision has been created", 1);
             return false;
         }
         $minMigration = current($mHelper['migrations']);
@@ -156,7 +156,7 @@ class migrateController extends DatasetsController {
             $revision = $time;
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
-                    Ouput::verbose(sprintf("Executing migration for %s (# %d)\n",
+                    Output::verbose(sprintf("Executing migration for %s (# %d)\n",
                                     $time_str, $rev), 1);
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
