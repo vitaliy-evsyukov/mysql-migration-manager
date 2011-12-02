@@ -15,8 +15,9 @@ class Helper {
         'db' => array('req_val'),
         'savedir' => array('req_val'),
         'verbose' => array('req_val'),
-        'versiontable' => array('req_val'),
-        'quiet' => array('short' => 'q', 'no_val')
+        'versionfile' => array('req_val'),
+        'quiet' => array('short' => 'q', 'no_val'),
+        'version_marker' => array('req_val')
     );
     static protected $config = array(
         'config' => null, //path to alternate config file
@@ -26,7 +27,8 @@ class Helper {
         'db' => null,
         'savedir' => null,
         'verbose' => null,
-        'versiontable' => null
+        'versionfile' => null,
+        'version_marker' => null
     );
     private static $_revisionLines = array();
     private static $_lastRevision = 0;
@@ -522,6 +524,7 @@ class Helper {
                     "%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts
             );
         }
+        //self::$_revisionLines = $lines;
         $lines[] = "#{$revision}";
         file_put_contents($filename, implode("\n", $lines));
         return $ts;
