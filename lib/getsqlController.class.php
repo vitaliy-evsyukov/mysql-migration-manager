@@ -21,14 +21,17 @@ class getsqlController extends AbstractController {
             $desc = $this->db->query($q);
             $data = $desc->fetch_row();
             $filename = sprintf('%s%s', $path, $row[0]);
-            $c = null;
-            if (is_null($this->_choice)) {
-                $c = $this->askForRewrite($filename . '.sql');
-            } else {
-                $c = $this->_choice;
-            }
-            if (!$c) {
-                $filename .= md5(time());
+            if (file_exists($filename . '.sql')) {
+                $c = null;
+                if (is_null($this->_choice)) {
+                    $c = $this->askForRewrite($filename);
+                }
+                else {
+                    $c = $this->_choice;
+                }
+                if (!$c) {
+                    $filename .= md5(time());
+                }
             }
             $filename .= '.sql';
             file_put_contents($filename, $data[1]);
@@ -38,8 +41,9 @@ class getsqlController extends AbstractController {
 
     // TODO: рефакторинг
     protected function askForRewrite($fname) {
-        if (Helper::get('quiet') || !file_exists($fname))
+        if (Helper::get('quiet')) {
             return true;
+        }
         $c = '';
         do {
             if ($c != "\n") {

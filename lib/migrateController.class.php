@@ -186,21 +186,28 @@ class migrateController extends DatasetsController {
             $revision = 0;
         }
         else {
-            foreach ($mHelper['data'] as $num => $migration) {
-                if ($migration['time'] === $revision) {
-                    foreach ($mHelper['migrations'] as $k => $v) {
-                        if ($v === $num) {
-                            $revision = $num;
-                            $direction == 'Down' ? $k-- : $k++;
-                            if (isset($mHelper['migrations'][$k])) {
-                                $revision = $mHelper['migrations'][$k];
-                            }
-                            break;
-                        }
-                    }
-                    break;
-                }
+            print_r($mHelper);
+            var_dump($revision);
+            
+            if (isset($mHelper['timestamps'][$revision])) {
+                $revision = $mHelper['timestamps'][$revision];
             }
+//            
+//            foreach ($mHelper['data'] as $num => $migration) {
+//                if ($migration['time'] === $revision) {
+//                    foreach ($mHelper['migrations'] as $k => $v) {
+//                        if ($v === $num) {
+//                            $revision = $num;
+//                            $direction == 'Down' ? $k-- : $k++;
+//                            if (isset($mHelper['migrations'][$k])) {
+//                                $revision = $mHelper['migrations'][$k];
+//                            }
+//                            break;
+//                        }
+//                    }
+//                    break;
+//                }
+//            }
         }
 
         Helper::writeRevisionFile($revision);

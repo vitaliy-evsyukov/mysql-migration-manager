@@ -337,6 +337,28 @@ class Helper {
         return $result;
     }
 
+    public static function _debug_queryMultipleDDL(Mysqli $db, $queries) {
+        foreach ($queries as $table => $stmts) {
+            Output::verbose($table, 2);
+            foreach ($stmts as $qs) {
+                $qs = stripslashes($qs);
+                $q = explode(";\n", $qs);
+                if (!is_array($q)) {
+                    $q = array($q);
+                }
+                foreach ($q as $i) {
+                    if (empty($i)) {
+                        continue;
+                    }
+                    if (!$db->query($i)) {
+                        throw new \Exception(sprintf('%s: %s (%d)', $i,
+                                        $db->error, $db->errno));
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Выполняет запросы DDL
      * @param Mysqli $db

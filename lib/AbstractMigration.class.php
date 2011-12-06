@@ -48,8 +48,16 @@ abstract class AbstractMigration {
         );
         $start = microtime(1);
         if (!empty($query)) {
-            Helper::queryMultipleDDL($this->db,
-                    stripslashes(implode("\n", $query)));
+            Helper::_debug_queryMultipleDDL($this->db, $direction);
+//            try {
+//                Helper::queryMultipleDDL($this->db,
+//                        stripslashes(implode("\n", $query)));
+//            }
+//            catch (\Exception $e) {
+//                $m = $e->getMessage();
+//                $m_p = explode('|', $m);
+//                throw new \Exception($query[(int) $m_p[1]] . ': ' . $m_p[0], $e->getCode());
+//            }
         }
         Output::verbose(
                 sprintf('Summary execution time: %f', (microtime(1) - $start)),
