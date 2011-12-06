@@ -15,6 +15,7 @@ class getsqlController extends AbstractController {
     public function runStrategy() {
         $res = $this->db->query('SHOW TABLES');
         $path = DIR . Helper::get('schemadir') . DIR_SEP;
+        $suffix = md5(time());
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             Output::verbose(sprintf('Get table %s description', $row[0]), 1);
             $q = "SHOW CREATE TABLE {$row[0]}";
@@ -30,11 +31,11 @@ class getsqlController extends AbstractController {
                     $c = $this->_choice;
                 }
                 if (!$c) {
-                    $filename .= md5(time());
+                    $filename .= $suffix;
                 }
             }
             $filename .= '.sql';
-            file_put_contents($filename, $data[1]);
+            file_put_contents($filename, $data[1].';');
         }
         Output::verbose('Files successfully created', 1);
     }
