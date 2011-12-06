@@ -17,7 +17,11 @@ class Helper {
         'verbose' => array('req_val'),
         'versionfile' => array('req_val'),
         'quiet' => array('short' => 'q', 'no_val'),
-        'version_marker' => array('req_val')
+        'version_marker' => array('req_val'),
+        'tmp_host' => array('req_val'),
+        'tmp_user' => array('req_val'),
+        'tmp_password' => array('req_val'),
+        'cachedir' => array('req_val')
     );
     static protected $config = array(
         'config' => null, //path to alternate config file
@@ -26,6 +30,7 @@ class Helper {
         'password' => null,
         'db' => null,
         'savedir' => null,
+        'cachedir' => null,
         'verbose' => null,
         'versionfile' => null,
         'version_marker' => null
@@ -182,16 +187,22 @@ class Helper {
     public static function prepareDb(Mysqli $connection, $dbName) {
         $res = $connection->query('SHOW DATABASES;');
         $dbs = array();
+        $flag = false;
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             if ($row[0] === $dbName) {
                 Output::verbose(
                         sprintf('Found database %s in current databases',
                                 $dbName), 2
                 );
-                return;
+                $flag = true;
+                break;
             }
         }
-        $connection->query("CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
+        if (!$flag) {
+            Output::verbose(sprintf('Create database %s', $dbName), 2);
+            $connection->query("CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
+        }
+        $connection->select_db($dbName);
     }
 
     /**
@@ -213,12 +224,10 @@ class Helper {
                 return $db;
             $db = new Mysqli($conf['host'], $conf['user'], $conf['password']);
             self::prepareDb($db, $conf['db']);
-            $db->select_db($conf['db']);
             return $db;
         }
         $t = new Mysqli($conf['host'], $conf['user'], $conf['password']);
         self::prepareDb($t, $conf['db']);
-        $t->select_db($conf['db']);
         return $t;
     }
 
@@ -227,9 +236,19 @@ class Helper {
      * @return void 
      */
     static function initDirForSavedMigrations() {
-        if (is_dir(self::$config['savedir']))
-            return;
-        mkdir(self::$config['savedir'], 0775, true);
+        $s = false;
+        $c = false;
+        if (is_dir(self::$config['savedir'])) {
+            $s = true;
+        }
+        if (is_dir(self::$config['cachedir'])) {
+            $c = true;
+        }
+        if ($c && $s) {
+            return true;
+        }
+        !$s && mkdir(self::$config['savedir'], 0775, true);
+        !$c && mkdir(self::$config['cachedir'], 0775, true);
     }
 
     static public function get($key) {
@@ -246,17 +265,22 @@ class Helper {
         if (empty($tmpname)) {
             $tmpname = $config['db'] . '_' . self::getCurrentVersion();
         }
-        $config['db'] = $tmpname;
-        $db = self::getDbObject();
-        $db->query("CREATE DATABASE `{$config['db']}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
-        $tmpdb = self::getDbObject($config);
+
+        $c = array();
+        $params = array('host', 'password', 'user');
+        foreach ($params as $p) {
+            $c[$p] = $config['tmp_' . $p];
+        }
+        $c['db'] = $tmpname;
+        unset($config);
+        $tmpdb = self::getDbObject($c);
         if (!$tmpdb->set_charset("utf8")) {
             throw new \Exception(sprintf("SET CHARACTER SET utf8 error: %s\n",
                             $tmpdb->error));
         }
-        register_shutdown_function(function() use($config, $tmpdb) {
-                    $tmpdb->query("DROP DATABASE `{$config['db']}`");
-                    Output::verbose("Temporary database {$config['db']} was deleted",
+        register_shutdown_function(function() use($c, $tmpdb) {
+                    $tmpdb->query("DROP DATABASE `{$c['db']}`");
+                    Output::verbose("Temporary database {$c['db']} was deleted",
                             2);
                 });
         return $tmpdb;
@@ -319,7 +343,11 @@ class Helper {
      * @param string $queries 
      */
     public static function queryMultipleDDL(Mysqli $db, $queries) {
+        $start = microtime(1);
         $ret = $db->multi_query($queries);
+        Output::verbose(
+                sprintf('multi_query time: %f', (microtime(1) - $start)), 3
+        );
         $text = $db->error;
         $code = $db->errno;
         if (!$ret) {
@@ -329,6 +357,10 @@ class Helper {
             
         }
         while ($db->next_result());
+        Output::verbose(
+                sprintf('Result set looping time: %f', (microtime(1) - $start)),
+                3
+        );
         $text = $db->error;
         $code = $db->errno;
         if ($code) {
@@ -351,11 +383,12 @@ class Helper {
         $params = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
-            $value = Helper::get($param);
+            $value = Helper::get('tmp_' . $param);
             if (!empty($value)) {
                 $params_str[] = "--{$param}={$value}";
             }
         }
+        $start = microtime(1);
         $command = sprintf(
                 "%s %s  --no-old-defs --refs %s",
                 self::get('mysqldiff_command'), implode(' ', $params_str),
@@ -370,6 +403,10 @@ class Helper {
                             $command, $status)
             );
         }
+        Output::verbose(
+                sprintf('References search in mysqldiff: %f seconds',
+                        (microtime(1) - $start)), 3
+        );
         $result = array();
         foreach ($output as $line) {
             $line = trim($line);
@@ -423,39 +460,54 @@ class Helper {
      * @return array 
      */
     public static function getAllMigrations() {
+        self::$_revisionLines = array();
+        self::$_currRevision = -1;
         $migrationsDir = DIR . self::get('savedir') . DIR_SEP;
         $migrationsListFile = $migrationsDir . self::get('versionfile');
+        $markerFile = $migrationsDir . self::get('version_marker');
         $result = array(
             'migrations' => array(),
             'data' => array()
         );
+        if (is_file($markerFile) && is_readable($markerFile)) {
+            $handler = fopen($markerFile, 'r');
+            if ($handler) {
+                while (!feof($handler)) {
+                    $line = trim(fgets($handler));
+                    if (empty($line)) {
+                        continue;
+                    }
+                    if ($line[0] === '#') {
+                        self::$_currRevision = (int) substr($line, 1);
+                        break;
+                    }
+                }
+                fclose($handler);
+            }
+        }
         if (is_file($migrationsListFile) && is_readable($migrationsListFile)) {
             $handler = fopen($migrationsListFile, 'r');
             if ($handler) {
                 while (!feof($handler)) {
                     $line = trim(fgets($handler));
-                    if (empty($line))
+                    if (empty($line)) {
                         continue;
-                    if (strpos($line, '#') === 0) {
-                        // это номер текущей ревизии
-                        self::$_currRevision = (int) substr($line, 1);
                     }
-                    else {
-                        self::$_revisionLines[] = $line;
-                        $parts = explode('|', $line);
-                        // TODO: упростить структуру данных
-                        $migrationId = (int) $parts[0];
-                        $time = (int) $parts[2];
-                        $result['migrations'][] = $migrationId;
-                        $result['data'][$migrationId] = array(
-                            'date' => $parts[1],
-                            'time' => $time,
-                            'revn' => $migrationId
-                        );
-                        $result['timestamps'][$time] = $migrationId;
-                        self::$_lastRevision = $migrationId;
-                    }
+                    self::$_revisionLines[] = $line;
+                    $parts = explode('|', $line);
+                    // TODO: упростить структуру данных
+                    $migrationId = (int) $parts[0];
+                    $time = (int) $parts[2];
+                    $result['migrations'][] = $migrationId;
+                    $result['data'][$migrationId] = array(
+                        'date' => $parts[1],
+                        'time' => $time,
+                        'revn' => $migrationId
+                    );
+                    $result['timestamps'][$time] = $migrationId;
+                    self::$_lastRevision = $migrationId;
                 }
+                fclose($handler);
             }
             else {
                 throw new \Exception(sprintf("Failed to open file %s",
@@ -505,13 +557,16 @@ class Helper {
      * @return int Таймстаймп для ревизии
      */
     public static function writeRevisionFile($revision) {
-        $filename = DIR . self::get('savedir') . DIR_SEP . self::get('versionfile');
+        $path = DIR . self::get('savedir') . DIR_SEP;
+        $filename = $path . self::get('versionfile');
+        $marker = $path . self::get('version_marker');
         if (is_file($filename) && !is_writable($filename)) {
             throw new \Exception(sprinf("File %s is write-protected", $filename));
         }
         $ts = time();
         $lines = self::getRevisionLines();
         //print_r($lines);
+        //var_dump($revision);
         $b = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
@@ -524,9 +579,13 @@ class Helper {
                     "%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts
             );
         }
-        //self::$_revisionLines = $lines;
-        $lines[] = "#{$revision}";
+        self::$_revisionLines = $lines;
         file_put_contents($filename, implode("\n", $lines));
+        if (is_file($marker) && !is_writable($marker)) {
+            throw new \Exception(sprintf('Cannot write revision marker to file: %s',
+                            $marker));
+        }
+        file_put_contents($marker, "#{$revision}");
         return $ts;
     }
 
@@ -553,6 +612,7 @@ class Helper {
         $usedMigrations = array();
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
+                $start = microtime(1);
                 if (is_int($revision)) {
                     $what = sprintf("migration %d for table %s", $revision,
                             $tablename);
@@ -567,8 +627,13 @@ class Helper {
                     // это SQL-запрос
                     $db->query($revision);
                 }
+                $stop = microtime(1);
+                $t = $stop - $start;
                 if (!Helper::get('quiet')) {
-                    Output::verbose($what, 2);
+                    Output::verbose(
+                            sprintf('Completed %s; time: %f seconds', $what, $t),
+                            3
+                    );
                 }
             }
         };

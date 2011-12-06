@@ -4,7 +4,6 @@
 use lib\Helper,    lib\Output;
 
 require_once __DIR__ . '/init.php';
-
 $cli_params = Helper::parseCommandLineArgs($argv);
 
 if (empty($cli_params['options']['config'])) {
@@ -15,7 +14,7 @@ if (file_exists($cli_params['options']['config'])) {
     $config = parse_ini_file($cli_params['options']['config']);
     $config = array_replace($config, $cli_params['options']); //command line overrides everything
 } else {
-    Output::error('mmp: could not find config file "' . $cli_params['options']['config'] . '"');
+    Output::error('mmm: could not find config file "' . $cli_params['options']['config'] . '"');
     exit(1);
 }
 

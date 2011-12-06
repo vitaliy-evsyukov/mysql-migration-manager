@@ -26,10 +26,12 @@ class createController extends AbstractController {
                             ), 2
                     );
                     $revision++;
-                } else {
+                }
+                else {
                     $file_exists = false;
                 }
             }
+            Output::verbose(sprintf('Try to create revision %d', $revision), 2);
             $timestamp = Helper::writeRevisionFile($revision);
             $content = Helper::createMigrationContent(
                             $revision, $diff, $timestamp

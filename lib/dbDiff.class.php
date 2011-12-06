@@ -24,7 +24,7 @@ class dbDiff {
 
     public function __construct(Mysqli $current, Mysqli $temp) {
         $this->_currentTable = $this->getDbName($current);
-        $this->_tempTable = $this->getDbName($temp);
+        $this->_tempTable = $this->getDbName($temp);    
     }
 
     private function getDbName(Mysqli $connection) {
@@ -66,7 +66,8 @@ class dbDiff {
                 $tmp = array();
                 $index = 0;
                 isset($result['desc'][$comment]) && ($index = sizeof($result['desc'][$comment]));
-            } else {
+            }
+            else {
                 $tmp[] = $line;
                 if (!empty($comment)) {
                     // добавим предыдущие собранные данные в результирующий массив
@@ -85,28 +86,39 @@ class dbDiff {
     public function getDifference() {
 
         $params = array('host', 'user', 'password');
-        $params_str = array();
-        foreach ($params as $param) {
-            $value = Helper::get($param);
-            if (!empty($value)) {
-                $params_str[] = "--{$param}={$value}";
-            }
-        }
+        $groups = array('', 'tmp_');
 
         $tables = array($this->_currentTable, $this->_tempTable);
         $dirs = array('down', 'up');
-        $command = Helper::get('mysqldiff_command') . ' ' . implode(' ', $params_str);
 
         $tablesList = array('used' => array(), 'refs' => array());
 
         for ($i = 0; $i < 2; $i++) {
+            $params_str = array();
+            foreach ($params as $param) {
+                foreach ($groups as $index => $g) {
+                    $value = Helper::get($g . $param);
+                    $k = $index + 1;
+                    if (!empty($value)) {
+                        $params_str[] = "--{$param}{$k}={$value}";
+                    }
+                }
+            }
+            $command = Helper::get('mysqldiff_command') . ' ' . implode(' ',
+                            $params_str);
             $return_status = 0;
             $output = array();
-            $last_line = exec("{$command} --list-tables --no-old-defs --save-quotes {$tables[$i]} {$tables[1 - $i]}", $output, $return_status);
+            $full = "{$command} --list-tables --no-old-defs --save-quotes {$tables[$i]} {$tables[1 - $i]}";
+            Output::verbose("Command {$full}", 2);
+            $last_line = exec($full, $output, $return_status);
             if (!empty($output)) {
                 $result = $this->parseDiff($output);
                 $this->_difference[$dirs[$i]] = $result['desc'];
             }
+            else {
+                throw new \Exception(sprintf('Ошибка в команде %s', $full));
+            }
+            $groups = array_reverse($groups);
         }
 
         return $this->_difference;

@@ -30,17 +30,31 @@ abstract class AbstractMigration {
     }
 
     private function runDirection($direction) {
+        $start = microtime(1);
         if (!empty($this->_tables)) {
             $direction = array_intersect_key($direction, $this->_tables);
         }
+        Output::verbose(
+                sprintf('Intersection tables time: %f', (microtime(1) - $start)),
+                3
+        );
+        $start = microtime(1);
         $query = array();
         foreach ($direction as $statements) {
             $query[] = implode("\n", $statements);
         }
+        Output::verbose(
+                sprintf('Implode time: %f', (microtime(1) - $start)), 3
+        );
+        $start = microtime(1);
         if (!empty($query)) {
             Helper::queryMultipleDDL($this->db,
                     stripslashes(implode("\n", $query)));
         }
+        Output::verbose(
+                sprintf('Summary execution time: %f', (microtime(1) - $start)),
+                3
+        );
     }
 
     public function runUp() {

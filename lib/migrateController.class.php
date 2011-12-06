@@ -22,6 +22,7 @@ class migrateController extends DatasetsController {
         else {
             $revision = $this->args['revision'];
         }
+        Output::verbose(sprintf('You are in revision %d', $revision), 1);
 
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
@@ -67,7 +68,6 @@ class migrateController extends DatasetsController {
             }
         }
 
-        $timeline = Helper::getTimeline($tablesList);
         $timestamp = 0;
         if ($revision > 0) {
             $timestamp = $mHelper['data'][$revision]['time'];
@@ -95,6 +95,8 @@ class migrateController extends DatasetsController {
                     ), 1
             );
         }
+
+        $timeline = Helper::getTimeline($tablesList);
 
         $direction = 'Up';
         if ($revision > 0) {

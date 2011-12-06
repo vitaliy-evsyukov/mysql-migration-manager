@@ -15,7 +15,7 @@ class initController extends DatasetsController {
             try {
                 $classname = sprintf(
                         "%s\Schema%s",
-                        str_replace('/', '\\', Helper::get('savedir')), $dshash
+                        str_replace('/', '\\', Helper::get('cachedir')), $dshash
                 );
                 $schema = new $classname;
                 $this->dropAllTables();

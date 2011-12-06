@@ -24,8 +24,8 @@ class schemaController extends DatasetsController {
         }
 
         $classname = sprintf("%s\Schema%s",
-                str_replace('/', '\\', Helper::get('savedir')), $dshash);
-        $fname = DIR . Helper::get('savedir') . DIR_SEP . "Schema{$dshash}.class.php";
+                str_replace('/', '\\', Helper::get('cachedir')), $dshash);
+        $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema{$dshash}.class.php";
 
         if ($this->askForRewrite($fname)) {
             if (!empty($datasets)) {
@@ -97,7 +97,7 @@ class schemaController extends DatasetsController {
             '"' . implode($sep, $this->_queries) . '"',
             '"' . implode($sep, array_keys($this->_queries)) . '"',
             $name,
-            str_replace('/', '\\', Helper::get('savedir'))
+            str_replace('/', '\\', Helper::get('cachedir'))
         );
         file_put_contents($fname, str_replace($search, $replace, $content));
     }
