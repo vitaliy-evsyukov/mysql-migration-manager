@@ -21,8 +21,8 @@ class getsqlController extends AbstractController {
             $q = "SHOW CREATE TABLE {$row[0]}";
             $desc = $this->db->query($q);
             $data = $desc->fetch_row();
-            $filename = sprintf('%s%s', $path, $row[0]);
-            if (file_exists($filename . '.sql')) {
+            $filename = sprintf('%s%s.sql', $path, $row[0]);
+            if (file_exists($filename)) {
                 $c = null;
                 if (is_null($this->_choice)) {
                     $c = $this->askForRewrite($filename);
@@ -34,8 +34,7 @@ class getsqlController extends AbstractController {
                     $filename .= $suffix;
                 }
             }
-            $filename .= '.sql';
-            file_put_contents($filename, $data[1].';');
+            file_put_contents($filename, $data[1] . ';');
         }
         Output::verbose('Files successfully created', 1);
     }
