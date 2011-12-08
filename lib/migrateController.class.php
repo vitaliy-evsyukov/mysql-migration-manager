@@ -127,6 +127,7 @@ class migrateController extends DatasetsController {
                 /*
                  * Если прошли минимально подходящую ревизию, остановимся
                  */
+                $revision = $time;
                 if ($time <= $target_migration) {
                     if ($time === 0) {
                         $revision = 0;
@@ -153,9 +154,9 @@ class migrateController extends DatasetsController {
                     );
                     break;
                 }
+                $revision = $time;
             }
 
-            $revision = $time;
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
                     Output::verbose(sprintf("Executing migration for %s (# %d)\n",
@@ -188,7 +189,7 @@ class migrateController extends DatasetsController {
         else {
             print_r($mHelper);
             var_dump($revision);
-            
+
             if (isset($mHelper['timestamps'][$revision])) {
                 $revision = $mHelper['timestamps'][$revision];
             }

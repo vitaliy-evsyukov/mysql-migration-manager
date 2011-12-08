@@ -337,9 +337,14 @@ class Helper {
         return $result;
     }
 
-    public static function _debug_queryMultipleDDL(Mysqli $db, $queries) {
+    /**
+     * Выполняет запросы с отладкой. Не останавливается в случае ошибки
+     * @param Mysqli $db
+     * @param array $queries 
+     */
+    public static function _debug_queryMultipleDDL(Mysqli $db, array $queries) {
         foreach ($queries as $table => $stmts) {
-            Output::verbose($table, 2);
+            Output::verbose(sprintf('Executing query for table %s', $table), 2);
             foreach ($stmts as $qs) {
                 $qs = stripslashes($qs);
                 $q = explode(";\n", $qs);
@@ -350,9 +355,12 @@ class Helper {
                     if (empty($i)) {
                         continue;
                     }
+                    //Output::verbose("   $i", 3);
                     if (!$db->query($i)) {
-                        throw new \Exception(sprintf('%s: %s (%d)', $i,
-                                        $db->error, $db->errno));
+                        Output::error(
+                                sprintf('   %s: %s (%d)', $i, $db->error,
+                                        $db->errno)
+                        );
                     }
                 }
             }

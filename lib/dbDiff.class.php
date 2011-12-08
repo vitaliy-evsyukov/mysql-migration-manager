@@ -116,7 +116,7 @@ class dbDiff {
                 $this->_difference[$dirs[$i]] = $result['desc'];
             }
             else {
-                throw new \Exception(sprintf('Ошибка в команде %s', $full));
+                Output::verbose(sprintf('Сommand %s returned nothing', $full), 3);
             }
             $groups = array_reverse($groups);
         }

@@ -60,11 +60,14 @@ class Registry {
             $queries = array();
             while ($file = readdir($handle)) {
                 if ($file != '.' && $file != '..' && is_file($file)) {
-                    $tablename = pathinfo($file, PATHINFO_FILENAME);
-                    if (is_readable($file)) {
-                        $q = file_get_contents($file);
-                        $queries[] = $q;
-                        self::$_migrations[$tablename][0] = $q;
+                    $fileInfo = pathinfo($file);
+                    if (strcasecmp($fileInfo['extension'], 'sql') === 0) {
+                        $tablename = $fileInfo['filename'];
+                        if (is_readable($file)) {
+                            $q = file_get_contents($file);
+                            $queries[] = $q;
+                            self::$_migrations[$tablename][0] = $q;
+                        }
                     }
                 }
             }

@@ -39,25 +39,24 @@ abstract class AbstractMigration {
                 3
         );
         $start = microtime(1);
-        $query = array();
-        foreach ($direction as $statements) {
-            $query[] = implode("\n", $statements);
-        }
-        Output::verbose(
-                sprintf('Implode time: %f', (microtime(1) - $start)), 3
-        );
-        $start = microtime(1);
-        if (!empty($query)) {
-            Helper::_debug_queryMultipleDDL($this->db, $direction);
-//            try {
-//                Helper::queryMultipleDDL($this->db,
-//                        stripslashes(implode("\n", $query)));
-//            }
-//            catch (\Exception $e) {
-//                $m = $e->getMessage();
-//                $m_p = explode('|', $m);
-//                throw new \Exception($query[(int) $m_p[1]] . ': ' . $m_p[0], $e->getCode());
-//            }
+        if (!empty($direction)) {
+            if ((int) Helper::get('verbose') === 3) {
+                Helper::_debug_queryMultipleDDL($this->db, $direction);
+            }
+            else {
+                $start_i = microtime(1);
+                $query = array();
+                foreach ($direction as $statements) {
+                    $query[] = implode("\n", $statements);
+                }
+                Output::verbose(
+                        sprintf('Implode time: %f', (microtime(1) - $start_i)),
+                        3
+                );
+                Helper::queryMultipleDDL(
+                        $this->db, stripslashes(implode("\n", $query))
+                );
+            }
         }
         Output::verbose(
                 sprintf('Summary execution time: %f', (microtime(1) - $start)),

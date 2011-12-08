@@ -54,7 +54,7 @@ class schemaController extends DatasetsController {
                         continue;
                     }
                     if (is_readable($file)) {
-                        $this->_queries[$tablename] = file_get_contents($file);
+                        $this->_queries[$tablename] = addslashes(file_get_contents($file));
                     }
                     else {
                         throw new \Exception(
@@ -69,7 +69,7 @@ class schemaController extends DatasetsController {
             Output::verbose('Deploy tables...', 1);
             foreach ($this->_queries as $tablename => $query) {
                 Output::verbose(sprintf("Deploy table '%s'", $tablename), 2);
-                $this->db->query($query);
+                $this->db->query(stripslashes($query));
             }
             Output::verbose('Tables deploy finished', 1);
             $this->writeInFile($fname, $dshash);
