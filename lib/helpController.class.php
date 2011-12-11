@@ -2,10 +2,14 @@
 
 namespace lib;
 
-class helpController extends AbstractController {
+class helpController implements IController {
 
     public function runStrategy() {
-        printf(file_get_contents(DIR . 'tpl/help.tpl')."\n");
+		$content = file_get_contents(DIR . 'tpl/help.tpl')."\n";
+		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+			$content = mb_convert_encoding($content, 'CP866', 'UTF-8');
+		}
+        printf($content);
     }
 
 }

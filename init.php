@@ -4,6 +4,7 @@ define('DIR_SEP', DIRECTORY_SEPARATOR);
 define('DIR', __DIR__ . DIR_SEP);
 date_default_timezone_set('Europe/Moscow');
 spl_autoload_register('mmpAutoload');
+mb_internal_encoding('UTF-8');
 
 function mmpAutoload($class) {
     $filename = DIR . str_replace('\\', '/', $class) . '.class.php';
