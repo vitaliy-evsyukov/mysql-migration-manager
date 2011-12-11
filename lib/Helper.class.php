@@ -185,6 +185,9 @@ class Helper {
     }
 
     public static function prepareDb(Mysqli $connection, $dbName) {
+		if ($connection->connect_error) {
+			throw new \Exception(sprintf('Database connect error occured: %s (%d)', $connection->connect_error, $connection->connect_errno));
+		}	
         $res = $connection->query('SHOW DATABASES;');
         $dbs = array();
         $flag = false;
@@ -222,11 +225,11 @@ class Helper {
         else {
             if ($db)
                 return $db;
-            $db = new Mysqli($conf['host'], $conf['user'], $conf['password']);
+            $db = @new Mysqli($conf['host'], $conf['user'], $conf['password']);
             self::prepareDb($db, $conf['db']);
             return $db;
         }
-        $t = new Mysqli($conf['host'], $conf['user'], $conf['password']);
+        $t = @new Mysqli($conf['host'], $conf['user'], $conf['password']);
         self::prepareDb($t, $conf['db']);
         return $t;
     }
