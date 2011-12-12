@@ -238,17 +238,17 @@ class Helper {
     static function initDirForSavedMigrations() {
         $s = false;
         $c = false;
-        if (is_dir(self::$config['savedir'])) {
+        if (is_dir(DIR . self::$config['savedir'])) {
             $s = true;
         }
-        if (is_dir(self::$config['cachedir'])) {
+        if (is_dir(DIR . self::$config['cachedir'])) {
             $c = true;
         }
         if ($c && $s) {
             return true;
         }
-        !$s && mkdir(self::$config['savedir'], 0775, true);
-        !$c && mkdir(self::$config['cachedir'], 0775, true);
+        !$s && mkdir(DIR . self::$config['savedir'], 0775, true);
+        !$c && mkdir(DIR . self::$config['cachedir'], 0775, true);
     }
 
     static public function get($key) {
@@ -591,7 +591,7 @@ class Helper {
         $filename = $path . self::get('versionfile');
         $marker = $path . self::get('version_marker');
         if (is_file($filename) && !is_writable($filename)) {
-            throw new \Exception(sprinf("File %s is write-protected", $filename));
+            throw new \Exception(sprintf("File %s is write-protected", $filename));
         }
         $ts = time();
         $lines = self::getRevisionLines();
