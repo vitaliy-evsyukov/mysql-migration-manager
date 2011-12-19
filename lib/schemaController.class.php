@@ -87,7 +87,15 @@ class schemaController extends DatasetsController {
      * @param string $tpl 
      */
     protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
-        $content = file_get_contents(DIR . $tpl);
+        $tpl_file = DIR . $tpl;
+        if (file_exists($tpl_file)) {
+            $content = file_get_contents($tpl_file);
+        }
+        else {
+            throw new \Exception(
+                    sprintf('Template file %s not exists', $tpl_file)
+            );
+        }
         $search = array('queries', 'tables', 'name', 'ns');
         foreach ($search as &$value) {
             $value = '%%' . $value . '%%';
@@ -99,7 +107,9 @@ class schemaController extends DatasetsController {
             $name,
             str_replace('/', '\\', Helper::get('cachedir'))
         );
-        file_put_contents($fname, str_replace($search, $replace, $content));
+        if (is_writable($fname)) {
+            file_put_contents($fname, str_replace($search, $replace, $content));
+        }
     }
 
     protected function askForRewrite($fname) {
