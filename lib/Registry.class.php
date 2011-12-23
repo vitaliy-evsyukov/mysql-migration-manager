@@ -47,33 +47,36 @@ class Registry {
      */
     private static function prepareMap($loadSQL = true) {
         if ($loadSQL) {
-            // Вначале соберем все данные из папки схемы
-            $schemadir = DIR . Helper::get('schemadir');
-            if (!is_dir($schemadir) || !is_readable($schemadir)) {
-                throw new \Exception("Directory {$schemadir} with tables definitions is not exists\n");
-            }
-
-            // SQL считается первой ревизией
+            /*
+             * Вначале соберем все данные из папки схемы
+             * SQL считается первой ревизией 
+             */
             Output::verbose('Starting to search initial revisions', 1);
-            $handle = opendir($schemadir);
-            chdir($schemadir);
-            $queries = array();
-            while ($file = readdir($handle)) {
-                if ($file != '.' && $file != '..' && is_file($file)) {
-                    $fileInfo = pathinfo($file);
-                    if (strcasecmp($fileInfo['extension'], 'sql') === 0) {
-                        $tablename = $fileInfo['filename'];
-                        if (is_readable($file)) {
-                            $q = file_get_contents($file);
-                            $queries[] = $q;
-                            self::$_migrations[$tablename][0] = $q;
-                        }
-                    }
-                }
+            $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema.class.php";
+            if (!file_exists($fname)) {
+                $queries = Helper::parseSchemaFiles();
             }
-            closedir($handle);
-            Output::verbose('Starting to search initial references', 1);
-            self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
+            else {
+                $classname = sprintf(
+                        "%s\Schema",
+                        str_replace('/', '\\', Helper::get('cachedir'))
+                );
+                $schemaObj = new $classname;
+                $queries = $schemaObj->getQueries();
+                unset($schemaObj);
+            }
+            if (!empty($queries)) {
+                foreach ($queries as $tablename => $q) {
+                    self::$_migrations[$tablename][0] = $q;
+                }
+                Output::verbose('Starting to search initial references', 1);
+                self::$_refsMap = Helper::getInitialRefs(
+                                stripslashes(implode("\n", $queries))
+                );
+            }
+            else {
+                Output::verbose('No initial revisions and references found', 1);
+            }
             unset($queries);
         }
         Output::verbose('Collecting maps of revisions and references', 1);

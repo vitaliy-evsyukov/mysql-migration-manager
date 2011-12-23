@@ -13,28 +13,96 @@ class getsqlController extends AbstractController {
     private $_choice = null;
 
     public function runStrategy() {
-        $res = $this->db->query('SHOW TABLES');
+        $entities = array('TABLE', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
+        $operations = array(
+            'ops' => array(
+                'SHOW %sS',
+                "SHOW %s STATUS WHERE Db='" . Helper::get('db') . "'"
+            ),
+            'links' => array(
+                'TABLE' => 0,
+                'TRIGGER' => 0,
+                'FUNCTION' => 1,
+                'PROCEDURE' => 1
+            ),
+            'cols' => array(
+                'TABLE' => array(
+                    'list' => 0,
+                    'def' => 1
+                ),
+                'TRIGGER' => array(
+                    'list' => 'Trigger',
+                    'def' => 'SQL Original Statement'
+                ),
+                'PROCEDURE' => array(
+                    'list' => 'Name',
+                    'def' => 'Create Procedure'
+                ),
+                'FUNCTION' => array(
+                    'list' => 'Name',
+                    'def' => 'Create Function'
+                )
+            )
+        );
+        $opts = array();
+        foreach ($this->args as $arg) {
+            if (is_string($arg)) {
+                $parts = explode('=', $arg);
+                if (sizeof($parts) != 2) {
+                    $parts[1] = '1';
+                }
+                $opts[strtoupper(trim($parts[0], '-'))] = $parts[1];
+            }
+        }
         $path = DIR . Helper::get('schemadir') . DIR_SEP;
         $suffix = md5(time());
-        while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            Output::verbose(sprintf('Get table %s description', $row[0]), 1);
-            $q = "SHOW CREATE TABLE {$row[0]}";
-            $desc = $this->db->query($q);
-            $data = $desc->fetch_row();
-            $filename = sprintf('%s%s.sql', $path, $row[0]);
-            if (file_exists($filename)) {
-                $c = null;
-                if (is_null($this->_choice)) {
-                    $c = $this->askForRewrite($filename);
+        foreach ($entities as $entity) {
+            $op = sprintf(
+                    $operations['ops'][$operations['links'][$entity]], $entity
+            );
+            $res = $this->db->query($op);
+            while ($row = $res->fetch_array(MYSQLI_BOTH)) {
+                $col = $row[$operations['cols'][$entity]['list']];
+                $value = $operations['cols'][$entity]['def'];
+                if (!empty($opts[$entity])) {
+                    if (!preg_match('/^' . $opts[$entity] . '/', $col)) {
+                        continue;
+                    }
+                }
+                $e_lower = strtolower($entity);
+                Output::verbose(
+                        sprintf(
+                                'Get %s %s description', $e_lower, $col
+                        ), 1
+                );
+                $q = "SHOW CREATE {$entity} {$col}";
+                $desc = $this->db->query($q);
+                $data = $desc->fetch_row();
+                if (isset($data[$value])) {
+                    $filename = sprintf('%s%s.sql', $path, $col);
+                    if (file_exists($filename)) {
+                        $c = null;
+                        if (is_null($this->_choice)) {
+                            $c = $this->askForRewrite($filename);
+                        }
+                        else {
+                            $c = $this->_choice;
+                        }
+                        if (!$c) {
+                            $filename .= $suffix;
+                        }
+                    }
+                    file_put_contents($filename, $data[$value] . ';');
                 }
                 else {
-                    $c = $this->_choice;
-                }
-                if (!$c) {
-                    $filename .= $suffix;
+                    Output::verbose(
+                            sprintf(
+                                    'Cannot to get description of %s %s',
+                                    $e_lower, $col
+                            ), 1
+                    );
                 }
             }
-            file_put_contents($filename, $data[1] . ';');
         }
         Output::verbose('Files successfully created', 1);
     }

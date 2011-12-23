@@ -185,9 +185,11 @@ class Helper {
     }
 
     public static function prepareDb(Mysqli $connection, $dbName) {
-		if ($connection->connect_error) {
-			throw new \Exception(sprintf('Database connect error occured: %s (%d)', $connection->connect_error, $connection->connect_errno));
-		}	
+        if ($connection->connect_error) {
+            throw new \Exception(sprintf('Database connect error occured: %s (%d)',
+                            $connection->connect_error,
+                            $connection->connect_errno));
+        }
         $res = $connection->query('SHOW DATABASES;');
         $dbs = array();
         $flag = false;
@@ -358,7 +360,6 @@ class Helper {
                     if (empty($i)) {
                         continue;
                     }
-                    //Output::verbose("   $i", 3);
                     if (!$db->query($i)) {
                         Output::error(
                                 sprintf('   %s: %s (%d)', $i, $db->error,
@@ -379,7 +380,8 @@ class Helper {
         $start = microtime(1);
         $ret = $db->multi_query($queries);
         Output::verbose(
-                sprintf('multi_query time: %f', (microtime(1) - $start)), 3
+                sprintf('Started multiple DDL execution: multi_query time: %f',
+                        (microtime(1) - $start)), 3
         );
         $text = $db->error;
         $code = $db->errno;
@@ -391,8 +393,8 @@ class Helper {
         }
         while ($db->next_result());
         Output::verbose(
-                sprintf('Result set looping time: %f', (microtime(1) - $start)),
-                3
+                sprintf('Multiple DDL execution finished: result set looping time: %f',
+                        (microtime(1) - $start)), 3
         );
         $text = $db->error;
         $code = $db->errno;
@@ -756,6 +758,53 @@ class Helper {
             $placeholder = "%%{$placeholder}%%";
         }
         return str_replace($search, $replace, $content);
+    }
+
+    /**
+     * Проходит по папке с файлами схемы и собирает их
+     * @param array $includeTables Хеш с именами таблиц, которые нужно включать, в качестве ключей
+     * @return array Массив запросов
+     */
+    public static function parseSchemaFiles(array $includeTables = array()) {
+        $queries = array();
+        $schemadir = DIR . Helper::get('schemadir');
+        if (is_dir($schemadir) && is_readable($schemadir)) {
+            $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
+            $patternView = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
+            $exclude = !empty($includeTables);
+            $handle = opendir($schemadir);
+            chdir($schemadir);
+            while ($file = readdir($handle)) {
+                if ($file != '.' && $file != '..' && is_file($file)) {
+                    $fileInfo = pathinfo($file);
+                    if (strcasecmp($fileInfo['extension'], 'sql') === 0) {
+                        $tablename = $fileInfo['filename'];
+                        if ($exclude && !isset($includeTables[$tablename])) {
+                            continue;
+                        }
+                        if (is_readable($file)) {
+                            $q = addslashes(file_get_contents($file));
+                            $tmp = array($tablename => $q);
+                            if (preg_match($patternTable, $q)) {
+                                $queries = $tmp + $queries;
+                            }
+                            else {
+                                $matches = array();
+                                if (preg_match($patternView, $q, $matches)) {
+                                    $q = str_replace(
+                                            $matches[1], 'CURRENT_USER', $q
+                                    );
+                                    $tmp[$tablename] = $q;
+                                }
+                                $queries += $tmp;
+                            }
+                        }
+                    }
+                }
+            }
+            closedir($handle);
+        }
+        return $queries;
     }
 
     /**
