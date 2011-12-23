@@ -25,7 +25,8 @@ class schemaController extends DatasetsController {
                 str_replace('/', '\\', Helper::get('cachedir')), $dshash);
         $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema{$dshash}.class.php";
 
-        if ($this->askForRewrite($fname)) {
+        if (Helper::askToRewrite($fname,
+                        "Schema's file %s already exists. Do you want to override it? [y/n] ")) {
             if (!empty($datasets)) {
                 foreach ($json['reqs'] as $dataset) {
                     foreach ($dataset['tables'] as $tablename) {
@@ -74,9 +75,9 @@ class schemaController extends DatasetsController {
         foreach ($search as &$value) {
             $value = '%%' . $value . '%%';
         }
-        $sep = "\",\n".str_repeat(' ', 8).'"';
+        $sep = "\",\n" . str_repeat(' ', 8) . '"';
         $replace = array(
-            '"' . implode($sep, $this->_queries) . '"',
+            Helper::recursiveImplode($this->_queries),
             '"' . implode($sep, array_keys($this->_queries)) . '"',
             $name,
             str_replace('/', '\\', Helper::get('cachedir'))
@@ -84,26 +85,6 @@ class schemaController extends DatasetsController {
         if (!file_exists($fname) || is_writable($fname)) {
             file_put_contents($fname, str_replace($search, $replace, $content));
         }
-    }
-
-    protected function askForRewrite($fname) {
-        if (Helper::get('quiet') || !file_exists($fname))
-            return true;
-        $c = '';
-        do {
-            if ($c != "\n") {
-                printf("Schema's file %s already exists. Do you want to override it? [y/n] ",
-                        $fname);
-            }
-            $c = trim(fgets(STDIN));
-            if ($c === 'Y' or $c === 'y') {
-                return true;
-            }
-            if ($c === 'N' or $c === 'n') {
-                return false;
-            }
-        }
-        while (true);
     }
 
 }

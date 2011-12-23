@@ -385,7 +385,9 @@ class Helper {
         $text = $db->error;
         $code = $db->errno;
         if (!$ret) {
-            throw new \Exception($text, $code);
+            Output::error(
+                    sprintf('%s (%d)', $text, $code)
+            );
         }
         do {
             
@@ -398,7 +400,9 @@ class Helper {
         $text = $db->error;
         $code = $db->errno;
         if ($code) {
-            throw new \Exception($text, $code);
+            Output::error(
+                    sprintf('%s (%d)', $text, $code)
+            );
         }
     }
 
@@ -783,15 +787,31 @@ class Helper {
                         }
                         if (is_readable($file)) {
                             $q = addslashes(file_get_contents($file));
+                            if ($q === ';') {
+                                continue;
+                            }
                             $tmp = array($tablename => $q);
                             if (preg_match($patternTable, $q)) {
+                                $q = str_replace(
+                                        'CREATE TABLE ',
+                                        'CREATE TABLE IF NOT EXISTS ', $q
+                                );
+                                $tmp[$tablename] = $q;
                                 $queries = $tmp + $queries;
                             }
                             else {
                                 $matches = array();
                                 if (preg_match($patternView, $q, $matches)) {
+                                    $search = array(
+                                        $matches[1],
+                                        'CREATE '
+                                    );
+                                    $replace = array(
+                                        'CURRENT_USER',
+                                        'CREATE OR REPLACE '
+                                    );
                                     $q = str_replace(
-                                            $matches[1], 'CURRENT_USER', $q
+                                            $search, $replace, $q
                                     );
                                     $tmp[$tablename] = $q;
                                 }
@@ -804,6 +824,35 @@ class Helper {
             closedir($handle);
         }
         return $queries;
+    }
+
+    /**
+     * Спрашивает у пользователя, необходимо ли перезаписывать файл
+     * @param string $filename Имя файла
+     * @param string $message Сообщение
+     * @return boolean Результат ввода пользователя
+     */
+    public static function askToRewrite($filename, $message = '') {
+        if (self::get('quiet') || !file_exists($filename))
+            return true;
+        $c = '';
+        $choices = array(
+            'y' => true,
+            'n' => false
+        );
+        do {
+            if ($c != "\n") {
+                if (empty($message)) {
+                    $message = 'File %s already exists. Do you really want to override it? [y/n] ';
+                }
+                printf($message, $filename);
+            }
+            $c = mb_strtolower(trim(fgets(STDIN)));
+            if (isset($choices[$c])) {
+                return $choices[$c];
+            }
+        }
+        while (true);
     }
 
     /**

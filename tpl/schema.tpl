@@ -9,8 +9,6 @@ class Schema%%name%% extends AbstractSchema {
     protected $tables = array(
         %%tables%%
     );
-    protected $queries=array(
-        %%queries%%
-    );
+    protected $queries=%%queries%%;
 
 }

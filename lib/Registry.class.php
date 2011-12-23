@@ -53,7 +53,7 @@ class Registry {
              */
             Output::verbose('Starting to search initial revisions', 1);
             $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema.class.php";
-            if (!file_exists($fname)) {
+            if (!file_exists($fname) || Helper::askToRewrite($fname)) {
                 $queries = Helper::parseSchemaFiles();
             }
             else {
