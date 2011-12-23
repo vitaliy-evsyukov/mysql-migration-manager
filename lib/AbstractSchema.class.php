@@ -16,7 +16,7 @@ abstract class AbstractSchema {
             foreach ($this->queries as $query) {
                 $query = stripslashes($query);
                 if (!$db->query($query)) {
-                    throw new \Exception(sprintf("Error in query \"%s\": %s (%d)\n",
+                    Output::error(sprintf("Error in query \"%s\": %s (%d)\n",
                                     $query, $db->error, $db->errno));
                 }
             }
