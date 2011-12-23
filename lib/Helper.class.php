@@ -21,7 +21,8 @@ class Helper {
         'tmp_host' => array('req_val'),
         'tmp_user' => array('req_val'),
         'tmp_password' => array('req_val'),
-        'cachedir' => array('req_val')
+        'cachedir' => array('req_val'),
+        'schemadir' => array('req_val')
     );
     static protected $config = array(
         'config' => null, //path to alternate config file
@@ -31,6 +32,7 @@ class Helper {
         'db' => null,
         'savedir' => null,
         'cachedir' => null,
+        'schemadir' => null,
         'verbose' => null,
         'versionfile' => null,
         'version_marker' => null
@@ -240,20 +242,17 @@ class Helper {
      * Создает, если не было, директорию для миграций
      * @return void 
      */
-    static function initDirForSavedMigrations() {
-        $s = false;
-        $c = false;
-        if (is_dir(DIR . self::$config['savedir'])) {
-            $s = true;
+    static function initDirs() {
+        $dirs = array('savedir', 'cachedir', 'schemadir');
+        foreach ($dirs as $dir) {
+            $dirname = DIR . self::$config[$dir];
+            if (!is_dir($dirname)) {
+                mkdir($dirname, 0775, true);
+                Output::verbose(
+                        sprintf('Created %s in path: %s', $dir, $dirname), 3
+                );
+            }
         }
-        if (is_dir(DIR . self::$config['cachedir'])) {
-            $c = true;
-        }
-        if ($c && $s) {
-            return true;
-        }
-        !$s && mkdir(DIR . self::$config['savedir'], 0775, true);
-        !$c && mkdir(DIR . self::$config['cachedir'], 0775, true);
     }
 
     static public function get($key) {

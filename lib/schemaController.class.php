@@ -11,7 +11,6 @@ class schemaController extends DatasetsController {
     protected $_queries = array();
 
     public function runStrategy() {
-        Helper::initDirForSavedMigrations();
         $datasets = $this->args['datasets'];
 
         $dshash = '';
