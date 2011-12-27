@@ -22,17 +22,20 @@ class dbDiff {
         )
     );
 
-    public function __construct(Mysqli $current, Mysqli $temp) {
+    public function __construct(MysqliHelper $current, MysqliHelper $temp) {
         $this->_currentTable = $this->getDbName($current);
-        $this->_tempTable = $this->getDbName($temp);    
+        $this->_tempTable = $this->getDbName($temp);
     }
 
-    private function getDbName(Mysqli $connection) {
-        $sql = "SELECT DATABASE() as dbname";
-        $res = $connection->query($sql);
-        $row = $res->fetch_array(MYSQLI_ASSOC);
-        $res->free_result();
-        return $row['dbname'];
+    private function getDbName(MysqliHelper $connection) {
+        /*
+          $sql = "SELECT DATABASE() as dbname";
+          $res = $connection->query($sql);
+          $row = $res->fetch_array(MYSQLI_ASSOC);
+          $res->free_result();
+          return $row['dbname'];
+         */
+        return $connection->getDatabaseName();
     }
 
     /**

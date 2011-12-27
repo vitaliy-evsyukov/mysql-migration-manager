@@ -8,7 +8,7 @@ abstract class AbstractMigration {
 
     /**
      *
-     * @var Mysqli
+     * @var MysqliHelper
      */
     protected $db;
     protected $up = array();
@@ -17,7 +17,7 @@ abstract class AbstractMigration {
     protected $metadata = array();
     protected $_tables = array();
 
-    public function __construct(mysqli $db = null) {
+    public function __construct(MysqliHelper $db = null) {
         $this->db = $db;
     }
 

@@ -62,7 +62,12 @@ abstract class DatasetsController extends AbstractController {
         if (!in_array($state, array(0, 1))) {
             throw new \Exception("Invalid foreign keys checks status: {$state}\n");
         }
-        $this->db->query("SET foreign_key_checks = {$state};");
+        $command = "SET foreign_key_checks = {$state};";
+        if ($state) {
+            $this->db->query($command);
+        } else {
+            $this->db->setCommand($command);
+        }
     }
 
     /**

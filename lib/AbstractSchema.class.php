@@ -9,16 +9,18 @@ abstract class AbstractSchema {
 
     /**
      * Разворачивает схему данных
-     * @param Mysqli $db 
+     * @param MysqliHelper $db 
      */
-    public function load($db) {
+    public function load(MysqliHelper $db) {
         if ((int) Helper::get('verbose') === 3) {
-            foreach ($this->queries as $query) {
+            foreach ($this->queries as $tablename => $query) {
+                Output::verbose(sprintf('Executing schema SQL for %s', $tablename), 1);
                 $query = stripslashes($query);
                 if (!$db->query($query)) {
                     Output::error(sprintf("Error in query \"%s\": %s (%d)\n",
                                     $query, $db->error, $db->errno));
                 }
+                Output::verbose(sprintf('Completed schema SQL for %s', $tablename), 1);
             }
         }
         else {
