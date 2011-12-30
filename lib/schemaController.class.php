@@ -37,12 +37,13 @@ class schemaController extends DatasetsController {
             $this->_queries = Helper::parseSchemaFiles($this->_queries);
             if (!empty($this->_queries)) {
                 // Создадим структуру базы
-                Output::verbose('Deploy tables...', 1);
-                foreach ($this->_queries as $tablename => $query) {
-                    Output::verbose(sprintf("Deploy table '%s'", $tablename), 2);
-                    $this->db->query(stripslashes($query));
+                Output::verbose('Deploy schema...', 1);
+                if ((int)Helper::get('verbose') === 3) {
+                    Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
+                } else {
+                    
                 }
-                Output::verbose('Tables deploy finished', 1);
+                Output::verbose('Schema deploy finished', 1);
                 $this->writeInFile($fname, $dshash);
             }
             else {

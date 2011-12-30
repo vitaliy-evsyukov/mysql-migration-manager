@@ -157,7 +157,8 @@ class Helper {
         catch (\Exception $e) {
             $message = $e->getMessage();
             if ($e->getCode() === NO_COMMAND) {
-                $message = sprintf("%s\nCommand %s not recognized", $message, $name);
+                $message = sprintf("%s\nCommand %s not recognized", $message,
+                        $name);
             }
             throw new \Exception($message, $e->getCode());
         }
@@ -346,20 +347,20 @@ class Helper {
      */
     public static function _debug_queryMultipleDDL(MysqliHelper $db, array $queries) {
         foreach ($queries as $table => $stmts) {
-            Output::verbose(sprintf('Executing query for table %s', $table), 2);
-            foreach ($stmts as $qs) {
-                $qs = stripslashes($qs);
-                $q = explode(";\n", $qs);
-                if (!is_array($q)) {
-                    $q = array($q);
-                }
-                foreach ($q as $i) {
-                    if (empty($i)) {
+            Output::verbose(sprintf('Executing query for %s', $table), 2);
+            if (!is_array($stmts)) {
+                $stmts = array($stmts);
+            }
+            foreach ($stmts as $queries) {
+                $queries = stripslashes($queries);
+                $queries = explode(";\n", $queries);
+                foreach ($queries as $query) {
+                    if (empty($query)) {
                         continue;
                     }
-                    if (!$db->query($i)) {
+                    if (!$db->query($query)) {
                         Output::error(
-                                sprintf('   %s: %s (%d)', $i, $db->error,
+                                sprintf('   %s: %s (%d)', $query, $db->error,
                                         $db->errno)
                         );
                     }
@@ -780,6 +781,7 @@ class Helper {
         if (is_dir($schemadir) && is_readable($schemadir)) {
             $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
             $patternView = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
+            $patternRoutine = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+(TRIGGER|FUNCTION|PROCEDURE)/ims';
             $exclude = !empty($includeTables);
             $handle = opendir($schemadir);
             chdir($schemadir);
@@ -820,6 +822,17 @@ class Helper {
                                             $search, $replace, $q
                                     );
                                     $tmp[$tablename] = $q;
+                                }
+                                else {
+                                    if (preg_match($patternRoutine, $q, $matches)) {
+                                        $q = str_replace(
+                                                $matches[1], 'CURRENT_USER', $q
+                                        );
+                                        $tmp[$tablename] = sprintf(
+                                                "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;",
+                                                $matches[2], $tablename, $q
+                                        );
+                                    }
                                 }
                                 $queries += $tmp;
                             }

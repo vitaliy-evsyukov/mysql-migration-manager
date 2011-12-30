@@ -60,6 +60,8 @@ class getsqlController extends AbstractController {
             $op = sprintf(
                     $operations['ops'][$operations['links'][$entity]], $entity
             );
+            $e_lower = strtolower($entity);
+            Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
                 $col = $row[$operations['cols'][$entity]['list']];
@@ -69,7 +71,6 @@ class getsqlController extends AbstractController {
                         continue;
                     }
                 }
-                $e_lower = strtolower($entity);
                 Output::verbose(
                         sprintf(
                                 'Get %s %s description', $e_lower, $col
