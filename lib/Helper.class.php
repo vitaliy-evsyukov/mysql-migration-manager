@@ -370,7 +370,7 @@ class Helper {
     }
 
     /**
-     * Выполняет запросы DDL
+     * Выполняет множественные запросы DDL
      * @param Mysqli $db
      * @param string $queries 
      */
@@ -719,7 +719,7 @@ class Helper {
     }
 
     /**
-     * Возможно deprecated в будущем
+     * DEPRECATED
      * @param array $a
      * @return string 
      */

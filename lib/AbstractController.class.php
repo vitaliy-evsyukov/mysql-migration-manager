@@ -6,7 +6,7 @@ abstract class AbstractController implements IController {
 
     /**
      *
-     * @var Mysqli 
+     * @var MysqliHelper
      */
     protected $db = null;
     protected $args = array();

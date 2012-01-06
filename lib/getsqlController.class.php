@@ -93,7 +93,10 @@ class getsqlController extends AbstractController {
                             $filename .= $suffix;
                         }
                     }
-                    file_put_contents($filename, $data[$value] . ';');
+                    $data['value'] .= str_repeat(
+                            ';', (int) ($entity !== 'TABLE') + 1
+                    );
+                    file_put_contents($filename, $data[$value]);
                 }
                 else {
                     Output::verbose(

@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * schemaController
+ * Создает и/или разворачивает схему данных
+ * @author guyfawkes 
+ */
+
 namespace lib;
 
 class schemaController extends DatasetsController {
@@ -38,10 +44,13 @@ class schemaController extends DatasetsController {
             if (!empty($this->_queries)) {
                 // Создадим структуру базы
                 Output::verbose('Deploy schema...', 1);
-                if ((int)Helper::get('verbose') === 3) {
+                if ((int) Helper::get('verbose') === 3) {
                     Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
-                } else {
-                    
+                }
+                else {
+                    Helper::queryMultipleDDL(
+                            $this->db, implode("\n", $this->_queries)
+                    );
                 }
                 Output::verbose('Schema deploy finished', 1);
                 $this->writeInFile($fname, $dshash);
