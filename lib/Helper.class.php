@@ -138,7 +138,7 @@ class Helper {
      * @param array $args Optional controller arguments
      * @return AbstractController Initialized controller, False if not found
      */
-    static function getController($name=null, $args=array()) {
+    static function getController($name = null, $args = array()) {
         if (empty($name))
             return new helpController;
 
@@ -190,9 +190,13 @@ class Helper {
         return $res;
     }
 
+    /**
+     * Выбирает базу данных и создает ее, если не было
+     * @param MysqliHelper $connection
+     * @param string $dbName 
+     */
     public static function prepareDb(MysqliHelper $connection, $dbName) {
         $res = $connection->query('SHOW DATABASES;');
-        $dbs = array();
         $flag = false;
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             if ($row[0] === $dbName) {
@@ -213,11 +217,10 @@ class Helper {
 
     /**
      * Возвращает объект соединения
-     * @staticvar <type> $db
      * @param array $config
      * @return MysqliHelper
      */
-    static function getDbObject($config=array()) {
+    public static function getDbObject($config = array()) {
         static $db = null;
         $conf = self::$config;
         if (count($config)) {
@@ -241,7 +244,7 @@ class Helper {
      * Создает, если не было, директорию для миграций
      * @return void 
      */
-    static function initDirs() {
+    public static function initDirs() {
         $dirs = array('savedir', 'cachedir', 'schemadir');
         foreach ($dirs as $dir) {
             $dirname = DIR . self::$config[$dir];
@@ -254,7 +257,7 @@ class Helper {
         }
     }
 
-    static public function get($key) {
+    public static function get($key) {
         return isset(self::$config[$key]) ? self::$config[$key] : false;
     }
 
@@ -341,27 +344,39 @@ class Helper {
     }
 
     /**
-     * Выполняет запросы с отладкой. Не останавливается в случае ошибки
+     * Выполняет запросы с отладкой. 
      * @param Mysqli $db
      * @param array $queries 
      */
     public static function _debug_queryMultipleDDL(MysqliHelper $db, array $queries) {
         foreach ($queries as $table => $stmts) {
             Output::verbose(sprintf('Executing query for %s', $table), 2);
+            /*
+             * Для одной сущности может быть как одна, так и несколько
+             * групп запросов, содержащих строки с SQL-операторами
+             */
             if (!is_array($stmts)) {
                 $stmts = array($stmts);
             }
             foreach ($stmts as $queries) {
-                $queries = stripslashes($queries);
-                $queries = explode(";\n", $queries);
+                /*
+                 * Из строки множества операторов необходимо вычленить
+                 * эти операторы, при этом возможны пустые строки
+                 */
+                $queries = explode("DELIMITER ;", stripslashes($queries)); 
+                if (sizeof($queries) === 1) {
+                    $queries = explode(";\n", $queries[0]);
+                }
                 foreach ($queries as $query) {
                     if (empty($query)) {
                         continue;
                     }
                     if (!$db->query($query)) {
                         Output::error(
-                                sprintf('   %s: %s (%d)', $query, $db->error,
-                                        $db->errno)
+                                sprintf(
+                                        '   %s: %s (%d)', $query, $db->error,
+                                        $db->errno
+                                )
                         );
                     }
                 }
@@ -781,7 +796,7 @@ class Helper {
         if (is_dir($schemadir) && is_readable($schemadir)) {
             $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
             $patternView = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
-            $patternRoutine = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+(TRIGGER|FUNCTION|PROCEDURE)/ims';
+            $patternRoutine = '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
             $exclude = !empty($includeTables);
             $handle = opendir($schemadir);
             chdir($schemadir);

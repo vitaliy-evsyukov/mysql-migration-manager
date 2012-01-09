@@ -93,7 +93,7 @@ class getsqlController extends AbstractController {
                             $filename .= $suffix;
                         }
                     }
-                    $data['value'] .= str_repeat(
+                    $data[$value] .= str_repeat(
                             ';', (int) ($entity !== 'TABLE') + 1
                     );
                     file_put_contents($filename, $data[$value]);
