@@ -359,15 +359,33 @@ class Helper {
                 $stmts = array($stmts);
             }
             foreach ($stmts as $queries) {
+                $queries = stripslashes($queries);
                 /*
                  * Из строки множества операторов необходимо вычленить
                  * эти операторы, при этом возможны пустые строки
                  */
-                $queries = explode("DELIMITER ;", stripslashes($queries)); 
-                if (sizeof($queries) === 1) {
-                    $queries = explode(";\n", $queries[0]);
+                $ds = mb_stripos($queries, 'DELIMITER ;;');
+                $l = mb_strlen('DELIMITER ;;');
+                if ($ds !== false) {
+                    $offset = $ds + $l;
+                    $df = mb_stripos($queries, 'DELIMITER ;', $offset);
+                    if ($df !== false) {
+                        $tmp = array(
+                            mb_substr($queries, $offset, $df - $offset)
+                        );
+                        $before = mb_substr($queries, 0, $offset - $l);
+                        $after = mb_substr($queries, $df + $l - 1);
+                        $queries = array_merge(
+                                explode(";\n", $before), $tmp,
+                                explode(";\n", $after)
+                        );
+                    }
+                }
+                if (!is_array($queries)) {
+                    $queries = explode(";\n", $queries);
                 }
                 foreach ($queries as $query) {
+                    $query = trim($query);
                     if (empty($query)) {
                         continue;
                     }
@@ -390,11 +408,19 @@ class Helper {
      * @param string $queries 
      */
     public static function queryMultipleDDL(MysqliHelper $db, $queries) {
+        $queries = str_ireplace(
+                "DELIMITER ;\n", '',
+                str_ireplace(
+                        "DELIMITER ;;\n", '', $queries
+                )
+        );
+        $queries = str_replace(';;', ';', $queries);
+        //print_r($queries);die();
         $start = microtime(1);
         $ret = $db->multi_query($queries);
         Output::verbose(
                 sprintf('Started multiple DDL execution: multi_query time: %f',
-                        (microtime(1) - $start)), 3
+                        (microtime(1) - $start)), 2
         );
         $text = $db->error;
         $code = $db->errno;
@@ -404,12 +430,15 @@ class Helper {
             );
         }
         do {
-            
+            if ($result = $db->store_result()) {
+                $result->free();
+            }
         }
         while ($db->next_result());
+        var_dump($db->more_results());
         Output::verbose(
                 sprintf('Multiple DDL execution finished: result set looping time: %f',
-                        (microtime(1) - $start)), 3
+                        (microtime(1) - $start)), 2
         );
         $text = $db->error;
         $code = $db->errno;
@@ -844,7 +873,7 @@ class Helper {
                                                 $matches[1], 'CURRENT_USER', $q
                                         );
                                         $tmp[$tablename] = sprintf(
-                                                "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;",
+                                                "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
                                                 $matches[2], $tablename, $q
                                         );
                                     }

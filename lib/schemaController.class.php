@@ -40,7 +40,9 @@ class schemaController extends DatasetsController {
                     }
                 }
             }
+            Output::verbose('Parsing schema files...', 1);
             $this->_queries = Helper::parseSchemaFiles($this->_queries);
+            Output::verbose('Parsing finished', 1);
             if (!empty($this->_queries)) {
                 // Создадим структуру базы
                 Output::verbose('Deploy schema...', 1);
@@ -49,7 +51,7 @@ class schemaController extends DatasetsController {
                 }
                 else {
                     Helper::queryMultipleDDL(
-                            $this->db, implode("\n", $this->_queries)
+                            $this->db, stripslashes(implode("\n", $this->_queries))
                     );
                 }
                 Output::verbose('Schema deploy finished', 1);
