@@ -415,7 +415,6 @@ class Helper {
                 )
         );
         $queries = str_replace(';;', ';', $queries);
-        //print_r($queries);die();
         $start = microtime(1);
         $ret = $db->multi_query($queries);
         Output::verbose(
@@ -430,12 +429,12 @@ class Helper {
             );
         }
         do {
-            if ($result = $db->store_result()) {
+            $result = $db->use_result();
+            if ($result) {
                 $result->free();
             }
         }
         while ($db->next_result());
-        var_dump($db->more_results());
         Output::verbose(
                 sprintf('Multiple DDL execution finished: result set looping time: %f',
                         (microtime(1) - $start)), 2
