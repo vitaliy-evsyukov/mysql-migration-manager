@@ -49,10 +49,11 @@ class dbDiff {
         $result = array();
         $index = 0;
         foreach ($output as $line) {
-            $line = addslashes(trim($line));
-            if (empty($line)) {
+            // если строка состоит только из whitespace'ов
+            if (ctype_space($line)) {
                 continue;
             }
+            $line = addslashes($line);
             if (strpos($line, '--') === 0) {
                 // это комментарий с именем таблицы
                 $comment = explode('|', trim(substr($line, 2)));
