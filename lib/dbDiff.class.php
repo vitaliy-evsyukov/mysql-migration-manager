@@ -49,7 +49,7 @@ class dbDiff {
         $result = array();
         $index = 0;
         foreach ($output as $line) {
-            // если строка состоит только из whitespace'ов
+            // если строка состоит только из whitespace'ов  
             if (ctype_space($line)) {
                 continue;
             }

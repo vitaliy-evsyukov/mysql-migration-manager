@@ -17,7 +17,7 @@ abstract class DatasetsController extends AbstractController {
      */
     protected $_chain = null;
 
-    public function __construct($db, $args) {
+    public function __construct(MysqliHelper $db, $args) {
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
@@ -65,7 +65,8 @@ abstract class DatasetsController extends AbstractController {
         $command = "SET foreign_key_checks = {$state};";
         if ($state) {
             $this->db->query($command);
-        } else {
+        }
+        else {
             $this->db->setCommand($command);
         }
     }
@@ -110,6 +111,10 @@ abstract class DatasetsController extends AbstractController {
         }
     }
 
+    /**
+     * Удаляет все содержимое БД 
+     * TODO: refactoring
+     */
     protected function dropAllTables() {
         $res = $this->db->query('SHOW FULL TABLES;');
         $queries = array();
@@ -118,8 +123,26 @@ abstract class DatasetsController extends AbstractController {
             $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
         }
         $res->free_result();
+        $routines = array('FUNCTION', 'PROCEDURE');
+        foreach ($routines as $routine) {
+            $res = $this->db->query(
+                    sprintf(
+                            "SHOW %s STATUS WHERE Db='%s'", $routine,
+                            $this->db->getDatabaseName()
+                    )
+            );
+            while ($row = $res->fetch_array(MYSQLI_NUM)) {
+                $queries[$row[1]] = sprintf("DROP %s %s;", $routine, $row[1]);
+            }
+            $res->free_result();
+        }
+        $res = $this->db->query('SHOW TRIGGERS;');
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
+            $queries[$row[0]] = sprintf("DROP TRIGGER %s;", $row[0]);
+        }
+        $res->free_result();
         if (!empty($queries)) {
-            Output::verbose("Views and tables are dropping now", 1);
+            Output::verbose("Views and tables and routines are dropping now", 1);
             Output::verbose(sprintf("--- %s",
                             implode("\n--- ", array_keys($queries))), 2);
             $this->multiQuery(implode('', $queries));
