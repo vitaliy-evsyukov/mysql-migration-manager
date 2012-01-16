@@ -75,7 +75,7 @@ class Registry {
                     self::$_migrations[$tablename][0] = $q;
                 }
                 Output::verbose('Starting to search initial references', 1);
-                self::$_refsMap = Helper::getInitialRefs(implode("\n", $queries));
+                self::$_refsMap = Helper::getInitialRefs($queries);
             } else {
                 Output::verbose('No initial revisions and references found', 1);
             }
