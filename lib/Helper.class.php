@@ -449,15 +449,19 @@ class Helper {
     }
 
     /**
-     *
-     * @param type $data
+     * Получить список начальных связей таблиц в БД
+     * @param array $data Массив запросов
      * @return array 
      */
     public static function getInitialRefs($data) {
         $dbName = 'db_' . md5(time());
         $db = self::getTmpDbObject($dbName);
         $db->query("SET foreign_key_checks = 0;");
-        self::queryMultipleDDL($db, $data);
+        if ((int)self::get('verbose') === 3) {
+            self::_debug_queryMultipleDDL($db, $data);
+        } else {
+            self::queryMultipleDDL($db, implode("\n", $data));
+        }
         $db->query("SET foreign_key_checks = 1;");
 
         $params = array('host', 'user', 'password');
