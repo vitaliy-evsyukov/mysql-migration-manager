@@ -4,7 +4,7 @@ namespace lib;
 
 /**
  * IController
- *
+ * Интерфейс контроллеров
  * @author guyfawkes
  */
 interface IController {

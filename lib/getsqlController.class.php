@@ -80,7 +80,7 @@ class getsqlController extends AbstractController {
                 $desc = $this->db->query($q);
                 $data = $desc->fetch_array(MYSQLI_BOTH);
                 if (isset($data[$value])) {
-                    $filename = sprintf('%s%s.sql', $path, $col);
+                    $filename = sprintf('%s%ss/%s.sql', $path, $e_lower, $col);
                     if (file_exists($filename)) {
                         $c = null;
                         if (is_null($this->_choice)) {

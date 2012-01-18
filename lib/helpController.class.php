@@ -2,6 +2,11 @@
 
 namespace lib;
 
+/**
+ * helpController
+ * Выводит справку
+ * @author guyfawkes
+ */
 class helpController implements IController {
 
     public function runStrategy() {

@@ -4,6 +4,11 @@ namespace lib;
 
 use \Mysqli;
 
+/**
+ * AbstractMigration
+ * Абстрактный класс миграций
+ * @author guyfawkes
+ */
 abstract class AbstractMigration {
 
     /**
