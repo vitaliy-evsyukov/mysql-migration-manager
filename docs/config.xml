@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<docblox>
+    <title>Mysql Migration Manager</title>
+    <parser>
+        <target>docblox</target>
+        <default-package-name>Mysql Migration Manager</default-package-name>
+        <extensions>
+            <extension>php</extension>
+        </extensions>
+    </parser>
+    <transformer>
+        <target>docblox</target>
+    </transformer>
+    <files>
+        <directory>../lib</directory>
+        <ignore>.git</ignore>
+        <ignore>MyMysqli.class.php</ignore>
+        <ignore>testController.class.php</ignore>
+        <ignore>watchdogController.class.php</ignore>
+    </files>
+    <logging>
+        <level>warn</level>
+        <paths>
+            <default>log/docblox.{DATE}.log</default>
+            <errors>log/docblox.{DATE}.errors.log</errors>
+        </paths>
+    </logging>
+</docblox>

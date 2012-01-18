@@ -2,6 +2,11 @@
 
 namespace lib;
 
+/**
+ * AbstractSchema
+ * Абстрактный класс схем данных
+ * @author guyfawkes
+ */
 abstract class AbstractSchema {
 
     protected $queries = array();

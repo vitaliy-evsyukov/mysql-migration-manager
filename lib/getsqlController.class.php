@@ -61,6 +61,7 @@ class getsqlController extends AbstractController {
                     $operations['ops'][$operations['links'][$entity]], $entity
             );
             $e_lower = strtolower($entity);
+            Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
             Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
@@ -80,7 +81,7 @@ class getsqlController extends AbstractController {
                 $desc = $this->db->query($q);
                 $data = $desc->fetch_array(MYSQLI_BOTH);
                 if (isset($data[$value])) {
-                    $filename = sprintf('%s%s.sql', $path, $col);
+                    $filename = sprintf('%s%ss/%s.sql', $path, $e_lower, $col);
                     if (file_exists($filename)) {
                         $c = null;
                         if (is_null($this->_choice)) {

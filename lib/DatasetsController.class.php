@@ -115,7 +115,7 @@ abstract class DatasetsController extends AbstractController {
      * Удаляет все содержимое БД 
      * TODO: refactoring
      */
-    protected function dropAllTables() {
+    protected function dropAllDBEntities() {
         $res = $this->db->query('SHOW FULL TABLES;');
         $queries = array();
         while ($row = $res->fetch_array(MYSQLI_NUM)) {

@@ -2,6 +2,11 @@
 
 namespace lib;
 
+/**
+ * createController
+ * Создает ревизию и сохраняет ее
+ * @author guyfawkes
+ */
 class createController extends AbstractController {
 
     protected $queries = array();
@@ -16,6 +21,7 @@ class createController extends AbstractController {
         if (!empty($diff['up']) || !empty($diff['down'])) {
             $revision = Helper::getLastRevision();
             $file_exists = true;
+            $migrationFileName = '';
             while ($file_exists) {
                 $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
                 if (is_file($migrationFileName)) {

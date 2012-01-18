@@ -14,7 +14,7 @@ class recoverController implements IController {
         $lines = array();
         $list = Registry::getAllMigrations(false);
         $max_revision = -1;
-        foreach ($list as $tablename => $data) {
+        foreach ($list as $data) {
             foreach ($data as $timestamp => $revision) {
                 if (isset($lines[$timestamp])) {
                     continue;

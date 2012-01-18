@@ -6,14 +6,14 @@ namespace lib;
  * deployController
  * Разворачивает данные с нужными датасетами и накатывает нужные миграции
  * Если миграции не указаны, то накатываются все 
- * Если 
+ * Если датасеты не указаны, то выводится соответствующее сообщение
  * @author guyfawkes
  */
 class deployController extends DatasetsController {
 
     public function runStrategy() {
 
-        $this->dropAllTables();
+        $this->dropAllDBEntities();
         $toWork = array(
             'schema' => array(
                 'datasets' => $this->args['datasets'],

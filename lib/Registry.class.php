@@ -9,7 +9,13 @@ namespace lib;
  */
 class Registry {
 
+    /**
+     * @var array
+     */
     private static $_migrations = array();
+    /**
+     * @var array
+     */
     private static $_refsMap = array();
 
     private function __construct() {
@@ -44,6 +50,7 @@ class Registry {
      *
      * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
      * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
+     * @param bool $loadSQL Загружать ли содержимое SQL-файлов
      */
     private static function prepareMap($loadSQL = true) {
         if ($loadSQL) {
@@ -122,6 +129,8 @@ class Registry {
 
     /**
      * Возвращает картину миграций
+     * @static
+     * @param bool $loadSQL
      * @return array
      */
     public static function getAllMigrations($loadSQL = true) {

@@ -12,7 +12,7 @@ class applydsController extends DatasetsController {
     public function runStrategy() {
         $datasets = $this->args['datasets'];
         if (empty($datasets)) {
-            printf("Не указаны наборы данных\n");
+            Output::verbose('Datasets were not passed', 1);
             return false;
         }
         if (!isset($this->args['loadData']))  {

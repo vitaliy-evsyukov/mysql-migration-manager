@@ -4,6 +4,11 @@ namespace lib;
 
 use \Mysqli;
 
+/**
+ * dbDiff
+ * Получает и парсит выдачу mysqldiff
+ * @author guyfawkes
+ */
 class dbDiff {
 
     protected $_currentTable;
@@ -22,11 +27,21 @@ class dbDiff {
         )
     );
 
+    /**
+     * Создает экземпляр класса dbDiff для двух соединений
+     * @param MysqliHelper $current Соединение с текущей БД
+     * @param MysqliHelper $temp Соединение с временной БД
+     */
     public function __construct(MysqliHelper $current, MysqliHelper $temp) {
         $this->_currentTable = $this->getDbName($current);
         $this->_tempTable = $this->getDbName($temp);
     }
 
+    /**
+     * Получает имя базы данных
+     * @param MysqliHelper $connection Объект соединения
+     * @return string
+     */
     private function getDbName(MysqliHelper $connection) {
         /*
           $sql = "SELECT DATABASE() as dbname";
@@ -95,8 +110,6 @@ class dbDiff {
         $tables = array($this->_currentTable, $this->_tempTable);
         $dirs = array('down', 'up');
 
-        $tablesList = array('used' => array(), 'refs' => array());
-
         for ($i = 0; $i < 2; $i++) {
             $params_str = array();
             foreach ($params as $param) {
@@ -114,7 +127,7 @@ class dbDiff {
             $output = array();
             $full = "{$command} --list-tables --no-old-defs --save-quotes {$tables[$i]} {$tables[1 - $i]}";
             Output::verbose("Command {$full}", 2);
-            $last_line = exec($full, $output, $return_status);
+            exec($full, $output, $return_status);
             if (!empty($output)) {
                 $result = $this->parseDiff($output);
                 $this->_difference[$dirs[$i]] = $result['desc'];
