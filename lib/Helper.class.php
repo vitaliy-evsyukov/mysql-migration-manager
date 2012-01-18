@@ -10,7 +10,13 @@ use \Mysqli;
  */
 class Helper {
 
+    /**
+     * @var array
+     */
     protected static $_datasets = array();
+    /**
+     * @var array
+     */
     static protected $config_tpl = array(
         'config' => array('short' => 'c', 'req_val'),
         'host' => array('req_val'),
@@ -28,6 +34,9 @@ class Helper {
         'cachedir' => array('req_val'),
         'schemadir' => array('req_val')
     );
+    /**
+     * @var array
+     */
     static protected $config = array(
         'config' => null, //path to alternate config file
         'host' => null,
@@ -41,14 +50,31 @@ class Helper {
         'versionfile' => null,
         'version_marker' => null
     );
+    /**
+     * @var array
+     */
     private static $_revisionLines = array();
+    /**
+     * @var int
+     */
     private static $_lastRevision = 0;
+    /**
+     * @var int
+     */
     private static $_currRevision = -1;
 
+    /**
+     * @static
+     * @param $cnf
+     */
     static function setConfig($cnf) {
         self::$config = array_replace(self::$config, $cnf);
     }
 
+    /**
+     * @static
+     * @return array
+     */
     static function getConfig() {
         return self::$config;
     }
@@ -248,21 +274,38 @@ class Helper {
 
     /**
      * Создает, если не было, директорию для миграций
+     * @param array|string $dirs Список директорий. Если не указан, создаются и проверяются стандартные
      * @return void
      */
-    public static function initDirs() {
-        $dirs = array('savedir', 'cachedir', 'schemadir');
+    public static function initDirs($dirs = array()) {
+        if (!is_array($dirs)) {
+            $dirs = array($dirs);
+        }
+        if (empty($dirs)) {
+            $dirs = array('savedir', 'cachedir', 'schemadir');
+        }
         foreach ($dirs as $dir) {
-            $dirname = DIR . self::$config[$dir];
+            if (isset(self::$config[$dir])) {
+                $dirname = DIR . self::$config[$dir];
+            } else {
+                $dirname = $dir;
+                $dir = basename(rtrim($dir, '/'));
+            }
             if (!is_dir($dirname)) {
                 mkdir($dirname, 0775, true);
                 Output::verbose(
-                    sprintf('Created %s in path: %s', $dir, $dirname), 3
+                    sprintf('Created %s directory in path: %s', $dir, $dirname), 3
                 );
             }
         }
     }
 
+    /**
+     * Возвращает значение параметра из конфигурации
+     * @static
+     * @param $key Название параметра
+     * @return mixed|bool Значение или false в случае неудачи
+     */
     public static function get($key) {
         return isset(self::$config[$key]) ? self::$config[$key] : false;
     }
@@ -299,6 +342,10 @@ class Helper {
         return $tmpdb;
     }
 
+    /**
+     * @static
+     *
+     */
     static function initVersionTable() {
         $db = self::getDbObject();
         $tbl = self::get('versiontable');
@@ -309,10 +356,20 @@ class Helper {
         $db->query("INSERT INTO `{$tbl}` VALUES({$rev})");
     }
 
+    /**
+     * @static
+     * @return int
+     */
     static function getCurrentVersion() {
         return time();
     }
 
+    /**
+     * @static
+     * @param $tname
+     * @param $db
+     * @return mixed|string
+     */
     static function getSqlForTableCreation($tname, $db) {
         $tres = $db->query("SHOW CREATE TABLE `{$tname}`");
         $trow = $tres->fetch_array(MYSQLI_NUM);
@@ -322,6 +379,11 @@ class Helper {
         return $query;
     }
 
+    /**
+     * @static
+     * @param \Mysqli $db
+     * @return bool|int
+     */
     static function getDatabaseVersion(Mysqli $db) {
         $tbl = self::get('versiontable');
         $res = $db->query("SELECT max(rev) FROM `{$tbl}`");
@@ -538,7 +600,15 @@ class Helper {
         return $timeline;
     }
 
-    public static function applyMigration($revision, $db, $direction = 'Up', array $tablesList = array()) {
+    /**
+     * Выполняет миграцию
+     * @static
+     * @param $revision Номер ревизии
+     * @param \lib\MysqliHelper $db Объект соединения
+     * @param string $direction Направление (Up или Down)
+     * @param array $tablesList Список таблиц, операторы которых необходимо выполнить. Если пуст, выполняются все.
+     */
+    public static function applyMigration($revision, MysqliHelper $db, $direction = 'Up', array $tablesList = array()) {
         $classname = str_replace('/', '\\', self::get('savedir')) . '\Migration' . $revision;
         $migration = new $classname($db);
         $migration->setTables($tablesList);
@@ -628,6 +698,11 @@ class Helper {
         return ++self::$_lastRevision;
     }
 
+    /**
+     * Получает номер текущей ревизии
+     * @static
+     * @return int
+     */
     public static function getCurrentRevision() {
         if (self::$_currRevision === -1) {
             self::getAllMigrations();
@@ -635,6 +710,11 @@ class Helper {
         return self::$_currRevision;
     }
 
+    /**
+     * Получает список строк ревизий
+     * @static
+     * @return array
+     */
     public static function getRevisionLines() {
         if (empty(self::$_revisionLines)) {
             self::getAllMigrations();
@@ -680,6 +760,10 @@ class Helper {
         return $ts;
     }
 
+    /**
+     * @static
+     * @return array
+     */
     static function _getAllMigrations() {
         $dir = self::get('savedir');
         $files = glob($dir . '/Migration*.php');

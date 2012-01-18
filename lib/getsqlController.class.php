@@ -61,6 +61,7 @@ class getsqlController extends AbstractController {
                     $operations['ops'][$operations['links'][$entity]], $entity
             );
             $e_lower = strtolower($entity);
+            Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
             Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
