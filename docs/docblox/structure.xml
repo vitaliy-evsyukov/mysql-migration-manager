@@ -151,7 +151,7 @@
       </method>
     </class>
   </file>
-  <file path="getsqlController.class.php" hash="6379cf547f2eab5990cd1da9c173dbc4" package="Mysql Migration Manager">
+  <file path="getsqlController.class.php" hash="9b464b1ca500aeafc231bb5a27b882b9" package="Mysql Migration Manager">
     <docblock>
       <description>getsqlController
 &#x41F;&#x43E;&#x43B;&#x443;&#x447;&#x438;&#x442;&#x44C; &#x43E;&#x43F;&#x438;&#x441;&#x430;&#x43D;&#x438;&#x44F; &#x432;&#x441;&#x435;&#x445; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;</description>
@@ -159,14 +159,14 @@
       <tag line="3" name="author" description="guyfawkes"/>
     </docblock>
     <markers>
-      <todo line="114">&#x440;&#x435;&#x444;&#x430;&#x43A;&#x442;&#x43E;&#x440;&#x438;&#x43D;&#x433;</todo>
+      <todo line="115">&#x440;&#x435;&#x444;&#x430;&#x43A;&#x442;&#x43E;&#x440;&#x438;&#x43D;&#x433;</todo>
     </markers>
     <parse_markers>
       <error line="3">No Page-level DocBlock was found in file getsqlController.class.php</error>
       <error line="11">No DocBlock was found for Class getsqlController</error>
       <error line="13">No DocBlock was found for Property $_choice</error>
       <error line="15">No DocBlock was found for Method runStrategy</error>
-      <error line="115">No DocBlock was found for Method askForRewrite</error>
+      <error line="116">No DocBlock was found for Method askForRewrite</error>
     </parse_markers>
     <class final="false" abstract="false" line="11" namespace="lib" package="Mysql Migration Manager">
       <name>getsqlController</name>
@@ -179,9 +179,9 @@
       <method final="false" abstract="false" static="false" visibility="public" line="15" package="Mysql Migration Manager">
         <name>runStrategy</name>
       </method>
-      <method final="false" abstract="false" static="false" visibility="protected" line="115" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="false" visibility="protected" line="116" package="Mysql Migration Manager">
         <name>askForRewrite</name>
-        <argument line="115">
+        <argument line="116">
           <name>$fname</name>
           <default/>
           <type/>
@@ -273,30 +273,26 @@
       </method>
     </class>
   </file>
-  <file path="Helper.class.php" hash="7b04f89a47b3fff1643b2e42bd1ba908" package="Mysql Migration Manager">
+  <file path="Helper.class.php" hash="d8a044157f4491326b02332116663790" package="Mysql Migration Manager">
     <markers>
-      <todo line="589">&#x443;&#x43F;&#x440;&#x43E;&#x441;&#x442;&#x438;&#x442;&#x44C; &#x441;&#x442;&#x440;&#x443;&#x43A;&#x442;&#x443;&#x440;&#x443; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445;</todo>
-      <todo line="719">&#x432;&#x44B;&#x43D;&#x435;&#x441;&#x442;&#x438; &#x438; &#x43E;&#x431;&#x440;&#x430;&#x431;&#x43E;&#x442;&#x430;&#x442;&#x44C; &#x43E;&#x442;&#x434;&#x435;&#x43B;&#x44C;&#x43D;&#x43E;</todo>
+      <todo line="659">&#x443;&#x43F;&#x440;&#x43E;&#x441;&#x442;&#x438;&#x442;&#x44C; &#x441;&#x442;&#x440;&#x443;&#x43A;&#x442;&#x443;&#x440;&#x443; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445;</todo>
+      <todo line="803">&#x432;&#x44B;&#x43D;&#x435;&#x441;&#x442;&#x438; &#x438; &#x43E;&#x431;&#x440;&#x430;&#x431;&#x43E;&#x442;&#x430;&#x442;&#x44C; &#x43E;&#x442;&#x434;&#x435;&#x43B;&#x44C;&#x43D;&#x43E;</todo>
     </markers>
     <parse_markers>
       <error line="1">No DocBlock was found for File Helper.class.php</error>
-      <error line="13">No DocBlock was found for Property $_datasets</error>
-      <error line="14">No DocBlock was found for Property $config_tpl</error>
-      <error line="31">No DocBlock was found for Property $config</error>
-      <error line="44">No DocBlock was found for Property $_revisionLines</error>
-      <error line="45">No DocBlock was found for Property $_lastRevision</error>
-      <error line="46">No DocBlock was found for Property $_currRevision</error>
-      <error line="48">No DocBlock was found for Method setConfig</error>
-      <error line="52">No DocBlock was found for Method getConfig</error>
-      <error line="266">No DocBlock was found for Method get</error>
-      <error line="302">No DocBlock was found for Method initVersionTable</error>
-      <error line="312">No DocBlock was found for Method getCurrentVersion</error>
-      <error line="316">No DocBlock was found for Method getSqlForTableCreation</error>
-      <error line="325">No DocBlock was found for Method getDatabaseVersion</error>
-      <error line="541">No DocBlock was found for Method applyMigration</error>
-      <error line="631">No DocBlock was found for Method getCurrentRevision</error>
-      <error line="638">No DocBlock was found for Method getRevisionLines</error>
-      <error line="683">No DocBlock was found for Method _getAllMigrations</error>
+      <critical line="13">No short description for property $_datasets</critical>
+      <critical line="17">No short description for property $config_tpl</critical>
+      <critical line="37">No short description for property $config</critical>
+      <critical line="53">No short description for property $_revisionLines</critical>
+      <critical line="57">No short description for property $_lastRevision</critical>
+      <critical line="61">No short description for property $_currRevision</critical>
+      <critical line="66">No short description for method setConfig</critical>
+      <critical line="74">No short description for method getConfig</critical>
+      <critical line="345">No short description for method initVersionTable</critical>
+      <critical line="359">No short description for method getCurrentVersion</critical>
+      <critical line="367">No short description for method getSqlForTableCreation</critical>
+      <critical line="382">No short description for method getDatabaseVersion</critical>
+      <critical line="763">No short description for method _getAllMigrations</critical>
     </parse_markers>
     <namespace-alias name="Mysqli">\Mysqli</namespace-alias>
     <class final="false" abstract="false" line="11" namespace="lib" package="Mysql Migration Manager">
@@ -308,62 +304,118 @@
 &#x421;&#x442;&#x430;&#x442;&#x438;&#x447;&#x435;&#x441;&#x43A;&#x438;&#x439; &#x43A;&#x43B;&#x430;&#x441;&#x441;, &#x43F;&#x440;&#x435;&#x434;&#x43E;&#x441;&#x442;&#x430;&#x432;&#x43B;&#x44F;&#x44E;&#x449;&#x438;&#x439; &#x444;&#x443;&#x43D;&#x43A;&#x446;&#x438;&#x438;, &#x438;&#x441;&#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x443;&#x44E;&#x449;&#x438;&#x435;&#x441;&#x44F; &#x432; &#x440;&#x430;&#x437;&#x43B;&#x438;&#x447;&#x43D;&#x44B;&#x445; &#x43C;&#x435;&#x441;&#x442;&#x430;&#x445; &#x441;&#x438;&#x441;&#x442;&#x435;&#x43C;&#x44B;, &#x438; &#x434;&#x43E;&#x441;&#x442;&#x443;&#x43F; &#x43A; &#x43A;&#x43E;&#x43D;&#x444;&#x438;&#x433;&#x443;&#x440;&#x430;&#x446;&#x438;&#x43E;&#x43D;&#x43D;&#x44B;&#x43C; &#x43F;&#x430;&#x440;&#x430;&#x43C;&#x435;&#x442;&#x440;&#x430;&#x43C;</description>
         <long-description/>
       </docblock>
-      <property final="false" static="true" visibility="protected" line="13" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="protected" line="16" package="Mysql Migration Manager">
         <name>$_datasets</name>
         <default>array()</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="13" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </property>
-      <property final="false" static="true" visibility="protected" line="14" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="protected" line="20" package="Mysql Migration Manager">
         <name>$config_tpl</name>
         <default>array(
         'config' =&gt; array('short' =&gt; 'c'</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="17" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </property>
-      <property final="false" static="true" visibility="protected" line="31" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="protected" line="40" package="Mysql Migration Manager">
         <name>$config</name>
         <default>array(
         'config' =&gt; null</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="37" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </property>
-      <property final="false" static="true" visibility="private" line="44" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="private" line="56" package="Mysql Migration Manager">
         <name>$_revisionLines</name>
         <default>array()</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="53" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </property>
-      <property final="false" static="true" visibility="private" line="45" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="private" line="60" package="Mysql Migration Manager">
         <name>$_lastRevision</name>
         <default>0</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="57" name="var" description="" type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
       </property>
-      <property final="false" static="true" visibility="private" line="46" package="Mysql Migration Manager">
+      <property final="false" static="true" visibility="private" line="64" package="Mysql Migration Manager">
         <name>$_currRevision</name>
         <default>-1</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="61" name="var" description="" type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
       </property>
-      <method final="false" abstract="false" static="true" visibility="public" line="48" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="70" package="Mysql Migration Manager">
         <name>setConfig</name>
-        <argument line="48">
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="66" name="static" description=""/>
+          <tag line="66" name="param" description="" type="" variable="$cnf"/>
+        </docblock>
+        <argument line="70">
           <name>$cnf</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="52" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="78" package="Mysql Migration Manager">
         <name>getConfig</name>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="74" name="static" description=""/>
+          <tag line="74" name="return" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="61" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="87" package="Mysql Migration Manager">
         <name>parseCommandLineArgs</name>
         <docblock>
           <description>Parse command line into config options and commands with its parameters</description>
           <long-description/>
-          <tag line="56" name="param" description="List of arguments provided from command line" type="array" variable="$args">
+          <tag line="82" name="param" description="List of arguments provided from command line" type="array" variable="$args">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="56" name="return" description="" type="array">
+          <tag line="82" name="return" description="" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="61">
+        <argument line="87">
           <name>$args</name>
           <default/>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="100" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="126" package="Mysql Migration Manager">
         <name>getDatasetInfo</name>
         <docblock>
           <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x43C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x441; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x43C;&#x438; &#x43F;&#x43E; &#x434;&#x430;&#x442;&#x430;&#x441;&#x435;&#x442;&#x430;&#x43C;
@@ -377,535 +429,633 @@ sqlContent -
            |- dataset2 -&gt; SQL2
 &lt;/pre&gt;</description>
           <long-description/>
-          <tag line="83" name="static" description=""/>
-          <tag line="83" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x438;&#x43C;&#x435;&#x43D; &#x434;&#x430;&#x442;&#x430;&#x441;&#x435;&#x442;&#x43E;&#x432;" type="array" variable="$datasets">
+          <tag line="109" name="static" description=""/>
+          <tag line="109" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x438;&#x43C;&#x435;&#x43D; &#x434;&#x430;&#x442;&#x430;&#x441;&#x435;&#x442;&#x43E;&#x432;" type="array" variable="$datasets">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="83" name="param" description="&#x417;&#x430;&#x433;&#x440;&#x443;&#x436;&#x430;&#x442;&#x44C; &#x43B;&#x438; &#x441;&#x43E;&#x434;&#x435;&#x440;&#x436;&#x438;&#x43C;&#x43E;&#x435; SQL &#x434;&#x430;&#x442;&#x430;&#x441;&#x435;&#x442;&#x43E;&#x432;" type="bool" variable="$loadDatasetContent">
+          <tag line="109" name="param" description="&#x417;&#x430;&#x433;&#x440;&#x443;&#x436;&#x430;&#x442;&#x44C; &#x43B;&#x438; &#x441;&#x43E;&#x434;&#x435;&#x440;&#x436;&#x438;&#x43C;&#x43E;&#x435; SQL &#x434;&#x430;&#x442;&#x430;&#x441;&#x435;&#x442;&#x43E;&#x432;" type="bool" variable="$loadDatasetContent">
             <type by_reference="false">bool</type>
           </tag>
-          <tag line="83" name="return" description="" type="array">
+          <tag line="109" name="return" description="" type="array">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="83" name="throws" description="" type="\Exception">
+          <tag line="109" name="throws" description="" type="\Exception">
             <type by_reference="false">\Exception</type>
           </tag>
         </docblock>
-        <argument line="100">
+        <argument line="126">
           <name>$datasets</name>
           <default/>
           <type>array</type>
         </argument>
-        <argument line="100">
+        <argument line="126">
           <name>$loadDatasetContent</name>
           <default>false</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="147" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="173" package="Mysql Migration Manager">
         <name>getController</name>
         <docblock>
           <description>TODO: &#x43F;&#x440;&#x438;&#x43A;&#x440;&#x443;&#x442;&#x438;&#x442;&#x44C; &#x43F;&#x443;&#x43B; &#x43A;&#x43E;&#x43D;&#x442;&#x440;&#x43E;&#x43B;&#x43B;&#x435;&#x440;&#x43E;&#x432;
 Get available controller object</description>
           <long-description>&lt;p&gt;With no parameters supplied, returns "help" controller&lt;/p&gt;</long-description>
-          <tag line="137" name="param" description="Controller name" type="string" variable="$name">
+          <tag line="163" name="param" description="Controller name" type="string" variable="$name">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="137" name="param" description="Optional controller arguments" type="array" variable="$args">
+          <tag line="163" name="param" description="Optional controller arguments" type="array" variable="$args">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="137" name="return" description="Initialized controller, False if not found" type="\lib\AbstractController">
+          <tag line="163" name="return" description="Initialized controller, False if not found" type="\lib\AbstractController">
             <type by_reference="false">\lib\AbstractController</type>
           </tag>
         </docblock>
-        <argument line="147">
+        <argument line="173">
           <name>$name</name>
           <default>null</default>
           <type/>
         </argument>
-        <argument line="147">
+        <argument line="173">
           <name>$args</name>
           <default>array()</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="179" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="205" package="Mysql Migration Manager">
         <name>getRefs</name>
         <docblock>
           <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x441;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x44B;&#x435; &#x441;&#x43E; &#x441;&#x43F;&#x438;&#x441;&#x43A;&#x43E;&#x43C; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B;</description>
           <long-description/>
-          <tag line="173" name="param" description="&#x425;&#x435;&#x448;, &#x433;&#x434;&#x435; &#x43A;&#x43B;&#x44E;&#x447; - &#x438;&#x43C;&#x44F; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B;, &#x437;&#x43D;&#x430;&#x447;&#x435;&#x43D;&#x438;&#x435; - &#x445;&#x435;&#x448; &#x432;&#x438;&#x434;&#x430; &#x438;&#x43C;&#x44F;_&#x441;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x43E;&#x439;_&#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B; =&gt; 1" type="array" variable="$refs">
+          <tag line="199" name="param" description="&#x425;&#x435;&#x448;, &#x433;&#x434;&#x435; &#x43A;&#x43B;&#x44E;&#x447; - &#x438;&#x43C;&#x44F; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B;, &#x437;&#x43D;&#x430;&#x447;&#x435;&#x43D;&#x438;&#x435; - &#x445;&#x435;&#x448; &#x432;&#x438;&#x434;&#x430; &#x438;&#x43C;&#x44F;_&#x441;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x43E;&#x439;_&#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B; =&gt; 1" type="array" variable="$refs">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="173" name="param" description="&#x425;&#x435;&#x448; &#x432;&#x438;&#x434;&#x430; &#x438;&#x43C;&#x44F;_&#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B; =&gt; 1" type="array" variable="$tablesList">
+          <tag line="199" name="param" description="&#x425;&#x435;&#x448; &#x432;&#x438;&#x434;&#x430; &#x438;&#x43C;&#x44F;_&#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B; =&gt; 1" type="array" variable="$tablesList">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="173" name="return" description="&#x421;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x44B;&#x435; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B;, &#x43D;&#x435; &#x432;&#x445;&#x43E;&#x434;&#x44F;&#x449;&#x438;&#x435; &#x432; &#x441;&#x43F;&#x438;&#x441;&#x43E;&#x43A;" type="array">
+          <tag line="199" name="return" description="&#x421;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x44B;&#x435; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x44B;, &#x43D;&#x435; &#x432;&#x445;&#x43E;&#x434;&#x44F;&#x449;&#x438;&#x435; &#x432; &#x441;&#x43F;&#x438;&#x441;&#x43E;&#x43A;" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="179">
+        <argument line="205">
           <name>$refs</name>
           <default>array()</default>
           <type>array</type>
         </argument>
-        <argument line="179">
+        <argument line="205">
           <name>$tablesList</name>
           <default>array()</default>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="204" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="230" package="Mysql Migration Manager">
         <name>prepareDb</name>
         <docblock>
           <description>&#x412;&#x44B;&#x431;&#x438;&#x440;&#x430;&#x435;&#x442; &#x431;&#x430;&#x437;&#x443; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445; &#x438; &#x441;&#x43E;&#x437;&#x434;&#x430;&#x435;&#x442; &#x435;&#x435;, &#x435;&#x441;&#x43B;&#x438; &#x43D;&#x435; &#x431;&#x44B;&#x43B;&#x43E;</description>
           <long-description/>
-          <tag line="199" name="param" description="" type="\lib\MysqliHelper" variable="$connection">
+          <tag line="225" name="param" description="" type="\lib\MysqliHelper" variable="$connection">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
-          <tag line="199" name="param" description="" type="string" variable="$dbName">
+          <tag line="225" name="param" description="" type="string" variable="$dbName">
             <type by_reference="false">string</type>
           </tag>
         </docblock>
-        <argument line="204">
+        <argument line="230">
           <name>$connection</name>
           <default/>
           <type>MysqliHelper</type>
         </argument>
-        <argument line="204">
+        <argument line="230">
           <name>$dbName</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="229" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="255" package="Mysql Migration Manager">
         <name>getDbObject</name>
         <docblock>
           <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x43E;&#x431;&#x44A;&#x435;&#x43A;&#x442; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F;</description>
           <long-description/>
-          <tag line="224" name="param" description="" type="array" variable="$config">
+          <tag line="250" name="param" description="" type="array" variable="$config">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="224" name="return" description="" type="\lib\MysqliHelper">
+          <tag line="250" name="return" description="" type="\lib\MysqliHelper">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
         </docblock>
-        <argument line="229">
+        <argument line="255">
           <name>$config</name>
           <default>array()</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="253" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="280" package="Mysql Migration Manager">
         <name>initDirs</name>
         <docblock>
           <description>&#x421;&#x43E;&#x437;&#x434;&#x430;&#x435;&#x442;, &#x435;&#x441;&#x43B;&#x438; &#x43D;&#x435; &#x431;&#x44B;&#x43B;&#x43E;, &#x434;&#x438;&#x440;&#x435;&#x43A;&#x442;&#x43E;&#x440;&#x438;&#x44E; &#x434;&#x43B;&#x44F; &#x43C;&#x438;&#x433;&#x440;&#x430;&#x446;&#x438;&#x439;</description>
           <long-description/>
-          <tag line="249" name="return" description="" type="void">
+          <tag line="275" name="param" description="&#x421;&#x43F;&#x438;&#x441;&#x43E;&#x43A; &#x434;&#x438;&#x440;&#x435;&#x43A;&#x442;&#x43E;&#x440;&#x438;&#x439;. &#x415;&#x441;&#x43B;&#x438; &#x43D;&#x435; &#x443;&#x43A;&#x430;&#x437;&#x430;&#x43D;, &#x441;&#x43E;&#x437;&#x434;&#x430;&#x44E;&#x442;&#x441;&#x44F; &#x438; &#x43F;&#x440;&#x43E;&#x432;&#x435;&#x440;&#x44F;&#x44E;&#x442;&#x441;&#x44F; &#x441;&#x442;&#x430;&#x43D;&#x434;&#x430;&#x440;&#x442;&#x43D;&#x44B;&#x435;" type="array|string" variable="$dirs">
+            <type by_reference="false">array</type>
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="275" name="return" description="" type="void">
             <type by_reference="false">void</type>
           </tag>
         </docblock>
+        <argument line="280">
+          <name>$dirs</name>
+          <default>array()</default>
+          <type/>
+        </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="266" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="309" package="Mysql Migration Manager">
         <name>get</name>
-        <argument line="266">
+        <docblock>
+          <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x437;&#x43D;&#x430;&#x447;&#x435;&#x43D;&#x438;&#x435; &#x43F;&#x430;&#x440;&#x430;&#x43C;&#x435;&#x442;&#x440;&#x430; &#x438;&#x437; &#x43A;&#x43E;&#x43D;&#x444;&#x438;&#x433;&#x443;&#x440;&#x430;&#x446;&#x438;&#x438;</description>
+          <long-description/>
+          <tag line="303" name="static" description=""/>
+          <tag line="303" name="param" description="&#x41D;&#x430;&#x437;&#x432;&#x430;&#x43D;&#x438;&#x435; &#x43F;&#x430;&#x440;&#x430;&#x43C;&#x435;&#x442;&#x440;&#x430;" type="\lib\$key" variable="$key">
+            <type by_reference="false">\lib\$key</type>
+          </tag>
+          <tag line="303" name="return" description="&#x417;&#x43D;&#x430;&#x447;&#x435;&#x43D;&#x438;&#x435; &#x438;&#x43B;&#x438; false &#x432; &#x441;&#x43B;&#x443;&#x447;&#x430;&#x435; &#x43D;&#x435;&#x443;&#x434;&#x430;&#x447;&#x438;" type="mixed|bool">
+            <type by_reference="false">mixed</type>
+            <type by_reference="false">bool</type>
+          </tag>
+        </docblock>
+        <argument line="309">
           <name>$key</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="276" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="319" package="Mysql Migration Manager">
         <name>getTmpDbObject</name>
         <docblock>
           <description>&#x421;&#x43E;&#x437;&#x434;&#x430;&#x435;&#x442; &#x43E;&#x431;&#x44A;&#x435;&#x43A;&#x442; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F; &#x434;&#x43B;&#x44F; &#x432;&#x440;&#x435;&#x43C;&#x435;&#x43D;&#x43D;&#x43E;&#x439; &#x411;&#x414;
 TODO: &#x43E;&#x431;&#x44A;&#x435;&#x434;&#x438;&#x43D;&#x438;&#x442;&#x44C; &#x43C;&#x435;&#x442;&#x43E;&#x434;&#x44B; &#x441;&#x43E;&#x437;&#x434;&#x430;&#x43D;&#x438;&#x44F; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F;</description>
           <long-description/>
-          <tag line="270" name="param" description="&#x418;&#x43C;&#x44F; &#x432;&#x440;&#x435;&#x43C;&#x435;&#x43D;&#x43D;&#x43E;&#x439; &#x431;&#x430;&#x437;&#x44B; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445;" type="string" variable="$tmpname">
+          <tag line="313" name="param" description="&#x418;&#x43C;&#x44F; &#x432;&#x440;&#x435;&#x43C;&#x435;&#x43D;&#x43D;&#x43E;&#x439; &#x431;&#x430;&#x437;&#x44B; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445;" type="string" variable="$tmpname">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="270" name="return" description="" type="\lib\MysqliHelper">
+          <tag line="313" name="return" description="" type="\lib\MysqliHelper">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
         </docblock>
-        <argument line="276">
+        <argument line="319">
           <name>$tmpname</name>
           <default>''</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="302" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="349" package="Mysql Migration Manager">
         <name>initVersionTable</name>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="345" name="static" description=""/>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="312" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="363" package="Mysql Migration Manager">
         <name>getCurrentVersion</name>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="359" name="static" description=""/>
+          <tag line="359" name="return" description="" type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="316" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="373" package="Mysql Migration Manager">
         <name>getSqlForTableCreation</name>
-        <argument line="316">
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="367" name="static" description=""/>
+          <tag line="367" name="param" description="" type="" variable="$tname"/>
+          <tag line="367" name="param" description="" type="" variable="$db"/>
+          <tag line="367" name="return" description="" type="mixed|string">
+            <type by_reference="false">mixed</type>
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="373">
           <name>$tname</name>
           <default/>
           <type/>
         </argument>
-        <argument line="316">
+        <argument line="373">
           <name>$db</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="325" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="387" package="Mysql Migration Manager">
         <name>getDatabaseVersion</name>
-        <argument line="325">
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="382" name="static" description=""/>
+          <tag line="382" name="param" description="" type="\Mysqli" variable="$db">
+            <type by_reference="false">\Mysqli</type>
+          </tag>
+          <tag line="382" name="return" description="" type="bool|int">
+            <type by_reference="false">bool</type>
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
+        <argument line="387">
           <name>$db</name>
           <default/>
           <type>Mysqli</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="340" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="402" package="Mysql Migration Manager">
         <name>getDatabaseVersions</name>
         <docblock>
           <description>Get all revisions that have been applied to the database</description>
           <long-description/>
-          <tag line="334" name="param" description="Database instance" type="\lib\MysqliHelper" variable="$db">
+          <tag line="396" name="param" description="Database instance" type="\lib\MysqliHelper" variable="$db">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
-          <tag line="334" name="return" description="List of applied revisions, False on error" type="array|bool">
+          <tag line="396" name="return" description="List of applied revisions, False on error" type="array|bool">
             <type by_reference="false">array</type>
             <type by_reference="false">bool</type>
           </tag>
         </docblock>
-        <argument line="340">
+        <argument line="402">
           <name>$db</name>
           <default/>
           <type>MysqliHelper</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="358" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="420" package="Mysql Migration Manager">
         <name>_debug_queryMultipleDDL</name>
         <docblock>
           <description>&#x412;&#x44B;&#x43F;&#x43E;&#x43B;&#x43D;&#x44F;&#x435;&#x442; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x44B; &#x441; &#x43E;&#x442;&#x43B;&#x430;&#x434;&#x43A;&#x43E;&#x439;.</description>
           <long-description/>
-          <tag line="353" name="param" description="" type="\lib\MysqliHelper" variable="$db">
+          <tag line="415" name="param" description="" type="\lib\MysqliHelper" variable="$db">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
-          <tag line="353" name="param" description="" type="array" variable="$queries">
+          <tag line="415" name="param" description="" type="array" variable="$queries">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="358">
+        <argument line="420">
           <name>$db</name>
           <default/>
           <type>MysqliHelper</type>
         </argument>
-        <argument line="358">
+        <argument line="420">
           <name>$queries</name>
           <default/>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="417" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="479" package="Mysql Migration Manager">
         <name>queryMultipleDDL</name>
         <docblock>
           <description>&#x412;&#x44B;&#x43F;&#x43E;&#x43B;&#x43D;&#x44F;&#x435;&#x442; &#x43C;&#x43D;&#x43E;&#x436;&#x435;&#x441;&#x442;&#x432;&#x435;&#x43D;&#x43D;&#x44B;&#x435; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x44B; DDL</description>
           <long-description/>
-          <tag line="412" name="param" description="" type="\lib\MysqliHelper" variable="$db">
+          <tag line="474" name="param" description="" type="\lib\MysqliHelper" variable="$db">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
-          <tag line="412" name="param" description="" type="string" variable="$queries">
+          <tag line="474" name="param" description="" type="string" variable="$queries">
             <type by_reference="false">string</type>
           </tag>
         </docblock>
-        <argument line="417">
+        <argument line="479">
           <name>$db</name>
           <default/>
           <type>MysqliHelper</type>
         </argument>
-        <argument line="417">
+        <argument line="479">
           <name>$queries</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="463" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="525" package="Mysql Migration Manager">
         <name>getInitialRefs</name>
         <docblock>
           <description>&#x41F;&#x43E;&#x43B;&#x443;&#x447;&#x438;&#x442;&#x44C; &#x441;&#x43F;&#x438;&#x441;&#x43E;&#x43A; &#x43D;&#x430;&#x447;&#x430;&#x43B;&#x44C;&#x43D;&#x44B;&#x445; &#x441;&#x432;&#x44F;&#x437;&#x435;&#x439; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446; &#x432; &#x411;&#x414;</description>
           <long-description/>
-          <tag line="458" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x43E;&#x432;" type="array" variable="$data">
+          <tag line="520" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x43E;&#x432;" type="array" variable="$data">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="458" name="return" description="" type="array">
+          <tag line="520" name="return" description="" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="463">
+        <argument line="525">
           <name>$data</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="521" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="583" package="Mysql Migration Manager">
         <name>getTimeline</name>
         <docblock>
           <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x438;&#x43D;&#x444;&#x43E;&#x440;&#x43C;&#x430;&#x446;&#x438;&#x44E; &#x43E; &#x438;&#x437;&#x43C;&#x435;&#x43D;&#x435;&#x43D;&#x438;&#x44F;&#x445; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446; &#x432; &#x431;&#x430;&#x437;&#x435; &#x441; &#x442;&#x435;&#x447;&#x435;&#x43D;&#x438;&#x435;&#x43C; &#x432;&#x440;&#x435;&#x43C;&#x435;&#x43D;&#x438;</description>
           <long-description/>
-          <tag line="516" name="param" description="" type="array" variable="$tablesList">
+          <tag line="578" name="param" description="" type="array" variable="$tablesList">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="516" name="return" description="" type="array">
+          <tag line="578" name="return" description="" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="521">
+        <argument line="583">
           <name>$tablesList</name>
           <default>array()</default>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="541" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="611" package="Mysql Migration Manager">
         <name>applyMigration</name>
-        <argument line="541">
+        <docblock>
+          <description>&#x412;&#x44B;&#x43F;&#x43E;&#x43B;&#x43D;&#x44F;&#x435;&#x442; &#x43C;&#x438;&#x433;&#x440;&#x430;&#x446;&#x438;&#x44E;</description>
+          <long-description/>
+          <tag line="603" name="static" description=""/>
+          <tag line="603" name="param" description="&#x41D;&#x43E;&#x43C;&#x435;&#x440; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;" type="\lib\$revision" variable="$revision">
+            <type by_reference="false">\lib\$revision</type>
+          </tag>
+          <tag line="603" name="param" description="&#x41E;&#x431;&#x44A;&#x435;&#x43A;&#x442; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F;" type="\lib\MysqliHelper" variable="$db">
+            <type by_reference="false">\lib\MysqliHelper</type>
+          </tag>
+          <tag line="603" name="param" description="&#x41D;&#x430;&#x43F;&#x440;&#x430;&#x432;&#x43B;&#x435;&#x43D;&#x438;&#x435; (Up &#x438;&#x43B;&#x438; Down)" type="string" variable="$direction">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="603" name="param" description="&#x421;&#x43F;&#x438;&#x441;&#x43E;&#x43A; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;, &#x43E;&#x43F;&#x435;&#x440;&#x430;&#x442;&#x43E;&#x440;&#x44B; &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x44B;&#x445; &#x43D;&#x435;&#x43E;&#x431;&#x445;&#x43E;&#x434;&#x438;&#x43C;&#x43E; &#x432;&#x44B;&#x43F;&#x43E;&#x43B;&#x43D;&#x438;&#x442;&#x44C;. &#x415;&#x441;&#x43B;&#x438; &#x43F;&#x443;&#x441;&#x442;, &#x432;&#x44B;&#x43F;&#x43E;&#x43B;&#x43D;&#x44F;&#x44E;&#x442;&#x441;&#x44F; &#x432;&#x441;&#x435;." type="array" variable="$tablesList">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="611">
           <name>$revision</name>
           <default/>
           <type/>
         </argument>
-        <argument line="541">
+        <argument line="611">
           <name>$db</name>
           <default/>
-          <type/>
+          <type>MysqliHelper</type>
         </argument>
-        <argument line="541">
+        <argument line="611">
           <name>$direction</name>
           <default>'Up'</default>
           <type/>
         </argument>
-        <argument line="541">
+        <argument line="611">
           <name>$tablesList</name>
           <default>array()</default>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="553" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="623" package="Mysql Migration Manager">
         <name>getAllMigrations</name>
         <docblock>
           <description>&#x412;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x441;&#x43F;&#x438;&#x441;&#x43E;&#x43A; &#x432;&#x441;&#x435;&#x445; &#x43C;&#x438;&#x433;&#x440;&#x430;&#x446;&#x438;&#x439; &#x438; &#x441;&#x432;&#x44F;&#x437;&#x430;&#x43D;&#x43D;&#x44B;&#x445; &#x441; &#x43D;&#x438;&#x43C;&#x438; &#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445;</description>
           <long-description/>
-          <tag line="549" name="return" description="" type="array">
+          <tag line="619" name="return" description="" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="624" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="694" package="Mysql Migration Manager">
         <name>getLastRevision</name>
         <docblock>
           <description>&#x41F;&#x43E;&#x43B;&#x443;&#x447;&#x438;&#x442;&#x44C; &#x43D;&#x43E;&#x43C;&#x435;&#x440; &#x43E;&#x436;&#x438;&#x434;&#x430;&#x435;&#x43C;&#x43E;&#x439; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;</description>
           <long-description/>
-          <tag line="620" name="return" description="" type="int">
+          <tag line="690" name="return" description="" type="int">
             <type by_reference="false">int</type>
           </tag>
         </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="631" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="706" package="Mysql Migration Manager">
         <name>getCurrentRevision</name>
+        <docblock>
+          <description>&#x41F;&#x43E;&#x43B;&#x443;&#x447;&#x430;&#x435;&#x442; &#x43D;&#x43E;&#x43C;&#x435;&#x440; &#x442;&#x435;&#x43A;&#x443;&#x449;&#x435;&#x439; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;</description>
+          <long-description/>
+          <tag line="701" name="static" description=""/>
+          <tag line="701" name="return" description="" type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="638" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="718" package="Mysql Migration Manager">
         <name>getRevisionLines</name>
+        <docblock>
+          <description>&#x41F;&#x43E;&#x43B;&#x443;&#x447;&#x430;&#x435;&#x442; &#x441;&#x43F;&#x438;&#x441;&#x43E;&#x43A; &#x441;&#x442;&#x440;&#x43E;&#x43A; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x439;</description>
+          <long-description/>
+          <tag line="713" name="static" description=""/>
+          <tag line="713" name="return" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="650" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="730" package="Mysql Migration Manager">
         <name>writeRevisionFile</name>
         <docblock>
           <description>&#x417;&#x430;&#x43F;&#x438;&#x441;&#x44B;&#x432;&#x430;&#x435;&#x442; &#x438;&#x43D;&#x444;&#x43E;&#x440;&#x43C;&#x430;&#x446;&#x438;&#x44E; &#x43E; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;</description>
           <long-description/>
-          <tag line="645" name="param" description="&#x41D;&#x43E;&#x43C;&#x435;&#x440; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;" type="int" variable="$revision">
+          <tag line="725" name="param" description="&#x41D;&#x43E;&#x43C;&#x435;&#x440; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;" type="int" variable="$revision">
             <type by_reference="false">int</type>
           </tag>
-          <tag line="645" name="return" description="&#x422;&#x430;&#x439;&#x43C;&#x441;&#x442;&#x430;&#x439;&#x43C;&#x43F; &#x434;&#x43B;&#x44F; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;" type="int">
+          <tag line="725" name="return" description="&#x422;&#x430;&#x439;&#x43C;&#x441;&#x442;&#x430;&#x439;&#x43C;&#x43F; &#x434;&#x43B;&#x44F; &#x440;&#x435;&#x432;&#x438;&#x437;&#x438;&#x438;" type="int">
             <type by_reference="false">int</type>
           </tag>
         </docblock>
-        <argument line="650">
+        <argument line="730">
           <name>$revision</name>
           <default/>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="683" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="767" package="Mysql Migration Manager">
         <name>_getAllMigrations</name>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="763" name="static" description=""/>
+          <tag line="763" name="return" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="699" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="783" package="Mysql Migration Manager">
         <name>loadTmpDb</name>
         <docblock>
           <description>&#x417;&#x430;&#x433;&#x440;&#x443;&#x436;&#x430;&#x435;&#x442; &#x43D;&#x430;&#x447;&#x430;&#x43B;&#x44C;&#x43D;&#x443;&#x44E; &#x441;&#x445;&#x435;&#x43C;&#x443; &#x432; &#x431;&#x430;&#x437;&#x443; &#x438; &#x43D;&#x430;&#x43A;&#x430;&#x442;&#x44B;&#x432;&#x430;&#x435;&#x442; &#x432;&#x441;&#x435; &#x43C;&#x438;&#x433;&#x440;&#x430;&#x446;&#x438;&#x438;</description>
           <long-description/>
-          <tag line="695" name="param" description="&#x421;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x435; &#x441; &#x441;&#x435;&#x440;&#x432;&#x435;&#x440;&#x43E;&#x43C; &#x411;&#x414;" type="\lib\MysqliHelper" variable="$db">
+          <tag line="779" name="param" description="&#x421;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x435; &#x441; &#x441;&#x435;&#x440;&#x432;&#x435;&#x440;&#x43E;&#x43C; &#x411;&#x414;" type="\lib\MysqliHelper" variable="$db">
             <type by_reference="false">\lib\MysqliHelper</type>
           </tag>
         </docblock>
-        <argument line="699">
+        <argument line="783">
           <name>$db</name>
           <default/>
           <type>MysqliHelper</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="752" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="836" package="Mysql Migration Manager">
         <name>recursiveImplode</name>
         <docblock>
           <description>&#x420;&#x435;&#x43A;&#x443;&#x440;&#x441;&#x438;&#x432;&#x43D;&#x43E; &#x43F;&#x440;&#x435;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x43C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x43B;&#x44E;&#x431;&#x43E;&#x439; &#x432;&#x43B;&#x43E;&#x436;&#x435;&#x43D;&#x43D;&#x43E;&#x441;&#x442;&#x438; &#x432; &#x441;&#x442;&#x440;&#x43E;&#x43A;&#x443;</description>
           <long-description/>
-          <tag line="744" name="static" description=""/>
-          <tag line="744" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432;" type="array" variable="$a">
+          <tag line="828" name="static" description=""/>
+          <tag line="828" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432;" type="array" variable="$a">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="744" name="param" description="&#x423;&#x440;&#x43E;&#x432;&#x435;&#x43D;&#x44C; &#x43D;&#x430;&#x447;&#x430;&#x43B;&#x44C;&#x43D;&#x43E;&#x433;&#x43E; &#x43E;&#x442;&#x441;&#x442;&#x443;&#x43F;&#x430;" type="int" variable="$level">
+          <tag line="828" name="param" description="&#x423;&#x440;&#x43E;&#x432;&#x435;&#x43D;&#x44C; &#x43D;&#x430;&#x447;&#x430;&#x43B;&#x44C;&#x43D;&#x43E;&#x433;&#x43E; &#x43E;&#x442;&#x441;&#x442;&#x443;&#x43F;&#x430;" type="int" variable="$level">
             <type by_reference="false">int</type>
           </tag>
-          <tag line="744" name="param" description="&#x421;&#x442;&#x440;&#x43E;&#x43A;&#x430;, &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x43E;&#x439; &#x43E;&#x442;&#x431;&#x438;&#x432;&#x430;&#x435;&#x442;&#x441;&#x44F; &#x43E;&#x442;&#x441;&#x442;&#x443;&#x43F;" type="string" variable="$spacer">
+          <tag line="828" name="param" description="&#x421;&#x442;&#x440;&#x43E;&#x43A;&#x430;, &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x43E;&#x439; &#x43E;&#x442;&#x431;&#x438;&#x432;&#x430;&#x435;&#x442;&#x441;&#x44F; &#x43E;&#x442;&#x441;&#x442;&#x443;&#x43F;" type="string" variable="$spacer">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="744" name="return" description="" type="string">
+          <tag line="828" name="return" description="" type="string">
             <type by_reference="false">string</type>
           </tag>
         </docblock>
-        <argument line="752">
+        <argument line="836">
           <name>$a</name>
           <default/>
           <type>array</type>
         </argument>
-        <argument line="752">
+        <argument line="836">
           <name>$level</name>
           <default>1</default>
           <type/>
         </argument>
-        <argument line="752">
+        <argument line="836">
           <name>$spacer</name>
           <default>' '</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="private" line="783" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="private" line="867" package="Mysql Migration Manager">
         <name>sqlImplode</name>
         <docblock>
           <description>DEPRECATED</description>
           <long-description/>
-          <tag line="778" name="param" description="" type="array" variable="$a">
+          <tag line="862" name="param" description="" type="array" variable="$a">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="778" name="return" description="" type="string">
+          <tag line="862" name="return" description="" type="string">
             <type by_reference="false">string</type>
           </tag>
         </docblock>
-        <argument line="783">
+        <argument line="867">
           <name>$a</name>
           <default/>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="804" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="888" package="Mysql Migration Manager">
         <name>createMigrationContent</name>
         <docblock>
           <description>&#x421;&#x43E;&#x437;&#x434;&#x430;&#x435;&#x442; &#x43A;&#x43B;&#x430;&#x441;&#x441; &#x43C;&#x438;&#x433;&#x440;&#x430;&#x446;&#x438;&#x438;</description>
           <long-description/>
-          <tag line="796" name="param" description="&#x420;&#x435;&#x432;&#x438;&#x437;&#x438;&#x44F;" type="int" variable="$version">
+          <tag line="880" name="param" description="&#x420;&#x435;&#x432;&#x438;&#x437;&#x438;&#x44F;" type="int" variable="$version">
             <type by_reference="false">int</type>
           </tag>
-          <tag line="796" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x440;&#x430;&#x437;&#x43B;&#x438;&#x447;&#x438;&#x439;" type="array" variable="$diff">
+          <tag line="880" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x440;&#x430;&#x437;&#x43B;&#x438;&#x447;&#x438;&#x439;" type="array" variable="$diff">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="796" name="param" description="timestamp" type="int" variable="$ts">
+          <tag line="880" name="param" description="timestamp" type="int" variable="$ts">
             <type by_reference="false">int</type>
           </tag>
-          <tag line="796" name="param" description="&#x428;&#x430;&#x431;&#x43B;&#x43E;&#x43D; &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430;" type="string" variable="$tpl">
+          <tag line="880" name="param" description="&#x428;&#x430;&#x431;&#x43B;&#x43E;&#x43D; &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430;" type="string" variable="$tpl">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="796" name="return" description="&#x41A;&#x43E;&#x43D;&#x442;&#x435;&#x43D;&#x442; &#x444;&#x430;&#x439;&#x43B;&#x430; &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430;" type="string">
+          <tag line="880" name="return" description="&#x41A;&#x43E;&#x43D;&#x442;&#x435;&#x43D;&#x442; &#x444;&#x430;&#x439;&#x43B;&#x430; &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430;" type="string">
             <type by_reference="false">string</type>
           </tag>
         </docblock>
-        <argument line="804">
+        <argument line="888">
           <name>$version</name>
           <default/>
           <type/>
         </argument>
-        <argument line="804">
+        <argument line="888">
           <name>$diff</name>
           <default/>
           <type>array</type>
         </argument>
-        <argument line="804">
+        <argument line="888">
           <name>$ts</name>
           <default/>
           <type/>
         </argument>
-        <argument line="804">
+        <argument line="888">
           <name>$tpl</name>
           <default>'tpl/migration.tpl'</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="835" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="919" package="Mysql Migration Manager">
         <name>parseSchemaFiles</name>
         <docblock>
           <description>&#x41F;&#x440;&#x43E;&#x445;&#x43E;&#x434;&#x438;&#x442; &#x43F;&#x43E; &#x43F;&#x430;&#x43F;&#x43A;&#x435; &#x441; &#x444;&#x430;&#x439;&#x43B;&#x430;&#x43C;&#x438; &#x441;&#x445;&#x435;&#x43C;&#x44B; &#x438; &#x441;&#x43E;&#x431;&#x438;&#x440;&#x430;&#x435;&#x442; &#x438;&#x445;</description>
           <long-description/>
-          <tag line="830" name="param" description="&#x425;&#x435;&#x448; &#x441; &#x438;&#x43C;&#x435;&#x43D;&#x430;&#x43C;&#x438; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;, &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x44B;&#x435; &#x43D;&#x443;&#x436;&#x43D;&#x43E; &#x432;&#x43A;&#x43B;&#x44E;&#x447;&#x430;&#x442;&#x44C;, &#x432; &#x43A;&#x430;&#x447;&#x435;&#x441;&#x442;&#x432;&#x435; &#x43A;&#x43B;&#x44E;&#x447;&#x435;&#x439;" type="array" variable="$includeTables">
+          <tag line="914" name="param" description="&#x425;&#x435;&#x448; &#x441; &#x438;&#x43C;&#x435;&#x43D;&#x430;&#x43C;&#x438; &#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;, &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x44B;&#x435; &#x43D;&#x443;&#x436;&#x43D;&#x43E; &#x432;&#x43A;&#x43B;&#x44E;&#x447;&#x430;&#x442;&#x44C;, &#x432; &#x43A;&#x430;&#x447;&#x435;&#x441;&#x442;&#x432;&#x435; &#x43A;&#x43B;&#x44E;&#x447;&#x435;&#x439;" type="array" variable="$includeTables">
             <type by_reference="false">array</type>
           </tag>
-          <tag line="830" name="return" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x43E;&#x432;" type="array">
+          <tag line="914" name="return" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x437;&#x430;&#x43F;&#x440;&#x43E;&#x441;&#x43E;&#x432;" type="array">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="835">
+        <argument line="919">
           <name>$includeTables</name>
           <default>array()</default>
           <type>array</type>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="941" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="1025" package="Mysql Migration Manager">
         <name>askToRewrite</name>
         <docblock>
           <description>&#x421;&#x43F;&#x440;&#x430;&#x448;&#x438;&#x432;&#x430;&#x435;&#x442; &#x443; &#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x43E;&#x432;&#x430;&#x442;&#x435;&#x43B;&#x44F;, &#x43D;&#x435;&#x43E;&#x431;&#x445;&#x43E;&#x434;&#x438;&#x43C;&#x43E; &#x43B;&#x438; &#x43F;&#x435;&#x440;&#x435;&#x437;&#x430;&#x43F;&#x438;&#x441;&#x44B;&#x432;&#x430;&#x442;&#x44C; &#x444;&#x430;&#x439;&#x43B;</description>
           <long-description/>
-          <tag line="935" name="param" description="&#x418;&#x43C;&#x44F; &#x444;&#x430;&#x439;&#x43B;&#x430;" type="string" variable="$filename">
+          <tag line="1019" name="param" description="&#x418;&#x43C;&#x44F; &#x444;&#x430;&#x439;&#x43B;&#x430;" type="string" variable="$filename">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="935" name="param" description="&#x421;&#x43E;&#x43E;&#x431;&#x449;&#x435;&#x43D;&#x438;&#x435;" type="string" variable="$message">
+          <tag line="1019" name="param" description="&#x421;&#x43E;&#x43E;&#x431;&#x449;&#x435;&#x43D;&#x438;&#x435;" type="string" variable="$message">
             <type by_reference="false">string</type>
           </tag>
-          <tag line="935" name="return" description="&#x420;&#x435;&#x437;&#x443;&#x43B;&#x44C;&#x442;&#x430;&#x442; &#x432;&#x432;&#x43E;&#x434;&#x430; &#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x43E;&#x432;&#x430;&#x442;&#x435;&#x43B;&#x44F;" type="boolean">
+          <tag line="1019" name="return" description="&#x420;&#x435;&#x437;&#x443;&#x43B;&#x44C;&#x442;&#x430;&#x442; &#x432;&#x432;&#x43E;&#x434;&#x430; &#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x43E;&#x432;&#x430;&#x442;&#x435;&#x43B;&#x44F;" type="boolean">
             <type by_reference="false">boolean</type>
           </tag>
         </docblock>
-        <argument line="941">
+        <argument line="1025">
           <name>$filename</name>
           <default/>
           <type/>
         </argument>
-        <argument line="941">
+        <argument line="1025">
           <name>$message</name>
           <default>''</default>
           <type/>
         </argument>
       </method>
-      <method final="false" abstract="false" static="true" visibility="public" line="970" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="true" visibility="public" line="1054" package="Mysql Migration Manager">
         <name>_createMigrationContent</name>
         <docblock>
           <description>DEPRECATED</description>
           <long-description/>
-          <tag line="964" name="param" description="" type="\lib\type" variable="$version">
+          <tag line="1048" name="param" description="" type="\lib\type" variable="$version">
             <type by_reference="false">\lib\type</type>
           </tag>
-          <tag line="964" name="param" description="" type="\lib\type" variable="$diff">
+          <tag line="1048" name="param" description="" type="\lib\type" variable="$diff">
             <type by_reference="false">\lib\type</type>
           </tag>
-          <tag line="964" name="return" description="" type="\lib\type">
+          <tag line="1048" name="return" description="" type="\lib\type">
             <type by_reference="false">\lib\type</type>
           </tag>
         </docblock>
-        <argument line="970">
+        <argument line="1054">
           <name>$version</name>
           <default/>
           <type/>
         </argument>
-        <argument line="970">
+        <argument line="1054">
           <name>$diff</name>
           <default/>
           <type/>
@@ -1250,11 +1400,11 @@ TODO: &#x43E;&#x431;&#x44A;&#x435;&#x434;&#x438;&#x43D;&#x438;&#x442;&#x44C; &#x
       </method>
     </class>
   </file>
-  <file path="AbstractController.class.php" hash="7d3edde2cc6a1ddd61ab5a15ba91fc7e" package="Mysql Migration Manager">
+  <file path="AbstractController.class.php" hash="a345376f5b55563525c109e42ef4a187" package="Mysql Migration Manager">
     <parse_markers>
       <error line="1">No DocBlock was found for File AbstractController.class.php</error>
       <critical line="12">No short description for property $db</critical>
-      <error line="17">No DocBlock was found for Property $args</error>
+      <critical line="17">No short description for property $args</critical>
     </parse_markers>
     <class final="false" abstract="true" line="10" namespace="lib" package="Mysql Migration Manager">
       <name>AbstractController</name>
@@ -1278,29 +1428,36 @@ TODO: &#x43E;&#x431;&#x44A;&#x435;&#x434;&#x438;&#x43D;&#x438;&#x442;&#x44C; &#x
           </tag>
         </docblock>
       </property>
-      <property final="false" static="false" visibility="protected" line="17" package="Mysql Migration Manager">
+      <property final="false" static="false" visibility="protected" line="20" package="Mysql Migration Manager">
         <name>$args</name>
         <default>array()</default>
+        <docblock>
+          <description/>
+          <long-description/>
+          <tag line="17" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
       </property>
-      <method final="false" abstract="false" static="false" visibility="public" line="24" package="Mysql Migration Manager">
+      <method final="false" abstract="false" static="false" visibility="public" line="27" package="Mysql Migration Manager">
         <name>__construct</name>
         <docblock>
           <description>&#x421;&#x43E;&#x437;&#x434;&#x430;&#x435;&#x442; &#x44D;&#x43A;&#x437;&#x435;&#x43C;&#x43B;&#x43F;&#x44F;&#x440; &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430; &#x43A;&#x43E;&#x43D;&#x442;&#x440;&#x43E;&#x43B;&#x43B;&#x435;&#x440;&#x430;</description>
           <long-description/>
-          <tag line="19" name="param" description="&#x41E;&#x431;&#x44A;&#x435;&#x43A;&#x442; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F;" type="\lib\MysqliHelper|null" variable="$db">
+          <tag line="22" name="param" description="&#x41E;&#x431;&#x44A;&#x435;&#x43A;&#x442; &#x441;&#x43E;&#x435;&#x434;&#x438;&#x43D;&#x435;&#x43D;&#x438;&#x44F;" type="\lib\MysqliHelper|null" variable="$db">
             <type by_reference="false">\lib\MysqliHelper</type>
             <type by_reference="false">null</type>
           </tag>
-          <tag line="19" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x430;&#x440;&#x433;&#x443;&#x43C;&#x435;&#x43D;&#x442;&#x43E;&#x432;, &#x43F;&#x435;&#x440;&#x435;&#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445; &#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x43E;&#x432;&#x430;&#x442;&#x435;&#x43B;&#x435;&#x43C;" type="array" variable="$args">
+          <tag line="22" name="param" description="&#x41C;&#x430;&#x441;&#x441;&#x438;&#x432; &#x430;&#x440;&#x433;&#x443;&#x43C;&#x435;&#x43D;&#x442;&#x43E;&#x432;, &#x43F;&#x435;&#x440;&#x435;&#x434;&#x430;&#x43D;&#x43D;&#x44B;&#x445; &#x43F;&#x43E;&#x43B;&#x44C;&#x437;&#x43E;&#x432;&#x430;&#x442;&#x435;&#x43B;&#x435;&#x43C;" type="array" variable="$args">
             <type by_reference="false">array</type>
           </tag>
         </docblock>
-        <argument line="24">
+        <argument line="27">
           <name>$db</name>
           <default>null</default>
           <type>MysqliHelper</type>
         </argument>
-        <argument line="24">
+        <argument line="27">
           <name>$args</name>
           <default>array()</default>
           <type/>
