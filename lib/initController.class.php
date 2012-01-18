@@ -2,9 +2,16 @@
 
 namespace lib;
 
-class initController extends DatasetsController {
+/**
+ * initController
+ * Приводит содержимое схемы к начальному
+ * @author guyfawkes
+ */
+class initController extends DatasetsController
+{
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         if ($this->askForRewriteInformation()) {
             $datasets = $this->args['datasets'];
             $dshash = '';
@@ -14,13 +21,13 @@ class initController extends DatasetsController {
             }
             try {
                 $classname = sprintf(
-                        "%s\Schema%s",
-                        str_replace('/', '\\', Helper::get('cachedir')), $dshash
+                    "%s\Schema%s",
+                    str_replace('/', '\\', Helper::get('cachedir')), $dshash
                 );
                 $schema = new $classname;
-                $this->dropAllTables();
+                $this->dropAllDBEntities();
                 $schema->load($this->db);
-                printf("Schema %s was successfully deployed\n", $classname);
+                Output::verbose(sprintf("Schema %s was successfully deployed\n", $classname), 1);
                 Helper::writeRevisionFile(0);
             }
             catch (\Exception $e) {
@@ -33,14 +40,19 @@ class initController extends DatasetsController {
         }
     }
 
-    private function askForRewriteInformation() {
+    /**
+     * Запрашивает удаление всех таблиц в БД
+     * @return bool
+     */
+    private function askForRewriteInformation()
+    {
         if (Helper::get('quiet')) {
             return true;
         }
         $c = '';
         do {
             if ($c != "\n") {
-                printf("Are you really shure you want to delete ALL tables in DB [y/n] ");
+                Output::verbose("Are you really shure you want to delete ALL tables in DB [y/n] ", 1);
             }
             $c = trim(fgets(STDIN));
 
