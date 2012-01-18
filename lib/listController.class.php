@@ -2,8 +2,16 @@
 
 namespace lib;
 
+/**
+ * listController
+ * Показывает список доступных миграций
+ * @author guyfawkes
+ */
 class listController extends AbstractController {
 
+    /**
+     * @var array
+     */
     protected $queries = array();
 
     public function runStrategy() {

@@ -71,7 +71,9 @@ class schemaController extends DatasetsController {
 
     /**
      * TODO: объединить с записью миграциий
-     * @param string $tpl 
+     * @param string $fname Имя файла
+     * @param string $name Имя схемы данных
+     * @param string $tpl Путь к файлу шаблона
      */
     protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
         $tpl_file = DIR . $tpl;

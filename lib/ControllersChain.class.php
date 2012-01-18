@@ -8,7 +8,14 @@ namespace lib;
  * @author guyfawkes
  */
 class ControllersChain implements IController {
+
+    /**
+     * Константа для выключения проверки внешних ключей
+     */
     const FK_OFF = 0;
+    /**
+     * Константа, восстанавливающая проверку внешних ключей
+     */
     const FK_ON = 1;
 
     /**

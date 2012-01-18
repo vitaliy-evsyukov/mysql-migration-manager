@@ -2,6 +2,10 @@
 
 namespace lib;
 
+/**
+ * GetOpt
+ * Получает и парсит аргументы, переданные пользователем
+ */
 class GetOpt {
 
     static protected $default_config = array(
