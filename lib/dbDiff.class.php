@@ -133,7 +133,7 @@ class dbDiff {
                 $this->_difference[$dirs[$i]] = $result['desc'];
             }
             else {
-                Output::verbose(sprintf('Сommand %s returned nothing', $full), 3);
+                Output::verbose(sprintf('Command %s returned nothing', $full), 3);
             }
             $groups = array_reverse($groups);
         }
