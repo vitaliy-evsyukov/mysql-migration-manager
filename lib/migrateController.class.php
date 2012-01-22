@@ -17,7 +17,7 @@ class migrateController extends DatasetsController
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
-            Output::verbose("No revision has been created", 1);
+            Output::verbose("No revisions have been created", 1);
             return false;
         }
         $minMigration = current($mHelper['migrations']);
@@ -33,7 +33,7 @@ class migrateController extends DatasetsController
         else {
             $revision = $this->args['revision'];
         }
-        Output::verbose(sprintf('You are in revision %d', $revision), 1);
+        Output::verbose(sprintf('You are at revision %d', $revision), 1);
 
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';

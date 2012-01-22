@@ -45,7 +45,7 @@ class schemaController extends DatasetsController {
             Output::verbose('Parsing finished', 1);
             if (!empty($this->_queries)) {
                 // Создадим структуру базы
-                Output::verbose('Deploy schema...', 1);
+                Output::verbose('Deploying schema...', 1);
                 if ((int) Helper::get('verbose') === 3) {
                     Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
                 }
@@ -58,11 +58,11 @@ class schemaController extends DatasetsController {
                 $this->writeInFile($fname, $dshash);
             }
             else {
-                Output::verbose('No tables found. File not created', 1);
+                Output::verbose('No tables found. File is not created', 1);
             }
         }
         else {
-            Output::verbose('Deploy schema', 1);
+            Output::verbose('Deploying schema', 1);
             $class = new $classname;
             $class->load($this->db);
             Output::verbose('Schema deploy finished', 1);
