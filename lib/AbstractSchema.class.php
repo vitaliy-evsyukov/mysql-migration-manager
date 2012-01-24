@@ -33,7 +33,7 @@ abstract class AbstractSchema {
         }
         else {
             Helper::queryMultipleDDL(
-                    $db, stripslashes(implode("\n", $this->queries))
+                    $db, implode("\n", $this->queries)
             );
         }
     }

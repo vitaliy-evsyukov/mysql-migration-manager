@@ -17,7 +17,7 @@ abstract class DatasetsController extends AbstractController {
      */
     protected $_chain = null;
 
-    public function __construct(MysqliHelper $db, $args) {
+    public function __construct(MysqliHelper $db, array $args = array()) {
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {

@@ -168,15 +168,19 @@ class Helper {
      *
      * @param string $name Controller name
      * @param array $args Optional controller arguments
-     * @return AbstractController Initialized controller, False if not found
+     * @param \lib\MysqliHelper|null $db Объект подключения к БД
+     * @return AbstractController|ChainController Initialized controller, False if not found
      */
-    static function getController($name = null, $args = array()) {
+    static function getController($name = null, $args = array(), MysqliHelper $db = null) {
         if (empty($name))
             return new helpController;
 
         $ctrlName = 'lib\\' . $name . 'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
         try {
-            $ctrl = new $ctrlName(self::getDbObject(), $args);
+            if (!$db) {
+                $db = self::getDbObject();
+            }
+            $ctrl = new $ctrlName($db, $args);
             if ($ctrl instanceof DatasetsController) {
                 // обернем его в цепочку
                 $chain = new ControllersChain();
@@ -335,7 +339,7 @@ class Helper {
                 $tmpdb->error));
         }
         register_shutdown_function(function() use($c, $tmpdb) {
-            $tmpdb->query("DROP DATABASE `{$c['db']}`");
+            //$tmpdb->query("DROP DATABASE `{$c['db']}`");
             Output::verbose("Temporary database {$c['db']} was deleted",
                 2);
         });
@@ -428,7 +432,6 @@ class Helper {
                 $stmts = array($stmts);
             }
             foreach ($stmts as $queries) {
-                $queries = stripslashes($queries);
                 /*
                  * Из строки множества операторов необходимо вычленить
                  * эти операторы, при этом возможны пустые строки
@@ -550,26 +553,29 @@ class Helper {
         $output = array();
         $status = -1;
         exec($command, $output, $status);
+        /*
         if (empty($output)) {
             throw new \Exception(
                 sprintf("An error was occured in command %s, return code %d",
                     $command, $status)
             );
-        }
+        }*/
         Output::verbose(
             sprintf('References search in mysqldiff: %f seconds',
                 (microtime(1) - $start)), 3
         );
         $result = array();
-        foreach ($output as $line) {
-            $line = trim($line);
-            if (empty($line)) {
-                continue;
-            }
-            $tables = explode('|', $line);
-            $tableName = array_shift($tables);
-            foreach ($tables as $table) {
-                $result[$tableName][$table] = 1;
+        if (!empty($output)) {
+            foreach ($output as $line) {
+                $line = trim($line);
+                if (empty($line)) {
+                    continue;
+                }
+                $tables = explode('|', $line);
+                $tableName = array_shift($tables);
+                foreach ($tables as $table) {
+                    $result[$tableName][$table] = 1;
+                }
             }
         }
         return $result;
@@ -800,15 +806,7 @@ class Helper {
                 else {
                     $what = sprintf("sql for %s", $tablename);
                     // это SQL-запрос
-                    // TODO: вынести и обработать отдельно
-                    if (!$db->query($revision)) {
-                        Output::error(
-                            sprintf(
-                                "Error: %s (%d)\n", $db->error,
-                                $db->errno
-                            )
-                        );
-                    }
+                    self::_debug_queryMultipleDDL($db, array($tablename => $revision));
                 }
                 $stop = microtime(1);
                 $t = $stop - $start;
@@ -830,24 +828,31 @@ class Helper {
      * @static
      * @param array $a Массив
      * @param int $level Уровень начального отступа
+     * @param bool $nowdoc Необходимо ли использовать Nowdoc или делать простые строки
      * @param string $spacer Строка, которой отбивается отступ
      * @return string
      */
-    public static function recursiveImplode(array $a, $level = 1, $spacer = ' ') {
+    public static function recursiveImplode(array $a, $level = 1, $nowdoc = true, $spacer = ' ') {
         $result = array();
         $depth = str_repeat($spacer, $level * 3);
         $depth2 = str_repeat($spacer, ($level - 1) * 3);
         foreach ($a as $k => $v) {
             $tmp = $depth;
             if (!is_int($k)) {
-                $tmp = sprintf('%s"%s" => ', $depth, $k);
+                $tmp = sprintf("%s'%s' => ", $depth, $k);
             }
             if (is_array($v)) {
-                $tmp .= self::recursiveImplode($v, ($level + 1), $spacer);
+                $tmp .= self::recursiveImplode($v, ($level + 1), $nowdoc, $spacer);
             }
             else {
                 if (is_string($v)) {
-                    $tmp .= '"' . $v . '"';
+                    if ($nowdoc) {
+                        $tmp .= "<<<'EOT'\n";
+                        $tmp .= $v;
+                        $tmp .= "\nEOT";
+                    } else {
+                        $tmp .= "'{$v}'";
+                    }
                 }
                 else {
                     $tmp .= $v;
@@ -945,7 +950,7 @@ class Helper {
                                 if ($exclude && !isset($includeTables[$entityname])) {
                                     continue;
                                 }
-                                $q = addslashes(file_get_contents($file));
+                                $q = file_get_contents($file);
                                 if ($q === ';') {
                                     continue;
                                 }

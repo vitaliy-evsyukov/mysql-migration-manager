@@ -51,7 +51,7 @@ class schemaController extends DatasetsController {
                 }
                 else {
                     Helper::queryMultipleDDL(
-                            $this->db, stripslashes(implode("\n", $this->_queries))
+                            $this->db, implode("\n", $this->_queries)
                     );
                 }
                 Output::verbose('Schema deploy finished', 1);
@@ -67,6 +67,7 @@ class schemaController extends DatasetsController {
             $class->load($this->db);
             Output::verbose('Schema deploy finished', 1);
         }
+        Helper::writeRevisionFile(0);
     }
 
     /**
