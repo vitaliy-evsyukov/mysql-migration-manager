@@ -849,7 +849,7 @@ class Helper {
                     if ($nowdoc) {
                         $tmp .= "<<<'EOT'\n";
                         $tmp .= $v;
-                        $tmp .= "\nEOT";
+                        $tmp .= "\nEOT\n";
                     } else {
                         $tmp .= "'{$v}'";
                     }
