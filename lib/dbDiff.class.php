@@ -11,6 +11,7 @@ use \Mysqli;
  */
 class dbDiff {
 
+    private $_currentAdapter;
     protected $_currentTable;
     protected $_tempTable;
 
@@ -35,6 +36,7 @@ class dbDiff {
     public function __construct(MysqliHelper $current, MysqliHelper $temp) {
         $this->_currentTable = $this->getDbName($current);
         $this->_tempTable = $this->getDbName($temp);
+        $this->_currentAdapter = $current;
     }
 
     /**
@@ -68,7 +70,6 @@ class dbDiff {
             if (ctype_space($line)) {
                 continue;
             }
-            $line = addslashes($line);
             if (strpos($line, '--') === 0) {
                 // это комментарий с именем таблицы
                 $comment = explode('|', trim(substr($line, 2)));

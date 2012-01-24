@@ -11,6 +11,7 @@ namespace lib;
 class recoverController implements IController {
 
     public function runStrategy() {
+        Registry::parseMigrations();
         $lines = array();
         $list = Registry::getAllMigrations(false);
         $max_revision = -1;
@@ -27,7 +28,6 @@ class recoverController implements IController {
             }
         }
         ksort($lines);
-        $lines[] = "#{$max_revision}";
         $filename = DIR . Helper::get('savedir') . DIR_SEP . Helper::get('versionfile');
         file_put_contents($filename, implode("\n", $lines));
         Output::verbose(sprintf("File %s was successfully restored\n", $filename), 1);

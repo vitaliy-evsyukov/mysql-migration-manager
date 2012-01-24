@@ -59,7 +59,7 @@ abstract class AbstractMigration {
                         3
                 );
                 Helper::queryMultipleDDL(
-                        $this->db, stripslashes(implode("\n", $query))
+                        $this->db, implode("\n", $query)
                 );
             }
         }
