@@ -12,7 +12,7 @@ reqdata=data.sql
 versionfile=revisions.txt
 version_marker=marker.txt
 verbose=3
-mysqldiff_command=mysqldiff
+mysqldiff_command=mysqldiff --logs-folder=
 
 [tmpdb]
 tmp_host=db-dev.sotmarket.ru
