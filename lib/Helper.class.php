@@ -339,7 +339,7 @@ class Helper {
                 $tmpdb->error));
         }
         register_shutdown_function(function() use($c, $tmpdb) {
-            //$tmpdb->query("DROP DATABASE `{$c['db']}`");
+            $tmpdb->query("DROP DATABASE `{$c['db']}`");
             Output::verbose("Temporary database {$c['db']} was deleted",
                 2);
         });
@@ -561,7 +561,7 @@ class Helper {
             );
         }*/
         Output::verbose(
-            sprintf('References search in mysqldiff: %f seconds',
+            sprintf('References search completed in: %f seconds',
                 (microtime(1) - $start)), 3
         );
         $result = array();
@@ -933,6 +933,7 @@ class Helper {
             $patternView = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
             $patternRoutine = '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
             $exclude = !empty($includeTables);
+            $views = array();
             while (!empty($dirs)) {
                 $dir = array_pop($dirs);
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
@@ -965,6 +966,7 @@ class Helper {
                                         'CREATE TABLE IF NOT EXISTS ', $q
                                     );
                                     $tmp[$entityname] = $q;
+                                    // сложение необходимо для сохранения ключей массивов
                                     $queries = $tmp + $queries;
                                 }
                                 else {
@@ -986,6 +988,8 @@ class Helper {
                                             $search, $replace, $q
                                         );
                                         $tmp[$entityname] = $q;
+                                        // дописываем вьюхи в отдельный массив, который в конец добавим в конец всего
+                                        $views  += $tmp;
                                     }
                                     else {
                                         /*
@@ -999,10 +1003,10 @@ class Helper {
                                                 "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
                                                 $matches[2], $entityname, $q
                                             );
+                                            // и дописываем такие сущности в конец массива запросов
+                                            $queries += $tmp;
                                         }
                                     }
-                                    // и дописываем такие сущности в конец массива запросов
-                                    $queries += $tmp;
                                 }
                             }
                         } elseif (is_dir($file)) {
@@ -1018,6 +1022,8 @@ class Helper {
                 closedir($handle);
             }
         }
+        // вьхи идут после хранимых процедур, функций и триггеров, которые в свою очередь идут после таблиц
+        $queries += $views;
         return $queries;
     }
 
