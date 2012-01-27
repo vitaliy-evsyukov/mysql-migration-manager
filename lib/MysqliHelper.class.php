@@ -10,10 +10,11 @@ use \Mysqli;
  * @author guyfawkes
  */
 class MysqliHelper {
+
     const MYSQL_SERVER_HAS_GONE_AWAY = 2006;
     /**
      *
-     * @var Mysqli 
+     * @var Mysqli
      */
     private $_db = null;
     private $_databaseName = '';
@@ -24,16 +25,16 @@ class MysqliHelper {
     private $_retriesCount = 3;
 
     public function __construct($host, $user, $password, $db = '') {
-        $this->_host = $host;
-        $this->_user = $user;
-        $this->_password = $password;
+        $this->_host         = $host;
+        $this->_user         = $user;
+        $this->_password     = $password;
         $this->_databaseName = $db;
         $this->connect();
     }
 
     /**
      * Добавляет команду или замещает список команд, которые нужно выполнять при реконнекте
-     * @param array|string $command 
+     * @param array|string $command
      */
     public function setCommand($command) {
         if (!is_array($command)) {
@@ -47,7 +48,7 @@ class MysqliHelper {
 
     /**
      * Устанавливает количество попыток для реконнекта
-     * @param int $count 
+     * @param int $count
      */
     public function setRetriesCount($count) {
         $this->_retriesCount = (int) $count;
@@ -55,7 +56,7 @@ class MysqliHelper {
 
     /**
      * Получить имя текущей базы данных
-     * @return string 
+     * @return string
      */
     public function getDatabaseName() {
         return $this->_databaseName;
@@ -64,7 +65,7 @@ class MysqliHelper {
     /**
      * Устанавливает используемую базу данных
      * @param string $dbname
-     * @return bool 
+     * @return bool
      */
     public function select_db($dbname) {
         $r = $this->_db->select_db($dbname);
@@ -85,15 +86,24 @@ class MysqliHelper {
         $counter = 0;
         while (true) {
             $result = call_user_func_array($callback, $arguments);
-            $errno = $this->_db->errno;
-            $error = $this->_db->error;
+            $errno  = $this->_db->errno;
+            $error  = $this->_db->error;
             if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
                 if (++$counter > $this->_retriesCount) {
                     throw new \Exception(sprintf('%s (%d)', $error, $errno));
                 }
                 else {
-                    Output::verbose(sprintf('#%d: Trying to reconnect...',
-                                    $counter), 1);
+                    Output::verbose(
+                        sprintf(
+                            "Method '%s' got arguments %s. Result: error %s, errno %d",
+                            $name, print_r($arguments, true), $error, $errno
+                        ), 3
+                    );
+                    Output::verbose(
+                        sprintf(
+                            '#%d: Trying to reconnect...', $counter
+                        ), 1
+                    );
                     $this->connect();
                 }
             }
@@ -118,21 +128,18 @@ class MysqliHelper {
     private function connect() {
         $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
         if ($this->_db->connect_errno) {
-            throw new \Exception(
-                    sprintf(
-                            'Database connect error occured: %s (%d)',
-                            $this->_db->connect_error, $this->_db->connect_errno
-                    )
-            );
+            throw new \Exception(sprintf(
+                'Database connect error occured: %s (%d)',
+                $this->_db->connect_error, $this->_db->connect_errno
+            ));
         }
         $this->_db->select_db($this->_databaseName);
         if (!$this->_db->set_charset("utf8")) {
-            throw new \Exception(
-                    sprintf(
-                            'SET CHARACTER SET utf8 error: %s', $this->db->error
-                    )
-            );
-        };
+            throw new \Exception(sprintf(
+                'SET CHARACTER SET utf8 error: %s', $this->db->error
+            ));
+        }
+        ;
         $this->executeCommands();
     }
 

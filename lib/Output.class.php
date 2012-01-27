@@ -6,6 +6,7 @@ namespace lib;
  * Output
  * Распечатывает сообщения
  */
+
 class Output {
 
     /**
@@ -15,8 +16,9 @@ class Output {
      * @param int $level Уровень вывода
      */
     static function verbose($msg, $level = 1) {
-        if (!Helper::get('quiet') && intval(Helper::get('verbose')) >= $level)
+        if (!Helper::get('quiet') && intval(Helper::get('verbose')) >= $level) {
             echo $msg, PHP_EOL;
+        }
     }
 
     /**
