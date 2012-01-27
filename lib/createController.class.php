@@ -2,37 +2,59 @@
 
 namespace lib;
 
+
 /**
  * createController
  * Создает ревизию и сохраняет ее
  * @author guyfawkes
  */
+
 class createController extends DatasetsController {
 
+    /**
+     * Массив запросов
+     * @var array
+     */
     protected $queries = array();
+    /**
+     * Объект подключения к временной БД
+     * @var \lib\MysqliHelper
+     */
     private $_tempDb = null;
 
+    /**
+     * Устанавливает подключение к временной БД
+     * @param MysqliHelper $tempDb
+     */
     public function setTempDb(MysqliHelper $tempDb) {
         $this->_tempDb = $tempDb;
     }
 
+    /**
+     * Создает миграцию, если появились отличия в структуре
+     * Если не указано подключение к временной БД, создает самостоятельно
+     * Если файл с номером текущей ревизии уже существует, подбирает номера
+     * После создания миграции меняет файлы маркера и списка ревизий
+     */
     public function runStrategy() {
         if (!$this->_tempDb) {
             $tempDb = Helper::getTmpDbObject();
             Helper::loadTmpDb($tempDb);
-        } else {
+        }
+        else {
             $tempDb = $this->_tempDb;
         }
         Output::verbose('Starting to search changes', 1);
         $diffObj = new dbDiff($this->db, $tempDb);
-        $diff = $diffObj->getDifference();
+        $diff    = $diffObj->getDifference();
         Output::verbose('Search of changes completed', 1);
         if (!empty($diff['up']) || !empty($diff['down'])) {
-            $revision = Helper::getLastRevision();
-            $file_exists = true;
+            $revision          = Helper::getLastRevision();
+            $file_exists       = true;
             $migrationFileName = '';
             while ($file_exists) {
-                $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP . "Migration{$revision}.class.php";
+                $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP .
+                                     "Migration{$revision}.class.php";
                 if (is_file($migrationFileName)) {
                     Output::verbose(
                         sprintf(
@@ -48,17 +70,21 @@ class createController extends DatasetsController {
             }
             Output::verbose(sprintf('Try to create revision %d', $revision), 2);
             $timestamp = Helper::writeRevisionFile($revision);
-            $content = Helper::createMigrationContent(
+            $content   = Helper::createMigrationContent(
                 $revision, $diff, $timestamp
             );
             file_put_contents($migrationFileName, $content);
             Output::verbose(
-                sprintf("Revision %d successfully created and saved in file %s",
-                    $revision, $migrationFileName), 1
+                sprintf(
+                    "Revision %d successfully created and saved in file %s",
+                    $revision, $migrationFileName
+                ), 1
             );
         }
         else {
-            Output::verbose('There are no changes in database structure now', 1);
+            Output::verbose(
+                'There are no changes in database structure now', 1
+            );
         }
     }
 

@@ -11,12 +11,11 @@ namespace lib;
 class gcController extends DatasetsController {
 
     public function runStrategy() {
-        $res = $this->db->query('SHOW DATABASES;');
-        $queries = array();
+        $res      = $this->db->query('SHOW DATABASES;');
+        $queries  = array();
         $patterns = array(
-            '/db_\S{32}/',
-            '/' . Helper::get('db') . '_\S{10}/',
-            '/test_mysqldiff-temp-[\d_]*/'
+            '/db_\S{32}/', '/' . Helper::get('db') . '_\S{10}/',
+            '/test_mysqldiff-temp-[\d_]*/', '/full_temp_db_\S{10}/'
         );
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             $flag = false;

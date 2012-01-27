@@ -161,17 +161,16 @@ class Helper {
     }
 
     /**
-     * TODO: прикрутить пул контроллеров
-     * Get available controller object
+     * Получить объект контроллера или цепочку ответственности
      *
-     * With no parameters supplied, returns "help" controller
+     * Без переданных параметров возвращает "help" контроллер
      *
-     * @param string $name Controller name
-     * @param array $args Optional controller arguments
+     * @param string $name Имя контроллера
+     * @param array $args Массив аргументов
      * @param \lib\MysqliHelper|null $db Объект подключения к БД
-     * @return AbstractController|ChainController Initialized controller, False if not found
+     * @return AbstractController|ChainController
      */
-    static function getController($name = null, $args = array(), MysqliHelper $db = null) {
+    public static function getController($name = null, $args = array(), MysqliHelper $db = null) {
         if (empty($name))
             return new helpController;
 

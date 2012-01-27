@@ -7,13 +7,14 @@ namespace lib;
  * Общий класс для контроллеров, связанных с датасетами
  * @author guyfawkes
  */
+
 abstract class DatasetsController extends AbstractController {
 
     protected $_datasetInfo = array();
 
     /**
      *
-     * @var ControllersChain 
+     * @var ControllersChain
      */
     protected $_chain = null;
 
@@ -21,9 +22,9 @@ abstract class DatasetsController extends AbstractController {
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
-                $arg_data = explode('=', $arg);
-                $param_name = str_replace('-', '', $arg_data[0]);
-                $param_value = str_replace('"', '', $arg_data[1]);
+                $arg_data          = explode('=', $arg);
+                $param_name        = str_replace('-', '', $arg_data[0]);
+                $param_value       = str_replace('"', '', $arg_data[1]);
                 $args[$param_name] = $param_value;
                 unset($args[$index]);
             }
@@ -31,7 +32,7 @@ abstract class DatasetsController extends AbstractController {
 
         if (!empty($args['datasets'])) {
             if (is_string($args['datasets'])) {
-                $datasets = explode(',', $args['datasets']);
+                $datasets         = explode(',', $args['datasets']);
                 $args['datasets'] = array();
                 foreach ($datasets as $dataset) {
                     $args['datasets'][trim($dataset)] = 1;
@@ -47,15 +48,16 @@ abstract class DatasetsController extends AbstractController {
 
     /**
      * Дает добавить к текущей цепи дополнительные элементы
-     * @param ControllersChain $chain 
+     * @param ControllersChain $chain
      */
     public function setChain(ControllersChain $chain) {
         $this->_chain = $chain;
     }
 
+
     /**
      * Переключает проверку внешних ключей
-     * @param int $state 
+     * @param int $state
      */
     public function toogleFK($state) {
         $state = (int) $state;
@@ -73,7 +75,7 @@ abstract class DatasetsController extends AbstractController {
 
     /**
      * Загружает данные датасетов
-     * @return array 
+     * @return array
      */
     protected function loadDatasetInfo() {
         $load_data = (empty($this->args['loadData']) xor true);
@@ -88,7 +90,7 @@ abstract class DatasetsController extends AbstractController {
     protected function multiQuery($query, $inTransaction = false) {
         $counter = 1;
         try {
-            $ret = $this->db->multi_query($query);
+            $ret  = $this->db->multi_query($query);
             $text = $this->db->error;
             $code = $this->db->errno;
             if (!$ret) {
@@ -96,40 +98,31 @@ abstract class DatasetsController extends AbstractController {
             }
             do {
                 $counter++;
-            }
-            while ($this->db->next_result());
+            } while ($this->db->next_result());
             $text = $this->db->error;
             $code = $this->db->errno;
             if ($code) {
                 throw new \Exception($text, $code);
             }
             $inTransaction && $this->db->query('COMMIT;');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $inTransaction && $this->db->query('ROLLBACK;');
             throw new \Exception("An error was occured: {$e->getMessage()} ({$e->getCode()}). Line: {$counter}");
         }
     }
 
     /**
-     * Удаляет все содержимое БД 
+     * Удаляет все содержимое БД
      * TODO: refactoring
      */
     protected function dropAllDBEntities() {
-        $res = $this->db->query('SHOW FULL TABLES;');
-        $queries = array();
-        while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            $what = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
-            $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
-        }
-        $res->free_result();
         $routines = array('FUNCTION', 'PROCEDURE');
         foreach ($routines as $routine) {
             $res = $this->db->query(
-                    sprintf(
-                            "SHOW %s STATUS WHERE Db='%s'", $routine,
-                            $this->db->getDatabaseName()
-                    )
+                sprintf(
+                    "SHOW %s STATUS WHERE Db='%s'", $routine,
+                    $this->db->getDatabaseName()
+                )
             );
             while ($row = $res->fetch_array(MYSQLI_NUM)) {
                 $queries[$row[1]] = sprintf("DROP %s %s;", $routine, $row[1]);
@@ -141,12 +134,31 @@ abstract class DatasetsController extends AbstractController {
             $queries[$row[0]] = sprintf("DROP TRIGGER %s;", $row[0]);
         }
         $res->free_result();
+        $res     = $this->db->query('SHOW FULL TABLES;');
+        $queries = array();
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
+            $what             = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
+            $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
+        }
+        $res->free_result();
         if (!empty($queries)) {
-            Output::verbose("Views and tables and routines are dropping now", 1);
-            Output::verbose(sprintf("--- %s",
-                            implode("\n--- ", array_keys($queries))), 2);
+            Output::verbose("Views and tables and routines are dropping now", 1
+            );
+            Output::verbose(
+                sprintf(
+                    "--- %s", implode("\n--- ", array_keys($queries))
+                ), 2
+            );
             $this->multiQuery(implode('', $queries));
         }
+    }
+
+    /**
+     * Получить цепочку ответственности
+     * @return \lib\ControllersChain
+     */
+    public function getChain() {
+        return $this->_chain;
     }
 
 }

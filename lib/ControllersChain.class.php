@@ -7,6 +7,7 @@ namespace lib;
  * Цепочка обязанностей
  * @author guyfawkes
  */
+
 class ControllersChain implements IController {
 
     /**
@@ -26,7 +27,7 @@ class ControllersChain implements IController {
 
     /**
      * Следующий элемент цепочки
-     * @var ControllersChain 
+     * @var ControllersChain
      */
     protected $_next = null;
 
@@ -36,7 +37,7 @@ class ControllersChain implements IController {
 
     /**
      * Установить выполняемый в элементе цепочки контроллер
-     * @param DatasetsController $controller 
+     * @param DatasetsController $controller
      */
     public function setController(DatasetsController $controller) {
         $this->_controller = $controller;
@@ -44,7 +45,7 @@ class ControllersChain implements IController {
 
     /**
      * Вернуть контроллер
-     * @return DatasetsController 
+     * @return DatasetsController
      */
     public function getController() {
         return $this->_controller;
@@ -64,11 +65,30 @@ class ControllersChain implements IController {
             if ($this->_next) {
                 $this->_next->runStrategy($state);
             }
+            Output::verbose(
+                sprintf('Run %s', get_class($this->_controller)), 3
+            );
             $this->_controller->runStrategy();
             if ($state == self::FK_ON) {
                 $this->_controller->toogleFK($state);
             }
         }
+    }
+
+    /**
+     * Установить следующий элемент цепочки
+     * @param \lib\ControllersChain $next
+     */
+    public function setNext(ControllersChain $next) {
+        $this->_next = $next;
+    }
+
+    /**
+     * Получить следующий элемент цепочки
+     * @return \lib\ControllersChain
+     */
+    public function getNext() {
+        return $this->_next;
     }
 
 }

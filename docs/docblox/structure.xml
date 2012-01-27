@@ -2096,7 +2096,7 @@ self::$_migrations = array(
         <name>runStrategy</name>
       </method>
       <method final="false" abstract="false" static="false" visibility="private" line="38" package="Mysql Migration Manager">
-        <name>draw_text_table</name>
+        <name>drawTextTable</name>
         <docblock>
           <description>&#x41E;&#x442;&#x440;&#x438;&#x441;&#x43E;&#x432;&#x44B;&#x432;&#x430;&#x435;&#x442; ASCII-&#x442;&#x430;&#x431;&#x43B;&#x438;&#x446;&#x443;</description>
           <long-description/>
