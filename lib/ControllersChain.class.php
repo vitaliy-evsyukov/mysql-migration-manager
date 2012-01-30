@@ -61,14 +61,14 @@ class ControllersChain implements IController {
             if ($state === self::FK_OFF) {
                 $this->_controller->toogleFK($state);
             }
+            Output::verbose(
+                sprintf('Run %s', Helper::getActionName($this->_controller)), 3
+            );
+            $this->_controller->runStrategy();
             $state++;
             if ($this->_next) {
                 $this->_next->runStrategy($state);
             }
-            Output::verbose(
-                sprintf('Run %s', get_class($this->_controller)), 3
-            );
-            $this->_controller->runStrategy();
             if ($state == self::FK_ON) {
                 $this->_controller->toogleFK($state);
             }

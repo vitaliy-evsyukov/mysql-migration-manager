@@ -93,12 +93,13 @@ class MysqliHelper {
                     throw new \Exception(sprintf('%s (%d)', $error, $errno));
                 }
                 else {
+                    /*
                     Output::verbose(
                         sprintf(
                             "Method '%s' got arguments %s. Result: error %s, errno %d",
                             $name, print_r($arguments, true), $error, $errno
                         ), 3
-                    );
+                    );*/
                     Output::verbose(
                         sprintf(
                             '#%d: Trying to reconnect...', $counter

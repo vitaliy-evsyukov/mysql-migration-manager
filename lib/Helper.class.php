@@ -18,37 +18,39 @@ class Helper {
      * @var array
      */
     static protected $config_tpl = array(
-        'config' => array('short' => 'c', 'req_val'),
-        'host' => array('req_val'),
-        'user' => array('req_val'),
-        'password' => array('req_val'),
-        'db' => array('req_val'),
-        'savedir' => array('req_val'),
-        'verbose' => array('req_val'),
-        'versionfile' => array('req_val'),
-        'quiet' => array('short' => 'q', 'no_val'),
+        'config'         => array('short' => 'c', 'req_val'),
+        'host'           => array('req_val'),
+        'user'           => array('req_val'),
+        'password'       => array('req_val'),
+        'db'             => array('req_val'),
+        'savedir'        => array('req_val'),
+        'verbose'        => array('req_val'),
+        'versionfile'    => array('req_val'),
+        'quiet'          => array('short' => 'q', 'no_val'),
         'version_marker' => array('req_val'),
-        'tmp_host' => array('req_val'),
-        'tmp_user' => array('req_val'),
-        'tmp_password' => array('req_val'),
-        'cachedir' => array('req_val'),
-        'schemadir' => array('req_val')
+        'tmp_host'       => array('req_val'),
+        'tmp_user'       => array('req_val'),
+        'tmp_password'   => array('req_val'),
+        'cachedir'       => array('req_val'),
+        'schemadir'      => array('req_val'),
+        'prefix'         => array('req_val')
     );
     /**
      * @var array
      */
     static protected $config = array(
-        'config' => null, //path to alternate config file
-        'host' => null,
-        'user' => null,
-        'password' => null,
-        'db' => null,
-        'savedir' => null,
-        'cachedir' => null,
-        'schemadir' => null,
-        'verbose' => null,
-        'versionfile' => null,
-        'version_marker' => null
+        'config'         => null, //path to alternate config file
+        'host'           => null,
+        'user'           => null,
+        'password'       => null,
+        'db'             => null,
+        'savedir'        => null,
+        'cachedir'       => null,
+        'schemadir'      => null,
+        'verbose'        => null,
+        'versionfile'    => null,
+        'version_marker' => null,
+        'prefix'         => null
     );
     /**
      * @var array
@@ -85,7 +87,13 @@ class Helper {
      * @return array
      */
     static function parseCommandLineArgs(array $args) {
-        $parsed_args = array('options' => array(), 'command' => array('name' => null, 'args' => array()));
+        $parsed_args = array(
+            'options' => array(),
+            'command' => array(
+                'name' => null,
+                'args' => array()
+            )
+        );
 
         array_shift($args);
         $opts = GetOpt::extractLeft($args, self::$config_tpl);
@@ -93,12 +101,14 @@ class Helper {
             Output::error('mmm: ' . reset(GetOpt::errors()));
             exit(1);
         }
-        else
+        else {
             $parsed_args['options'] = $opts;
+        }
 
         //if we didn't traverse the full array just now, move on to command parsing
-        if (!empty($args))
+        if (!empty($args)) {
             $parsed_args['command']['name'] = array_shift($args);
+        }
 
         //consider any remaining arguments as command arguments
         $parsed_args['command']['args'] = $args;
@@ -118,41 +128,51 @@ class Helper {
      *            |- dataset2 -> SQL2
      * </pre>
      * @static
-     * @param array $datasets Массив имен датасетов
-     * @param bool $loadDatasetContent Загружать ли содержимое SQL датасетов
+     * @param array $datasets           Массив имен датасетов
+     * @param bool  $loadDatasetContent Загружать ли содержимое SQL датасетов
      * @return array
      * @throws \Exception
      */
-    public static function getDatasetInfo(array $datasets, $loadDatasetContent = false) {
+    public static function getDatasetInfo(
+        array $datasets, $loadDatasetContent = false
+    ) {
         if (empty(self::$_datasets)) {
             $dsdir = DIR . Helper::get('datasetsdir');
             // получить данные
             if (!is_dir($dsdir) || !is_readable($dsdir)) {
-                throw new \Exception(
-                    sprintf("Directory %s with datasets is not exists",
-                        $dsdir)
-                );
+                throw new \Exception(sprintf(
+                    "Directory %s with datasets is not exists", $dsdir
+                ));
             }
 
             $handle = opendir($dsdir);
             chdir($dsdir);
 
             while ($dir = readdir($handle)) {
-                if (isset($datasets[$dir]) && is_dir($dir) && is_readable($dir)) {
+                if (isset($datasets[$dir]) && is_dir($dir) && is_readable($dir)
+                ) {
                     $tablesFileName = $dir . DIR_SEP . Helper::get('reqtables');
-                    if (is_file($tablesFileName) && is_readable($tablesFileName)) {
-                        self::$_datasets['reqs'][$dir] = json_decode(file_get_contents($tablesFileName),
-                            true);
-                        $datafile = $dir . DIR_SEP . self::get('reqdata');
-                        if ($loadDatasetContent && is_file($datafile) && is_readable($datafile)) {
-                            self::$_datasets['sqlContent'][$dir] = file_get_contents($datafile);
+                    if (is_file($tablesFileName) && is_readable($tablesFileName)
+                    ) {
+                        self::$_datasets['reqs'][$dir] = json_decode(
+                            file_get_contents($tablesFileName), true
+                        );
+                        $datafile                      =
+                            $dir . DIR_SEP . self::get('reqdata');
+                        if ($loadDatasetContent && is_file($datafile) &&
+                            is_readable($datafile)
+                        ) {
+                            self::$_datasets['sqlContent'][$dir] =
+                                file_get_contents($datafile);
                         }
                     }
                 }
             }
 
             closedir($handle);
-            if (empty(self::$_datasets) || ($loadDatasetContent && empty(self::$_datasets['sqlContent']))) {
+            if (empty(self::$_datasets) ||
+                ($loadDatasetContent && empty(self::$_datasets['sqlContent']))
+            ) {
                 throw new \Exception('Data for deploy not found');
             }
         }
@@ -162,19 +182,21 @@ class Helper {
 
     /**
      * Получить объект контроллера или цепочку ответственности
-     *
      * Без переданных параметров возвращает "help" контроллер
-     *
-     * @param string $name Имя контроллера
-     * @param array $args Массив аргументов
-     * @param \lib\MysqliHelper|null $db Объект подключения к БД
+     * @param string                 $name Имя контроллера
+     * @param array                  $args Массив аргументов
+     * @param \lib\MysqliHelper|null $db   Объект подключения к БД
      * @return AbstractController|ChainController
      */
-    public static function getController($name = null, $args = array(), MysqliHelper $db = null) {
-        if (empty($name))
+    public static function getController(
+        $name = null, $args = array(), MysqliHelper $db = null
+    ) {
+        if (empty($name)) {
             return new helpController;
+        }
 
-        $ctrlName = 'lib\\' . $name . 'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
+        $ctrlName = 'lib\\' . $name .
+                    'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
         try {
             if (!$db) {
                 $db = self::getDbObject();
@@ -188,12 +210,12 @@ class Helper {
                 return $chain;
             }
             return $ctrl;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $message = $e->getMessage();
             if ($e->getCode() === NO_COMMAND) {
-                $message = sprintf("%s\nCommand %s not recognized", $message,
-                    $name);
+                $message = sprintf(
+                    "%s\nCommand %s not recognized", $message, $name
+                );
             }
             throw new \Exception($message, $e->getCode());
         }
@@ -201,12 +223,14 @@ class Helper {
 
     /**
      * Возвращает связанные со списком таблицы
-     * @param array $refs Хеш, где ключ - имя таблицы, значение - хеш вида имя_связанной_таблицы => 1
+     * @param array $refs       Хеш, где ключ - имя таблицы, значение - хеш вида имя_связанной_таблицы => 1
      * @param array $tablesList Хеш вида имя_таблицы => 1
      * @return array Связанные таблицы, не входящие в список
      */
-    public static function getRefs(array $refs = array(), array $tablesList = array()) {
-        $res = array();
+    public static function getRefs(
+        array $refs = array(), array $tablesList = array()
+    ) {
+        $res        = array();
         $existsRefs = array_intersect_key($refs, $tablesList);
 
         $closure = function ($arr) use(&$closure, &$res, $refs) {
@@ -228,16 +252,17 @@ class Helper {
     /**
      * Выбирает базу данных и создает ее, если не было
      * @param MysqliHelper $connection
-     * @param string $dbName
+     * @param string       $dbName
      */
     public static function prepareDb(MysqliHelper $connection, $dbName) {
-        $res = $connection->query('SHOW DATABASES;');
+        $res  = $connection->query('SHOW DATABASES;');
         $flag = false;
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             if ($row[0] === $dbName) {
                 Output::verbose(
-                    sprintf('Found database %s in current databases',
-                        $dbName), 2
+                    sprintf(
+                        'Found database %s in current databases', $dbName
+                    ), 2
                 );
                 $flag = true;
                 break;
@@ -245,7 +270,9 @@ class Helper {
         }
         if (!$flag) {
             Output::verbose(sprintf('Create database %s', $dbName), 2);
-            $connection->query("CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;");
+            $connection->query(
+                "CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;"
+            );
         }
         $connection->select_db($dbName);
     }
@@ -264,9 +291,11 @@ class Helper {
             }
         }
         else {
-            if ($db)
+            if ($db) {
                 return $db;
-            $db = new MysqliHelper($conf['host'], $conf['user'], $conf['password']);
+            }
+            $db =
+                new MysqliHelper($conf['host'], $conf['user'], $conf['password']);
             self::prepareDb($db, $conf['db']);
             return $db;
         }
@@ -290,14 +319,16 @@ class Helper {
         foreach ($dirs as $dir) {
             if (isset(self::$config[$dir])) {
                 $dirname = DIR . self::$config[$dir];
-            } else {
+            }
+            else {
                 $dirname = $dir;
-                $dir = basename(rtrim($dir, '/'));
+                $dir     = basename(rtrim($dir, '/'));
             }
             if (!is_dir($dirname)) {
                 mkdir($dirname, 0775, true);
                 Output::verbose(
-                    sprintf('Created %s directory in path: %s', $dir, $dirname), 3
+                    sprintf('Created %s directory in path: %s', $dir, $dirname),
+                    3
                 );
             }
         }
@@ -324,9 +355,9 @@ class Helper {
         if (empty($tmpname)) {
             $tmpname = $config['db'] . '_' . self::getCurrentVersion();
         }
-
-        $c = array();
-        $params = array('host', 'password', 'user');
+        $tmpname = sprintf('%s_%s', self::get('prefix'), $tmpname);
+        $c       = array();
+        $params  = array('host', 'password', 'user');
         foreach ($params as $p) {
             $c[$p] = $config['tmp_' . $p];
         }
@@ -334,27 +365,33 @@ class Helper {
         unset($config);
         $tmpdb = self::getDbObject($c);
         if (!$tmpdb->set_charset("utf8")) {
-            throw new \Exception(sprintf("SET CHARACTER SET utf8 error: %s\n",
-                $tmpdb->error));
+            throw new \Exception(sprintf(
+                "SET CHARACTER SET utf8 error: %s\n", $tmpdb->error
+            ));
         }
-        register_shutdown_function(function() use($c, $tmpdb) {
-            $tmpdb->query("DROP DATABASE `{$c['db']}`");
-            Output::verbose("Temporary database {$c['db']} was deleted",
-                2);
-        });
+        register_shutdown_function(
+            function() use($c, $tmpdb) {
+                $tmpdb->query("DROP DATABASE `{$c['db']}`");
+                Output::verbose(
+                    "Temporary database {$c['db']} was deleted", 2
+                );
+            }
+        );
         return $tmpdb;
     }
 
     /**
      * @static
-     *
+
      */
     static function initVersionTable() {
-        $db = self::getDbObject();
+        $db  = self::getDbObject();
         $tbl = self::get('versiontable');
         $rev = self::getCurrentVersion();
         $db->query("DROP TABLE IF EXISTS `{$tbl}`");
-        $db->query("CREATE TABLE `{$tbl}` (`rev` BIGINT(20) UNSIGNED) ENGINE=MyISAM");
+        $db->query(
+            "CREATE TABLE `{$tbl}` (`rev` BIGINT(20) UNSIGNED) ENGINE=MyISAM"
+        );
         $db->query("TRUNCATE `{$tbl}`");
         $db->query("INSERT INTO `{$tbl}` VALUES({$rev})");
     }
@@ -374,8 +411,8 @@ class Helper {
      * @return mixed|string
      */
     static function getSqlForTableCreation($tname, $db) {
-        $tres = $db->query("SHOW CREATE TABLE `{$tname}`");
-        $trow = $tres->fetch_array(MYSQLI_NUM);
+        $tres  = $db->query("SHOW CREATE TABLE `{$tname}`");
+        $trow  = $tres->fetch_array(MYSQLI_NUM);
         $query = preg_replace('#AUTO_INCREMENT=\S+#is', '', $trow[1]);
         $query = preg_replace("#\n\s*#", ' ', $query);
         $query = addcslashes($query, '\\\''); //escape slashes and single quotes
@@ -390,27 +427,29 @@ class Helper {
     static function getDatabaseVersion(Mysqli $db) {
         $tbl = self::get('versiontable');
         $res = $db->query("SELECT max(rev) FROM `{$tbl}`");
-        if ($res === false)
+        if ($res === false) {
             return false;
+        }
         $row = $res->fetch_array(MYSQLI_NUM);
         return intval($row[0]);
     }
 
     /**
      * Get all revisions that have been applied to the database
-     *
      * @param MysqliHelper $db Database instance
      * @return array|bool List of applied revisions, False on error
      */
     static function getDatabaseVersions(MysqliHelper $db) {
         $result = array();
-        $tbl = self::get('versiontable');
-        $res = $db->query("SELECT rev FROM `{$tbl}` ORDER BY rev ASC");
-        if ($res === false)
+        $tbl    = self::get('versiontable');
+        $res    = $db->query("SELECT rev FROM `{$tbl}` ORDER BY rev ASC");
+        if ($res === false) {
             return false;
+        }
 
-        while ($row = $res->fetch_array(MYSQLI_NUM))
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
             $result[] = $row[0];
+        }
 
         return $result;
     }
@@ -418,9 +457,11 @@ class Helper {
     /**
      * Выполняет запросы с отладкой.
      * @param \lib\MysqliHelper $db
-     * @param array $queries
+     * @param array             $queries
      */
-    public static function _debug_queryMultipleDDL(MysqliHelper $db, array $queries) {
+    public static function _debug_queryMultipleDDL(
+        MysqliHelper $db, array $queries
+    ) {
         foreach ($queries as $table => $stmts) {
             Output::verbose(sprintf('Executing query for %s', $table), 2);
             /*
@@ -436,16 +477,16 @@ class Helper {
                  * эти операторы, при этом возможны пустые строки
                  */
                 $ds = mb_stripos($queries, 'DELIMITER ;;');
-                $l = mb_strlen('DELIMITER ;;');
+                $l  = mb_strlen('DELIMITER ;;');
                 if ($ds !== false) {
                     $offset = $ds + $l;
-                    $df = mb_stripos($queries, 'DELIMITER ;', $offset);
+                    $df     = mb_stripos($queries, 'DELIMITER ;', $offset);
                     if ($df !== false) {
-                        $tmp = array(
+                        $tmp     = array(
                             mb_substr($queries, $offset, $df - $offset)
                         );
-                        $before = mb_substr($queries, 0, $offset - $l);
-                        $after = mb_substr($queries, $df + $l - 1);
+                        $before  = mb_substr($queries, 0, $offset - $l);
+                        $after   = mb_substr($queries, $df + $l - 1);
                         $queries = array_merge(
                             explode(";\n", $before), $tmp,
                             explode(";\n", $after)
@@ -463,8 +504,7 @@ class Helper {
                     if (!$db->query($query)) {
                         Output::error(
                             sprintf(
-                                '   %s: %s (%d)', $query, $db->error,
-                                $db->errno
+                                '   %s: %s (%d)', $query, $db->error, $db->errno
                             )
                         );
                     }
@@ -476,21 +516,22 @@ class Helper {
     /**
      * Выполняет множественные запросы DDL
      * @param \lib\MysqliHelper $db
-     * @param string $queries
+     * @param string            $queries
      */
     public static function queryMultipleDDL(MysqliHelper $db, $queries) {
         $queries = str_ireplace(
-            "DELIMITER ;\n", '',
-            str_ireplace(
-                "DELIMITER ;;\n", '', $queries
-            )
+            "DELIMITER ;\n", '', str_ireplace(
+                               "DELIMITER ;;\n", '', $queries
+                           )
         );
         $queries = str_replace(';;', ';', $queries);
-        $start = microtime(1);
-        $ret = $db->multi_query($queries);
+        $start   = microtime(1);
+        $ret     = $db->multi_query($queries);
         Output::verbose(
-            sprintf('Started multiple DDL execution: multi_query time: %f',
-                (microtime(1) - $start)), 2
+            sprintf(
+                'Started multiple DDL execution: multi_query time: %f',
+                (microtime(1) - $start)
+            ), 2
         );
         $text = $db->error;
         $code = $db->errno;
@@ -504,11 +545,12 @@ class Helper {
             if ($result) {
                 $result->free();
             }
-        }
-        while ($db->next_result());
+        } while ($db->next_result());
         Output::verbose(
-            sprintf('Multiple DDL execution finished: result set looping time: %f',
-                (microtime(1) - $start)), 2
+            sprintf(
+                'Multiple DDL execution finished: result set looping time: %f',
+                (microtime(1) - $start)
+            ), 2
         );
         $text = $db->error;
         $code = $db->errno;
@@ -526,16 +568,17 @@ class Helper {
      */
     public static function getInitialRefs($data) {
         $dbName = 'db_' . md5(time());
-        $db = self::getTmpDbObject($dbName);
+        $db     = self::getTmpDbObject($dbName);
         $db->query("SET foreign_key_checks = 0;");
-        if ((int)self::get('verbose') === 3) {
+        if ((int) self::get('verbose') === 3) {
             self::_debug_queryMultipleDDL($db, $data);
-        } else {
+        }
+        else {
             self::queryMultipleDDL($db, implode("\n", $data));
         }
         $db->query("SET foreign_key_checks = 1;");
 
-        $params = array('host', 'user', 'password');
+        $params     = array('host', 'user', 'password');
         $params_str = array();
         foreach ($params as $param) {
             $value = Helper::get('tmp_' . $param);
@@ -543,14 +586,13 @@ class Helper {
                 $params_str[] = "--{$param}={$value}";
             }
         }
-        $start = microtime(1);
+        $start   = microtime(1);
         $command = sprintf(
-            "%s %s  --no-old-defs --refs %s",
-            self::get('mysqldiff_command'), implode(' ', $params_str),
-            $dbName
+            "%s %s  --no-old-defs --refs %s", self::get('mysqldiff_command'),
+            implode(' ', $params_str), $db->getDatabaseName()
         );
-        $output = array();
-        $status = -1;
+        $output  = array();
+        $status  = -1;
         exec($command, $output, $status);
         /*
         if (empty($output)) {
@@ -560,8 +602,10 @@ class Helper {
             );
         }*/
         Output::verbose(
-            sprintf('References search completed in: %f seconds',
-                (microtime(1) - $start)), 3
+            sprintf(
+                'References search completed in: %f seconds',
+                (microtime(1) - $start)
+            ), 3
         );
         $result = array();
         if (!empty($output)) {
@@ -570,7 +614,7 @@ class Helper {
                 if (empty($line)) {
                     continue;
                 }
-                $tables = explode('|', $line);
+                $tables    = explode('|', $line);
                 $tableName = array_shift($tables);
                 foreach ($tables as $table) {
                     $result[$tableName][$table] = 1;
@@ -588,9 +632,9 @@ class Helper {
     public static function getTimeline(array $tablesList = array()) {
         $migrations = Registry::getAllMigrations();
         if (!empty($tablesList)) {
-            $refs = Registry::getAllRefs();
+            $refs        = Registry::getAllRefs();
             $tablesToAdd = self::getRefs($refs, $tablesList);
-            $tablesList = array_merge($tablesList, $tablesToAdd);
+            $tablesList  = array_merge($tablesList, $tablesToAdd);
         }
         else {
             $tablesList = $migrations;
@@ -608,13 +652,18 @@ class Helper {
     /**
      * Выполняет миграцию
      * @static
-     * @param $revision Номер ревизии
-     * @param \lib\MysqliHelper $db Объект соединения
-     * @param string $direction Направление (Up или Down)
-     * @param array $tablesList Список таблиц, операторы которых необходимо выполнить. Если пуст, выполняются все.
+     * @param                   $revision   Номер ревизии
+     * @param \lib\MysqliHelper $db         Объект соединения
+     * @param string            $direction  Направление (Up или Down)
+     * @param array             $tablesList Список таблиц, операторы которых необходимо выполнить. Если пуст, выполняются все.
      */
-    public static function applyMigration($revision, MysqliHelper $db, $direction = 'Up', array $tablesList = array()) {
-        $classname = str_replace('/', '\\', self::get('savedir')) . '\Migration' . $revision;
+    public static function applyMigration(
+        $revision, MysqliHelper $db, $direction = 'Up',
+        array $tablesList = array()
+    ) {
+        $classname =
+            str_replace('/', '\\', self::get('savedir')) . '\Migration' .
+            $revision;
         $migration = new $classname($db);
         $migration->setTables($tablesList);
         $method = 'run' . $direction;
@@ -627,13 +676,13 @@ class Helper {
      */
     public static function getAllMigrations() {
         self::$_revisionLines = array();
-        self::$_currRevision = -1;
-        $migrationsDir = DIR . self::get('savedir') . DIR_SEP;
-        $migrationsListFile = $migrationsDir . self::get('versionfile');
-        $markerFile = $migrationsDir . self::get('version_marker');
-        $result = array(
+        self::$_currRevision  = -1;
+        $migrationsDir        = DIR . self::get('savedir') . DIR_SEP;
+        $migrationsListFile   = $migrationsDir . self::get('versionfile');
+        $markerFile           = $migrationsDir . self::get('version_marker');
+        $result               = array(
             'migrations' => array(),
-            'data' => array()
+            'data'       => array()
         );
         if (is_file($markerFile) && is_readable($markerFile)) {
             $handler = fopen($markerFile, 'r');
@@ -644,7 +693,7 @@ class Helper {
                         continue;
                     }
                     if ($line[0] === '#') {
-                        self::$_currRevision = (int)substr($line, 1);
+                        self::$_currRevision = (int) substr($line, 1);
                         break;
                     }
                 }
@@ -660,33 +709,34 @@ class Helper {
                         continue;
                     }
                     self::$_revisionLines[] = $line;
-                    $parts = explode('|', $line);
+                    $parts                  = explode('|', $line);
                     // TODO: упростить структуру данных
-                    $migrationId = (int)$parts[0];
-                    $time = (int)$parts[2];
-                    $result['migrations'][] = $migrationId;
+                    $migrationId                  = (int) $parts[0];
+                    $time                         = (int) $parts[2];
+                    $result['migrations'][]       = $migrationId;
                     $result['data'][$migrationId] = array(
                         'date' => $parts[1],
                         'time' => $time,
                         'revn' => $migrationId
                     );
-                    $result['timestamps'][$time] = $migrationId;
-                    self::$_lastRevision = $migrationId;
+                    $result['timestamps'][$time]  = $migrationId;
+                    self::$_lastRevision          = $migrationId;
                 }
                 fclose($handler);
             }
             else {
-                throw new \Exception(sprintf("Failed to open file %s",
-                    $migrationsListFile));
+                throw new \Exception(sprintf(
+                    "Failed to open file %s", $migrationsListFile
+                ));
             }
         }
         if (self::$_currRevision === -1) {
             self::$_currRevision = self::$_lastRevision;
         }
         usort(
-            $result['migrations'],
-            function ($a, $b) use ($result) {
-                return ($result['data'][$a]['time'] > $result['data'][$b]['time']) ? 1 : -1;
+            $result['migrations'], function ($a, $b) use ($result) {
+                return ($result['data'][$a]['time'] >
+                        $result['data'][$b]['time']) ? 1 : -1;
             }
         );
         return $result;
@@ -733,20 +783,22 @@ class Helper {
      * @return int Таймстаймп для ревизии
      */
     public static function writeRevisionFile($revision) {
-        $path = DIR . self::get('savedir') . DIR_SEP;
+        $path     = DIR . self::get('savedir') . DIR_SEP;
         $filename = $path . self::get('versionfile');
-        $marker = $path . self::get('version_marker');
+        $marker   = $path . self::get('version_marker');
         if (is_file($filename) && !is_writable($filename)) {
-            throw new \Exception(sprintf("File %s is write-protected", $filename));
+            throw new \Exception(sprintf(
+                "File %s is write-protected", $filename
+            ));
         }
-        $ts = time();
+        $ts    = time();
         $lines = self::getRevisionLines();
         //print_r($lines);
         //var_dump($revision);
         $b = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
-            if ((int)$data[0] === $revision) {
+            if ((int) $data[0] === $revision) {
                 $b = true;
             }
         }
@@ -758,8 +810,9 @@ class Helper {
         self::$_revisionLines = $lines;
         file_put_contents($filename, implode("\n", $lines));
         if (is_file($marker) && !is_writable($marker)) {
-            throw new \Exception(sprintf('Cannot write revision marker to file: %s',
-                $marker));
+            throw new \Exception(sprintf(
+                'Cannot write revision marker to file: %s', $marker
+            ));
         }
         file_put_contents($marker, "#{$revision}");
         return $ts;
@@ -770,11 +823,11 @@ class Helper {
      * @return array
      */
     static function _getAllMigrations() {
-        $dir = self::get('savedir');
-        $files = glob($dir . '/Migration*.php');
+        $dir    = self::get('savedir');
+        $files  = glob($dir . '/Migration*.php');
         $result = array();
         foreach ($files as $file) {
-            $key = preg_replace('#[^0-9]#is', '', $file);
+            $key      = preg_replace('#[^0-9]#is', '', $file);
             $result[] = $key;
         }
         sort($result, SORT_NUMERIC);
@@ -788,14 +841,15 @@ class Helper {
     public static function loadTmpDb(MysqliHelper $db) {
         Output::verbose("Deploy temporary database", 1);
         $db->setCommand("SET foreign_key_checks = 0;");
-        $timeline = self::getTimeline();
+        $timeline       = self::getTimeline();
         $usedMigrations = array();
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
                 $start = microtime(1);
                 if (is_int($revision)) {
-                    $what = sprintf("migration %d for table %s", $revision,
-                        $tablename);
+                    $what = sprintf(
+                        "migration %d for table %s", $revision, $tablename
+                    );
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$revision])) {
                         self::applyMigration($revision, $db);
@@ -805,14 +859,15 @@ class Helper {
                 else {
                     $what = sprintf("sql for %s", $tablename);
                     // это SQL-запрос
-                    self::_debug_queryMultipleDDL($db, array($tablename => $revision));
+                    self::_debug_queryMultipleDDL(
+                        $db, array($tablename => $revision)
+                    );
                 }
                 $stop = microtime(1);
-                $t = $stop - $start;
+                $t    = $stop - $start;
                 if (!Helper::get('quiet')) {
                     Output::verbose(
-                        sprintf('Completed %s; time: %f seconds', $what, $t),
-                        3
+                        sprintf('Completed %s; time: %f seconds', $what, $t), 3
                     );
                 }
             }
@@ -825,15 +880,17 @@ class Helper {
     /**
      * Рекурсивно превращает массив любой вложенности в строку
      * @static
-     * @param array $a Массив
-     * @param int $level Уровень начального отступа
-     * @param bool $nowdoc Необходимо ли использовать Nowdoc или делать простые строки
+     * @param array  $a      Массив
+     * @param int    $level  Уровень начального отступа
+     * @param bool   $nowdoc Необходимо ли использовать Nowdoc или делать простые строки
      * @param string $spacer Строка, которой отбивается отступ
      * @return string
      */
-    public static function recursiveImplode(array $a, $level = 1, $nowdoc = true, $spacer = ' ') {
+    public static function recursiveImplode(
+        array $a, $level = 1, $nowdoc = true, $spacer = ' '
+    ) {
         $result = array();
-        $depth = str_repeat($spacer, $level * 3);
+        $depth  = str_repeat($spacer, $level * 3);
         $depth2 = str_repeat($spacer, ($level - 1) * 3);
         foreach ($a as $k => $v) {
             $tmp = $depth;
@@ -841,7 +898,9 @@ class Helper {
                 $tmp = sprintf("%s'%s' => ", $depth, $k);
             }
             if (is_array($v)) {
-                $tmp .= self::recursiveImplode($v, ($level + 1), $nowdoc, $spacer);
+                $tmp .= self::recursiveImplode(
+                    $v, ($level + 1), $nowdoc, $spacer
+                );
             }
             else {
                 if (is_string($v)) {
@@ -849,7 +908,8 @@ class Helper {
                         $tmp .= "<<<'EOT'\n";
                         $tmp .= $v;
                         $tmp .= "\nEOT\n";
-                    } else {
+                    }
+                    else {
                         $tmp .= "'{$v}'";
                     }
                 }
@@ -872,10 +932,12 @@ class Helper {
         $result = array();
         foreach ($a as $direction => $data) {
             foreach ($data as $table => $queries) {
-                $result['tmp'][] = "'$table' => array(\n\"" . implode("\",\n\"",
-                    $queries) . "\"\n)";
+                $result['tmp'][] = "'$table' => array(\n\"" . implode(
+                    "\",\n\"", $queries
+                ) . "\"\n)";
             }
-            $result[$direction] = "array(\n" . implode(",\n", $result['tmp']) . "\n)";
+            $result[$direction] =
+                "array(\n" . implode(",\n", $result['tmp']) . "\n)";
             unset($result['tmp']);
         }
         return $result;
@@ -883,28 +945,29 @@ class Helper {
 
     /**
      * Создает класс миграции
-     * @param int $version Ревизия
-     * @param array $diff Массив различий
-     * @param int $ts timestamp
-     * @param string $tpl Шаблон класса
+     * @param int    $version Ревизия
+     * @param array  $diff    Массив различий
+     * @param int    $ts      timestamp
+     * @param string $tpl     Шаблон класса
      * @return string Контент файла класса
      */
-    public static function createMigrationContent($version, array $diff, $ts, $tpl = 'tpl/migration.tpl') {
-        $version = (int)$version;
+    public static function createMigrationContent(
+        $version, array $diff, $ts, $tpl = 'tpl/migration.tpl'
+    ) {
+        $version = (int) $version;
         $content = file_get_contents(DIR . $tpl);
-        $search = array('revision', 'up', 'down', 'meta', 'ns');
+        $search  = array('revision', 'up', 'down', 'meta', 'ns');
 
         $metadata = array(
             'timestamp' => $ts,
-            'tables' => $diff['tables']['used'],
-            'refs' => $diff['tables']['refs'],
-            'revision' => $version
+            'tables'    => $diff['tables']['used'],
+            'refs'      => $diff['tables']['refs'],
+            'revision'  => $version
         );
         unset($diff['tables']);
 
         $replace = array(
-            $version,
-            self::recursiveImplode($diff['up'], 2),
+            $version, self::recursiveImplode($diff['up'], 2),
             self::recursiveImplode($diff['down'], 2),
             self::recursiveImplode($metadata, 2),
             str_replace('/', '\\', self::get('savedir'))
@@ -921,18 +984,22 @@ class Helper {
      * @return array Массив запросов
      */
     public static function parseSchemaFiles(array $includeTables = array()) {
-        $queries = array();
+        $queries   = array();
         $schemadir = DIR . Helper::get('schemadir');
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
-            Output::verbose(sprintf('There are no schema files in %s', $schemadir), 1);
+            Output::verbose(
+                sprintf('There are no schema files in %s', $schemadir), 1
+            );
         }
         else {
-            $dirs = array($schemadir);
-            $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
-            $patternView = '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
-            $patternRoutine = '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
-            $exclude = !empty($includeTables);
-            $views = array();
+            $dirs           = array($schemadir);
+            $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
+            $patternView    =
+                '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
+            $patternRoutine =
+                '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
+            $exclude        = !empty($includeTables);
+            $views          = array();
             while (!empty($dirs)) {
                 $dir = array_pop($dirs);
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
@@ -944,10 +1011,17 @@ class Helper {
                             // если файл - получим данные о его имени
                             $fileInfo = pathinfo($file);
                             // если это SQL-файл, заберем его содержимое
-                            if (strcasecmp($fileInfo['extension'], 'sql') === 0) {
+                            if (strcasecmp($fileInfo['extension'], 'sql') === 0
+                            ) {
                                 $entityname = $fileInfo['filename'];
-                                Output::verbose(sprintf('--- Get content for %s', $entityname), 3);
-                                if ($exclude && !isset($includeTables[$entityname])) {
+                                Output::verbose(
+                                    sprintf(
+                                        '--- Get content for %s', $entityname
+                                    ), 3
+                                );
+                                if ($exclude &&
+                                    !isset($includeTables[$entityname])
+                                ) {
                                     continue;
                                 }
                                 $q = file_get_contents($file);
@@ -960,7 +1034,7 @@ class Helper {
                                     * Если это таблица, заменим начало объявления и допишем ее в начало массива запросов
                                     * TODO: сделать проверку на то, что начало объявления именно CREATE TABLE, без IF NOT EXISTS
                                     */
-                                    $q = str_replace(
+                                    $q                = str_replace(
                                         'CREATE TABLE ',
                                         'CREATE TABLE IF NOT EXISTS ', $q
                                     );
@@ -970,32 +1044,36 @@ class Helper {
                                 }
                                 else {
                                     $matches = array();
-                                    if (preg_match($patternView, $q, $matches)) {
+                                    if (preg_match(
+                                        $patternView, $q, $matches
+                                    )
+                                    ) {
                                         /*
                                         * Если это вьюха, то сделаем CREATE OR REPLACE и меняем создателя на CURRENT_USER
                                         * TODO: по аналогии с таблицей сделать проверку
                                         */
-                                        $search = array(
-                                            $matches[1],
-                                            'CREATE '
+                                        $search           = array(
+                                            $matches[1], 'CREATE '
                                         );
-                                        $replace = array(
-                                            'CURRENT_USER',
-                                            'CREATE OR REPLACE '
+                                        $replace          = array(
+                                            'CURRENT_USER', 'CREATE OR REPLACE '
                                         );
-                                        $q = str_replace(
+                                        $q                = str_replace(
                                             $search, $replace, $q
                                         );
                                         $tmp[$entityname] = $q;
                                         // дописываем вьюхи в отдельный массив, который в конец добавим в конец всего
-                                        $views  += $tmp;
+                                        $views += $tmp;
                                     }
                                     else {
                                         /*
                                         *  Если это триггер, процедура или функция, меняем создателя
                                         */
-                                        if (preg_match($patternRoutine, $q, $matches)) {
-                                            $q = str_replace(
+                                        if (preg_match(
+                                            $patternRoutine, $q, $matches
+                                        )
+                                        ) {
+                                            $q                = str_replace(
                                                 $matches[1], 'CURRENT_USER', $q
                                             );
                                             $tmp[$entityname] = sprintf(
@@ -1008,13 +1086,16 @@ class Helper {
                                     }
                                 }
                             }
-                        } elseif (is_dir($file)) {
+                        }
+                        elseif (is_dir($file)) {
                             /*
                             * Если это директория, то допишем ее имя к строке поддиректорий и добавим в стек директорий
                             */
                             $dir_to_add = $dir . DIR_SEP . $file;
                             array_push($dirs, $dir_to_add);
-                            Output::verbose(sprintf('Add subdirectory %s', $dir_to_add), 3);
+                            Output::verbose(
+                                sprintf('Add subdirectory %s', $dir_to_add), 3
+                            );
                         }
                     }
                 }
@@ -1029,13 +1110,14 @@ class Helper {
     /**
      * Спрашивает у пользователя, необходимо ли перезаписывать файл
      * @param string $filename Имя файла
-     * @param string $message Сообщение
+     * @param string $message  Сообщение
      * @return boolean Результат ввода пользователя
      */
     public static function askToRewrite($filename, $message = '') {
-        if (self::get('quiet') || !file_exists($filename))
+        if (self::get('quiet') || !file_exists($filename)) {
             return true;
-        $c = '';
+        }
+        $c       = '';
         $choices = array(
             'y' => true,
             'n' => false
@@ -1043,7 +1125,8 @@ class Helper {
         do {
             if ($c != "\n") {
                 if (empty($message)) {
-                    $message = 'File %s already exists. Do you really want to override it? [y/n] ';
+                    $message =
+                        'File %s already exists. Do you really want to override it? [y/n] ';
                 }
                 printf($message, $filename);
             }
@@ -1051,8 +1134,19 @@ class Helper {
             if (isset($choices[$c])) {
                 return $choices[$c];
             }
-        }
-        while (true);
+        } while (true);
+    }
+
+    /**
+     * Возвращает наименование действия, выполняемого контроллером
+     * @static
+     * @param IController $controller Экземпляр класса
+     * @return string
+     */
+    public static function getActionName(IController $controller) {
+        $name = get_class($controller);
+        $name = substr($name, strrpos($name, '\\') + 1);
+        return substr($name, 0, stripos($name, 'Controller'));
     }
 
     /**
@@ -1062,7 +1156,8 @@ class Helper {
      * @return type
      */
     static function _createMigrationContent($version, $diff) {
-        $content = "<?php\n class Migration{$version} extends AbstractMigration\n{\n" .
+        $content =
+            "<?php\n class Migration{$version} extends AbstractMigration\n{\n" .
             "  protected \$up = array(\n";
         foreach ($diff['up'] as $sql) {
             $content .= "    '{$sql}',\n";

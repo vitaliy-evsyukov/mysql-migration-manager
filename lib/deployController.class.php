@@ -29,17 +29,14 @@ class deployController extends DatasetsController {
             ),
             'applyds' => array('datasets' => $this->args['datasets'])
         );
-
-        $start = $this->getChain();
-        var_dump($start);die();
+        $toWork = array_reverse($toWork);
+        $start = $this->getChain()->getNext();
         foreach ($toWork as $controller => $arguments) {
             $start          = new ControllersChain($start);
             $controllerName = 'lib\\' . $controller . 'Controller';
             $start->setController(new $controllerName($this->db, $arguments));
         }
         $this->getChain()->setNext($start);
-        print_r($this->getChain());die();
-        $start->runStrategy();
     }
 
 }
