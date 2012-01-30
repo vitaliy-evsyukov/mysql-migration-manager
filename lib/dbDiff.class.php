@@ -31,7 +31,6 @@ class dbDiff {
 
     /**
      * Создает экземпляр класса dbDiff для двух соединений
-     *
      * @param MysqliHelper $current Соединение с текущей БД
      * @param MysqliHelper $temp    Соединение с временной БД
      */
@@ -44,7 +43,6 @@ class dbDiff {
     /**
      * Получает имя базы данных
      * @param MysqliHelper $connection Объект соединения
-     *
      * @return string
      */
     private function getDbName(MysqliHelper $connection) {
@@ -60,9 +58,7 @@ class dbDiff {
 
     /**
      * Парсит вывод mysqldiff, составляет список использованных и неиспользованных таблиц
-     *
      * @param array $output Вывод mysqldiff
-     *
      * @return array
      */
     private function parseDiff(array $output = array()) {
@@ -71,7 +67,7 @@ class dbDiff {
         $result  = array();
         $index   = 0;
         foreach ($output as $line) {
-            // если строка состоит только из whitespace'ов  
+            // если строка состоит только из whitespace'ов
             if (ctype_space($line)) {
                 continue;
             }
@@ -98,7 +94,8 @@ class dbDiff {
                 $tmp[] = $line;
                 if (!empty($comment)) {
                     // добавим предыдущие собранные данные в результирующий массив
-                    $result['desc'][$comment][$index] = implode("\n", $tmp);
+                    $result['desc'][$comment][$index] =
+                        trim(implode("\n", $tmp));
                 }
             }
         }

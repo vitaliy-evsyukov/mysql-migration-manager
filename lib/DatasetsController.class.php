@@ -117,6 +117,7 @@ abstract class DatasetsController extends AbstractController {
      */
     protected function dropAllDBEntities() {
         $routines = array('FUNCTION', 'PROCEDURE');
+        $queries = array();
         foreach ($routines as $routine) {
             $res = $this->db->query(
                 sprintf(
@@ -135,7 +136,6 @@ abstract class DatasetsController extends AbstractController {
         }
         $res->free_result();
         $res     = $this->db->query('SHOW FULL TABLES;');
-        $queries = array();
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             $what             = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
             $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
