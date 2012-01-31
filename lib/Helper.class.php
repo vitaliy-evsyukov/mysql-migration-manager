@@ -337,11 +337,21 @@ class Helper {
     /**
      * Возвращает значение параметра из конфигурации
      * @static
-     * @param $key Название параметра
+     * @param string $key Название параметра
      * @return mixed|bool Значение или false в случае неудачи
      */
     public static function get($key) {
         return isset(self::$config[$key]) ? self::$config[$key] : false;
+    }
+
+    /**
+     * Устанавливает значение параметра
+     * @static
+     * @param string $key Название параметра
+     * @param mixed  $value Значение
+     */
+    public static function set($key, $value) {
+        self::$config[$key] = $value;
     }
 
     /**
@@ -569,7 +579,7 @@ class Helper {
     public static function getInitialRefs($data) {
         $dbName = 'db_' . md5(time());
         $db     = self::getTmpDbObject($dbName);
-        $db->query("SET foreign_key_checks = 0;");
+        $db->setCommand("SET foreign_key_checks = 0;");
         if ((int) self::get('verbose') === 3) {
             self::_debug_queryMultipleDDL($db, $data);
         }

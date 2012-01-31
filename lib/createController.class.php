@@ -21,6 +21,11 @@ class createController extends DatasetsController {
      * @var \lib\MysqliHelper
      */
     private $_tempDb = null;
+    /**
+     * Имя и путь к файлу миграции
+     * @var string
+     */
+    private $_migrationFileName = '';
 
     /**
      * Устанавливает подключение к временной БД
@@ -49,17 +54,17 @@ class createController extends DatasetsController {
         $diff    = $diffObj->getDifference();
         Output::verbose('Search of changes completed', 1);
         if (!empty($diff['up']) || !empty($diff['down'])) {
-            $revision          = Helper::getLastRevision();
-            $file_exists       = true;
-            $migrationFileName = '';
+            $revision    = Helper::getLastRevision();
+            $file_exists = true;
             while ($file_exists) {
-                $migrationFileName = DIR . Helper::get('savedir') . DIR_SEP .
-                                     "Migration{$revision}.class.php";
-                if (is_file($migrationFileName)) {
+                $this->_migrationFileName =
+                    DIR . Helper::get('savedir') . DIR_SEP .
+                    "Migration{$revision}.class.php";
+                if (is_file($this->_migrationFileName)) {
                     Output::verbose(
                         sprintf(
                             "Revision # %d already exists, file name: %s",
-                            $revision, $migrationFileName
+                            $revision, $this->_migrationFileName
                         ), 2
                     );
                     $revision++;
@@ -73,11 +78,11 @@ class createController extends DatasetsController {
             $content   = Helper::createMigrationContent(
                 $revision, $diff, $timestamp
             );
-            file_put_contents($migrationFileName, $content);
+            file_put_contents($this->_migrationFileName, $content);
             Output::verbose(
                 sprintf(
                     "Revision %d successfully created and saved in file %s",
-                    $revision, $migrationFileName
+                    $revision, $this->_migrationFileName
                 ), 1
             );
         }
@@ -86,6 +91,14 @@ class createController extends DatasetsController {
                 'There are no changes in database structure now', 1
             );
         }
+    }
+
+    /**
+     * Возвращает имя и путь к файлу миграции
+     * @return string
+     */
+    public function getMigrationFileName() {
+        return $this->_migrationFileName;
     }
 
 }
