@@ -13,38 +13,38 @@ class getsqlController extends AbstractController {
     private $_choice = null;
 
     public function runStrategy() {
-        $entities = array('TABLE', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
+        $entities   = array('TABLE', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
         $operations = array(
-            'ops' => array(
+            'ops'   => array(
                 'SHOW %sS',
                 "SHOW %s STATUS WHERE Db='" . Helper::get('db') . "'"
             ),
             'links' => array(
-                'TABLE' => 0,
-                'TRIGGER' => 0,
-                'FUNCTION' => 1,
+                'TABLE'     => 0,
+                'TRIGGER'   => 0,
+                'FUNCTION'  => 1,
                 'PROCEDURE' => 1
             ),
-            'cols' => array(
-                'TABLE' => array(
+            'cols'  => array(
+                'TABLE'     => array(
                     'list' => 0,
-                    'def' => 1
+                    'def'  => 1
                 ),
-                'TRIGGER' => array(
+                'TRIGGER'   => array(
                     'list' => 'Trigger',
-                    'def' => 'SQL Original Statement'
+                    'def'  => 'SQL Original Statement'
                 ),
                 'PROCEDURE' => array(
                     'list' => 'Name',
-                    'def' => 'Create Procedure'
+                    'def'  => 'Create Procedure'
                 ),
-                'FUNCTION' => array(
+                'FUNCTION'  => array(
                     'list' => 'Name',
-                    'def' => 'Create Function'
+                    'def'  => 'Create Function'
                 )
             )
         );
-        $opts = array();
+        $opts       = array();
         foreach ($this->args as $arg) {
             if (is_string($arg)) {
                 $parts = explode('=', $arg);
@@ -54,18 +54,18 @@ class getsqlController extends AbstractController {
                 $opts[strtoupper(trim($parts[0], '-'))] = $parts[1];
             }
         }
-        $path = DIR . Helper::get('schemadir') . DIR_SEP;
+        $path   = Helper::get('schemadir');
         $suffix = md5(time());
         foreach ($entities as $entity) {
-            $op = sprintf(
-                    $operations['ops'][$operations['links'][$entity]], $entity
+            $op      = sprintf(
+                $operations['ops'][$operations['links'][$entity]], $entity
             );
             $e_lower = strtolower($entity);
             Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
             Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
-                $col = $row[$operations['cols'][$entity]['list']];
+                $col   = $row[$operations['cols'][$entity]['list']];
                 $value = $operations['cols'][$entity]['def'];
                 if (!empty($opts[$entity])) {
                     if (!preg_match('/^' . $opts[$entity] . '/', $col)) {
@@ -73,11 +73,11 @@ class getsqlController extends AbstractController {
                     }
                 }
                 Output::verbose(
-                        sprintf(
-                                'Get %s %s description', $e_lower, $col
-                        ), 1
+                    sprintf(
+                        'Get %s %s description', $e_lower, $col
+                    ), 1
                 );
-                $q = "SHOW CREATE {$entity} {$col}";
+                $q    = "SHOW CREATE {$entity} {$col}";
                 $desc = $this->db->query($q);
                 $data = $desc->fetch_array(MYSQLI_BOTH);
                 if (isset($data[$value])) {
@@ -95,16 +95,16 @@ class getsqlController extends AbstractController {
                         }
                     }
                     $data[$value] .= str_repeat(
-                            ';', (int) ($entity !== 'TABLE') + 1
+                        ';', (int) ($entity !== 'TABLE') + 1
                     );
                     file_put_contents($filename, $data[$value]);
                 }
                 else {
                     Output::verbose(
-                            sprintf(
-                                    'Cannot to get description of %s %s',
-                                    $e_lower, $col
-                            ), 1
+                        sprintf(
+                            'Cannot to get description of %s %s',
+                            $e_lower, $col
+                        ), 1
                     );
                 }
             }
@@ -120,8 +120,10 @@ class getsqlController extends AbstractController {
         $c = '';
         do {
             if ($c != "\n") {
-                printf("File %s already exists. Do you want to override it? [y/n/Yes to all/No to all] ",
-                        $fname);
+                printf(
+                    "File %s already exists. Do you want to override it? [y/n/Yes to all/No to all] ",
+                    $fname
+                );
             }
             $c = trim(fgets(STDIN));
             if ($c === 'Y' or $c === 'y') {

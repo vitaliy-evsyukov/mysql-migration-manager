@@ -64,6 +64,16 @@ class Helper {
      * @var int
      */
     private static $_currRevision = -1;
+    /**
+     * Текущая разворачиваемая временная БД
+     * @var \lib\MysqliHelper
+     */
+    private static $_currentTempDb = null;
+    /**
+     * Приведены ли стандартные директории к виду полных путей
+     * @var bool
+     */
+    private static $_prepareStandardDirectories = false;
 
     /**
      * @static
@@ -315,10 +325,19 @@ class Helper {
         }
         if (empty($dirs)) {
             $dirs = array('savedir', 'cachedir', 'schemadir');
+            if (!self::$_prepareStandardDirectories) {
+                foreach ($dirs as &$dir) {
+                    self::set(
+                        "{$dir}_ns", str_replace('/', '\\', self::get($dir))
+                    );
+                    self::set($dir, DIR . self::get($dir) . DIR_SEP);
+                }
+                self::$_prepareStandardDirectories = true;
+            }
         }
         foreach ($dirs as $dir) {
             if (isset(self::$config[$dir])) {
-                $dirname = DIR . self::$config[$dir];
+                $dirname = self::$config[$dir];
             }
             else {
                 $dirname = $dir;
@@ -347,7 +366,7 @@ class Helper {
     /**
      * Устанавливает значение параметра
      * @static
-     * @param string $key Название параметра
+     * @param string $key   Название параметра
      * @param mixed  $value Значение
      */
     public static function set($key, $value) {
@@ -577,16 +596,21 @@ class Helper {
      * @return array
      */
     public static function getInitialRefs($data) {
-        $dbName = 'db_' . md5(time());
-        $db     = self::getTmpDbObject($dbName);
-        $db->setCommand("SET foreign_key_checks = 0;");
-        if ((int) self::get('verbose') === 3) {
-            self::_debug_queryMultipleDDL($db, $data);
+        if (!self::$_currentTempDb) {
+            $dbName = sprintf('db_%s', md5(time()));
+            $db     = self::getTmpDbObject($dbName);
+            $db->setCommand("SET foreign_key_checks = 0;");
+            if ((int) self::get('verbose') === 3) {
+                self::_debug_queryMultipleDDL($db, $data);
+            }
+            else {
+                self::queryMultipleDDL($db, implode("\n", $data));
+            }
+            $db->query("SET foreign_key_checks = 1;");
         }
         else {
-            self::queryMultipleDDL($db, implode("\n", $data));
+            $db = self::$_currentTempDb;
         }
-        $db->query("SET foreign_key_checks = 1;");
 
         $params     = array('host', 'user', 'password');
         $params_str = array();
@@ -642,7 +666,9 @@ class Helper {
     public static function getTimeline(array $tablesList = array()) {
         $migrations = Registry::getAllMigrations();
         if (!empty($tablesList)) {
-            $refs        = Registry::getAllRefs();
+            // получить все связи таблиц
+            $refs = Registry::getAllRefs();
+            // получить те, которых не хватает
             $tablesToAdd = self::getRefs($refs, $tablesList);
             $tablesList  = array_merge($tablesList, $tablesToAdd);
         }
@@ -671,9 +697,7 @@ class Helper {
         $revision, MysqliHelper $db, $direction = 'Up',
         array $tablesList = array()
     ) {
-        $classname =
-            str_replace('/', '\\', self::get('savedir')) . '\Migration' .
-            $revision;
+        $classname = self::get('savedir_ns') . '\Migration' . $revision;
         $migration = new $classname($db);
         $migration->setTables($tablesList);
         $method = 'run' . $direction;
@@ -687,7 +711,7 @@ class Helper {
     public static function getAllMigrations() {
         self::$_revisionLines = array();
         self::$_currRevision  = -1;
-        $migrationsDir        = DIR . self::get('savedir') . DIR_SEP;
+        $migrationsDir        = self::get('savedir');
         $migrationsListFile   = $migrationsDir . self::get('versionfile');
         $markerFile           = $migrationsDir . self::get('version_marker');
         $result               = array(
@@ -793,7 +817,7 @@ class Helper {
      * @return int Таймстаймп для ревизии
      */
     public static function writeRevisionFile($revision) {
-        $path     = DIR . self::get('savedir') . DIR_SEP;
+        $path     = self::get('savedir');
         $filename = $path . self::get('versionfile');
         $marker   = $path . self::get('version_marker');
         if (is_file($filename) && !is_writable($filename)) {
@@ -849,7 +873,10 @@ class Helper {
      * @param \lib\MysqliHelper $db Соединение с сервером БД
      */
     public static function loadTmpDb(MysqliHelper $db) {
-        Output::verbose("Deploy temporary database", 1);
+        Output::verbose(
+            sprintf("Deploy temporary database %s", $db->getDatabaseName()), 1
+        );
+        self::$_currentTempDb = $db;
         $db->setCommand("SET foreign_key_checks = 0;");
         $timeline       = self::getTimeline();
         $usedMigrations = array();
@@ -954,6 +981,31 @@ class Helper {
     }
 
     /**
+     * Утилитарная работа с получением содержимого шаблона и заменой
+     * @static
+     * @param array  $search  Массив местозаменителей
+     * @param array  $replace Массив соответствующих им замен
+     * @param string $tpl     Имя файла шаблона
+     * @return string
+     * @throws \Exception
+     */
+    private static function createContent(array $search, array $replace, $tpl) {
+        $tpl_file = DIR . $tpl;
+        if (is_file($tpl_file) && is_readable($tpl_file)) {
+            $content = file_get_contents($tpl_file);
+        }
+        else {
+            throw new \Exception(sprintf(
+                'Template file %s not exists or is not readable', $tpl_file
+            ));
+        }
+        foreach ($search as &$placeholder) {
+            $placeholder = "%%{$placeholder}%%";
+        }
+        return str_replace($search, $replace, $content);
+    }
+
+    /**
      * Создает класс миграции
      * @param int    $version Ревизия
      * @param array  $diff    Массив различий
@@ -965,7 +1017,6 @@ class Helper {
         $version, array $diff, $ts, $tpl = 'tpl/migration.tpl'
     ) {
         $version = (int) $version;
-        $content = file_get_contents(DIR . $tpl);
         $search  = array('revision', 'up', 'down', 'meta', 'ns');
 
         $metadata = array(
@@ -980,12 +1031,57 @@ class Helper {
             $version, self::recursiveImplode($diff['up'], 2),
             self::recursiveImplode($diff['down'], 2),
             self::recursiveImplode($metadata, 2),
-            str_replace('/', '\\', self::get('savedir'))
+            self::get('savedir_ns')
         );
-        foreach ($search as &$placeholder) {
-            $placeholder = "%%{$placeholder}%%";
+        return self::createContent($search, $replace, $tpl);
+    }
+
+
+    /**
+     * Сохраняет файл схемы
+     * TODO: объединить с записью миграциий
+     * @param string $fname   Имя файла
+     * @param string $name    Имя схемы данных
+     * @param array  $queries Массив запросов
+     * @param string $tpl     Путь к файлу шаблона
+     */
+    public static function writeInFile(
+        $fname, $name, array $queries, $tpl = 'tpl/schema.tpl'
+    ) {
+        $search = array('queries', 'tables', 'name', 'ns');
+        $sep     = "\",\n" . str_repeat(' ', 8) . '"';
+        $replace = array(
+            self::recursiveImplode($queries),
+            '"' . implode($sep, array_keys($queries)) . '"', $name,
+            self::get('cachedir_ns')
+        );
+        if (!file_exists($fname) || is_writable($fname)) {
+            file_put_contents(
+                $fname, self::createContent($search, $replace, $tpl)
+            );
         }
-        return str_replace($search, $replace, $content);
+    }
+
+    /**
+     * Создать файл кеша связей таблиц
+     * @static
+     * @param string $filename   Имя файла
+     * @param array  $references Массив связей
+     * @param string $tpl        Файл шаблона
+     */
+    public static function createReferencesCache(
+        $filename, array $references, $tpl = 'tpl/references.tpl'
+    ) {
+        $search  = array('ns', 'refs');
+        $replace = array(
+            self::get('cachedir_ns'),
+            self::recursiveImplode($references)
+        );
+        if (!file_exists($filename) || is_writable($filename)) {
+            file_put_contents(
+                $filename, self::createContent($search, $replace, $tpl)
+            );
+        }
     }
 
     /**
@@ -995,7 +1091,7 @@ class Helper {
      */
     public static function parseSchemaFiles(array $includeTables = array()) {
         $queries   = array();
-        $schemadir = DIR . Helper::get('schemadir');
+        $schemadir = Helper::get('schemadir');
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
             Output::verbose(
                 sprintf('There are no schema files in %s', $schemadir), 1

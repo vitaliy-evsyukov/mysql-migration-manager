@@ -6,8 +6,7 @@ namespace lib;
  * Registry
  * Сохраняет список миграций
  * @author guyfawkes
- */
-class Registry {
+ */ class Registry {
 
     /**
      * @var array
@@ -39,7 +38,6 @@ class Registry {
      *              111112 => 2
      *      )
      * );
-     *
      * self::$_refsMap = array(
      *      'table1' => array(
      *              'table2' => 1,
@@ -47,7 +45,6 @@ class Registry {
      *      )
      * );
      * </code>
-     *
      * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
      * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
      * @param bool $loadSQL Загружать ли содержимое SQL-файлов
@@ -59,33 +56,48 @@ class Registry {
              * SQL считается первой ревизией
              */
             Output::verbose('Starting to search initial revisions', 1);
-            $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema.class.php";
-            $message = sprintf(
-                'Parse schema directory %s again? [y/n] ',
-                Helper::get('schemadir')
-            );
-            if (!file_exists($fname) || Helper::askToRewrite($fname, $message)) {
-                $queries = Helper::parseSchemaFiles();
-                // TODO: create schema here
-            } else {
-                $classname = sprintf(
-                    "%s\Schema",
-                    str_replace('/', '\\', Helper::get('cachedir'))
+            $path       = Helper::get('cachedir');
+            $fname      = "{$path}Schema.class.php";
+            $refs_fname = "{$path}References.class.php";
+            $message    = 'Refresh references? [y/n] ';
+            $ns         = Helper::get('cachedir_ns');
+            if (Helper::askToRewrite($refs_fname, $message)) {
+                $message = sprintf(
+                    'Parse schema directory %s again? [y/n] ',
+                    Helper::get('schemadir')
                 );
-                $schemaObj = new $classname;
-                $queries = $schemaObj->getQueries();
-                unset($schemaObj);
-            }
-            if (!empty($queries)) {
-                foreach ($queries as $tablename => &$q) {
-                    self::$_migrations[$tablename][0] = $q;
+                if (Helper::askToRewrite($fname, $message)) {
+                    $queries = Helper::parseSchemaFiles();
+                    Helper::writeInFile($fname, '', $queries);
                 }
-                Output::verbose('Starting to search initial references', 1);
-                self::$_refsMap = Helper::getInitialRefs($queries);
-            } else {
-                Output::verbose('No initial revisions and references found', 1);
+                else {
+                    $classname = sprintf('%s\Schema', $ns);
+                    $schemaObj = new $classname;
+                    $queries   = $schemaObj->getQueries();
+                    unset($schemaObj);
+                }
+                if (!empty($queries)) {
+                    foreach ($queries as $tablename => &$q) {
+                        self::$_migrations[$tablename][0] = $q;
+                    }
+                    Output::verbose('Starting to search initial references', 1);
+                    // получить начальные связи
+                    self::$_refsMap = Helper::getInitialRefs($queries);
+                }
+                else {
+                    Output::verbose(
+                        'No initial revisions and references found', 1
+                    );
+                }
+                unset($queries);
+                Helper::createReferencesCache($refs_fname, self::$_refsMap);
             }
-            unset($queries);
+            else {
+                $classname      = sprintf('%s\References', $ns);
+                $refsObj        = new $classname;
+                self::$_refsMap = $refsObj->getRefs();
+                unset($refsObj);
+            }
         }
         Output::verbose('Collecting maps of revisions and references', 1);
         self::parseMigrations(true);
@@ -126,7 +138,7 @@ class Registry {
      * @param bool $check Проверять, есть ли данный файл в списке миграций
      */
     public static function parseMigrations($check = false) {
-        $migratedir = DIR . Helper::get('savedir');
+        $migratedir = Helper::get('savedir');
         if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
             if ($check) {
@@ -135,13 +147,14 @@ class Registry {
             $files = glob('Migration*.php');
             foreach ($files as $file) {
                 // Наименование имеет вид типа Migration2.class.php
-                $className = str_replace('/', '\\', Helper::get('savedir')) . '\\' . pathinfo(
-                    pathinfo($file,
-                        PATHINFO_FILENAME
-                    ),
-                    PATHINFO_FILENAME
-                );
-                $class = new $className;
+                $className =
+                    Helper::get('savedir_ns') . '\\' .
+                    pathinfo(
+                        pathinfo(
+                            $file, PATHINFO_FILENAME
+                        ), PATHINFO_FILENAME
+                    );
+                $class     = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
                     if ($check) {
@@ -153,14 +166,16 @@ class Registry {
                         sprintf('Add migration %s to list', $file), 2
                     );
                     foreach ($metadata['tables'] as $tablename => $tmp) {
-                        self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
+                        self::$_migrations[$tablename][$metadata['timestamp']] =
+                            $metadata['revision'];
                     }
                     foreach ($metadata['refs'] as $refTable => $tables) {
                         if (!isset(self::$_refsMap[$refTable])) {
                             self::$_refsMap[$refTable] = array();
                         }
-                        self::$_refsMap[$refTable] = array_merge(self::$_refsMap[$refTable],
-                            $tables);
+                        self::$_refsMap[$refTable] = array_merge(
+                            self::$_refsMap[$refTable], $tables
+                        );
                     }
                 }
             }

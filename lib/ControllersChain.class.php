@@ -30,6 +30,17 @@ class ControllersChain implements IController {
      * @var ControllersChain
      */
     protected $_next = null;
+    /**
+     * Песочница окружения
+     * @var array
+     */
+    private $_sandbox = array();
+    /**
+     * Массив количества выполнений каждого контроллера
+     * @var array
+     */
+    private $_controllerIndexes = array();
+
 
     public function __construct(ControllersChain $handler = null) {
         $this->_next = $handler;
@@ -45,7 +56,7 @@ class ControllersChain implements IController {
 
     /**
      * Вернуть контроллер
-     * @return DatasetsController
+     * @return \lib\DatasetsController|null
      */
     public function getController() {
         return $this->_controller;
@@ -61,12 +72,17 @@ class ControllersChain implements IController {
             if ($state === self::FK_OFF) {
                 $this->_controller->toogleFK($state);
             }
+            $action = Helper::getActionName($this->_controller);
             Output::verbose(
-                sprintf('Run %s', Helper::getActionName($this->_controller)), 3
+                sprintf('Run %s', $action), 3
             );
+            $this->runSandbox($action);
             $this->_controller->runStrategy();
+            $this->resetSandbox();
             $state++;
             if ($this->_next) {
+                $this->_next->setSandbox($this->_sandbox);
+                $this->_next->setIndexesCounter($this->_controllerIndexes);
                 $this->_next->runStrategy($state);
             }
             if ($state == self::FK_ON) {
@@ -85,10 +101,73 @@ class ControllersChain implements IController {
 
     /**
      * Получить следующий элемент цепочки
-     * @return \lib\ControllersChain
+     * @return \lib\ControllersChain|null
      */
     public function getNext() {
         return $this->_next;
+    }
+
+    /**
+     * Установить окружение и сохранить предыдущее состояние
+     * @param array $sandbox Массив нового окружения
+     */
+    public function setSandbox(array $sandbox = array()) {
+        if (!isset($sandbox['original'])) {
+            $sandbox['original'] = array(Helper::getConfig());
+        }
+        $this->_sandbox           = $sandbox;
+        $this->_controllerIndexes = array();
+        $keys                     = array_keys($sandbox);
+        foreach ($keys as $key) {
+            $this->_controllerIndexes[$key] = -1;
+            if (!is_int(key($sandbox[$key]))) {
+                $this->_sandbox[$key] = array($this->_sandbox[$key]);
+            }
+        }
+    }
+
+    /**
+     * Установить счетчик
+     * @param array $counter
+     */
+    public function setIndexesCounter(array $counter) {
+        $this->_controllerIndexes = $counter;
+    }
+
+    /**
+     * Выполнить изменение окружения
+     * @param $action
+     */
+    private function runSandbox($action) {
+        if (isset($this->_sandbox[$action])) {
+            $currentIndex = 0;
+            if ($action !== 'original') {
+                $this->_controllerIndexes[$action]++;
+                $currentIndex = $this->_controllerIndexes[$action];
+            }
+            if (isset($this->_sandbox[$action][$currentIndex])) {
+                Output::verbose(
+                    sprintf(
+                        'Run sandboxing for %s at index %d', $action,
+                        $currentIndex
+                    ), 3
+                );
+                foreach ($this->_sandbox[$action][$currentIndex] as $key =>
+                         $value)
+                {
+                    Helper::set($key, $value);
+                }
+                var_dump($action);
+                print_r(Helper::getConfig());
+            }
+        }
+    }
+
+    /**
+     * Сбросить окружение к начальному состоянию
+     */
+    public function resetSandbox() {
+        $this->runSandbox('original');
     }
 
 }

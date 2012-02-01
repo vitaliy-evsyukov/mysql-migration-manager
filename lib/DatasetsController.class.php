@@ -17,7 +17,6 @@ abstract class DatasetsController extends AbstractController {
      * @var ControllersChain
      */
     protected $_chain = null;
-    protected $_sandbox = array();
 
     public function __construct(MysqliHelper $db, array $args = array()) {
         // вынести в разбор параметров
@@ -162,24 +161,6 @@ abstract class DatasetsController extends AbstractController {
      */
     public function getChain() {
         return $this->_chain;
-    }
-
-    /**
-     * Установить окружение и сохранить предыдущее состояние
-     * @param array $sandbox
-     */
-    public function setSandbox(array $sandbox = array()) {
-        foreach ($sandbox as $key => $value) {
-            $this->_sandbox[$key] = Helper::get($key);
-            Helper::set($key, $value);
-        }
-    }
-
-    /**
-     * Сбросить окружение к предыдущему состоянию и сохранить текущее
-     */
-    public function resetSandbox() {
-        $this->setSandbox($this->_sandbox);
     }
 
 }

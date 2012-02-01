@@ -30,8 +30,7 @@ class recoverController implements IController {
             }
         }
         ksort($lines);
-        $filename =
-            DIR . Helper::get('savedir') . DIR_SEP . Helper::get('versionfile');
+        $filename = Helper::get('savedir') . Helper::get('versionfile');
         file_put_contents($filename, implode("\n", $lines));
         Output::verbose(
             sprintf("File %s was successfully restored\n", $filename), 1

@@ -30,7 +30,7 @@ class deployController extends DatasetsController {
             'applyds' => array('datasets' => $this->args['datasets'])
         );
         $toWork = array_reverse($toWork);
-        $start = $this->getChain()->getNext();
+        $start  = $this->getChain()->getNext();
         foreach ($toWork as $controller => $arguments) {
             $start          = new ControllersChain($start);
             $controllerName = 'lib\\' . $controller . 'Controller';
