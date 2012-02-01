@@ -58,8 +58,7 @@ class createController extends DatasetsController {
             $file_exists = true;
             while ($file_exists) {
                 $this->_migrationFileName =
-                    DIR . Helper::get('savedir') . DIR_SEP .
-                    "Migration{$revision}.class.php";
+                    Helper::get('savedir') . "Migration{$revision}.class.php";
                 if (is_file($this->_migrationFileName)) {
                     Output::verbose(
                         sprintf(

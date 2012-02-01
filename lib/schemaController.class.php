@@ -3,7 +3,7 @@
 /**
  * schemaController
  * Создает и/или разворачивает схему данных
- * @author guyfawkes 
+ * @author guyfawkes
  */
 
 namespace lib;
@@ -12,7 +12,7 @@ class schemaController extends DatasetsController {
 
     /**
      * Массив запросов
-     * @var array 
+     * @var array
      */
     protected $_queries = array();
 
@@ -20,19 +20,20 @@ class schemaController extends DatasetsController {
         $datasets = $this->args['datasets'];
 
         $dshash = '';
-        $json = array();
+        $json   = array();
         if (!empty($datasets)) {
             ksort($datasets);
-            $json = $this->loadDatasetInfo();
+            $json   = $this->loadDatasetInfo();
             $dshash = md5(implode('', array_keys($datasets)));
         }
 
-        $classname = sprintf("%s\Schema%s",
-                str_replace('/', '\\', Helper::get('cachedir')), $dshash);
-        $fname = DIR . Helper::get('cachedir') . DIR_SEP . "Schema{$dshash}.class.php";
-
-        if (Helper::askToRewrite($fname,
-                        "Schema's file %s already exists. Do you want to override it? [y/n] ")) {
+        $classname = sprintf(
+            '%s\Schema%s', Helper::get('cachedir_ns'), $dshash
+        );
+        $fname     = Helper::get('cachedir') . "Schema{$dshash}.class.php";
+        $message   = "Schema's file %s already exists. " .
+                     "Do you want to override it? [y/n] ";
+        if (Helper::askToRewrite($fname, $message)) {
             if (!empty($datasets)) {
                 foreach ($json['reqs'] as $dataset) {
                     foreach ($dataset['tables'] as $tablename) {
@@ -44,6 +45,7 @@ class schemaController extends DatasetsController {
             $this->_queries = Helper::parseSchemaFiles($this->_queries);
             Output::verbose('Parsing finished', 1);
             if (!empty($this->_queries)) {
+                Helper::writeInFile($fname, $dshash, $this->_queries);
                 // Создадим структуру базы
                 Output::verbose('Deploying schema...', 1);
                 if ((int) Helper::get('verbose') === 3) {
@@ -51,11 +53,10 @@ class schemaController extends DatasetsController {
                 }
                 else {
                     Helper::queryMultipleDDL(
-                            $this->db, implode("\n", $this->_queries)
+                        $this->db, implode("\n", $this->_queries)
                     );
                 }
                 Output::verbose('Schema deploy finished', 1);
-                $this->writeInFile($fname, $dshash);
             }
             else {
                 Output::verbose('No tables found. File is not created', 1);
@@ -68,38 +69,6 @@ class schemaController extends DatasetsController {
             Output::verbose('Schema deploy finished', 1);
         }
         Helper::writeRevisionFile(0);
-    }
-
-    /**
-     * TODO: объединить с записью миграциий
-     * @param string $fname Имя файла
-     * @param string $name Имя схемы данных
-     * @param string $tpl Путь к файлу шаблона
-     */
-    protected function writeInFile($fname, $name, $tpl = 'tpl/schema.tpl') {
-        $tpl_file = DIR . $tpl;
-        if (file_exists($tpl_file)) {
-            $content = file_get_contents($tpl_file);
-        }
-        else {
-            throw new \Exception(
-                    sprintf('Template file %s not exists', $tpl_file)
-            );
-        }
-        $search = array('queries', 'tables', 'name', 'ns');
-        foreach ($search as &$value) {
-            $value = '%%' . $value . '%%';
-        }
-        $sep = "\",\n" . str_repeat(' ', 8) . '"';
-        $replace = array(
-            Helper::recursiveImplode($this->_queries),
-            '"' . implode($sep, array_keys($this->_queries)) . '"',
-            $name,
-            str_replace('/', '\\', Helper::get('cachedir'))
-        );
-        if (!file_exists($fname) || is_writable($fname)) {
-            file_put_contents($fname, str_replace($search, $replace, $content));
-        }
     }
 
 }

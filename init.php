@@ -32,7 +32,7 @@ function mmpAutoload($class) {
         }
         throw new Exception(
                 sprintf(
-                        "Класс %s не найден в %s\nBack trace:\n%s\n", $class,
+                        "Class %s not found in %s\nBack trace:\n%s\n", $class,
                         DIR, implode("\n", $debug)
                 ), NO_COMMAND
         );

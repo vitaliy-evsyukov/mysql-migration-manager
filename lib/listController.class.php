@@ -25,7 +25,12 @@ class listController implements IController {
         Output::verbose(
             sprintf(
                 $this->drawTextTable(
-                    $migrations['data'], array('revn' => '#', 'date' => 'Date&Time', 'time' => 'Timestamp')
+                    $migrations['data'],
+                    array(
+                         'revn'  => '#',
+                         'date'  => 'Date&Time',
+                         'time'  => 'Timestamp'
+                    )
                 )
             ), 1
         );
@@ -33,7 +38,7 @@ class listController implements IController {
 
     /**
      * Отрисовывает ASCII-таблицу
-     * @param array $table Двумерный массив
+     * @param array $table   Двумерный массив
      * @param array $headers Заголовки колонок
      * @return string Строка с таблицей
      */
@@ -42,16 +47,18 @@ class listController implements IController {
         foreach ($table AS $row) {
             $cell_count = 0;
             foreach ($headers AS $key => $value) {
-                $cell = $row[$key];
+                $cell        = $row[$key];
                 $cell_length = mb_strlen($cell);
                 $cell_count++;
-                if (!isset($cell_lengths[$key]) || $cell_length > $cell_lengths[$key]) {
+                if (!isset($cell_lengths[$key]) ||
+                    $cell_length > $cell_lengths[$key]
+                ) {
                     $cell_lengths[$key] = $cell_length;
                 }
             }
         }
 
-        $bar = '+';
+        $bar    = '+';
         $header = '|';
 
         foreach ($headers AS $key => $fieldname) {

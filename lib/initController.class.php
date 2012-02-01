@@ -7,27 +7,28 @@ namespace lib;
  * Приводит содержимое схемы к начальному
  * @author guyfawkes
  */
-class initController extends DatasetsController
-{
+class initController extends DatasetsController {
 
-    public function runStrategy()
-    {
+    public function runStrategy() {
         if ($this->askForRewriteInformation()) {
             $datasets = $this->args['datasets'];
-            $dshash = '';
+            $dshash   = '';
             if (!empty($datasets)) {
                 ksort($datasets);
                 $dshash = md5(implode('', array_keys($datasets)));
             }
             try {
                 $classname = sprintf(
-                    "%s\Schema%s",
-                    str_replace('/', '\\', Helper::get('cachedir')), $dshash
+                    '%s\Schema%s', Helper::get('cachedir_ns'), $dshash
                 );
-                $schema = new $classname;
+                $schema    = new $classname;
                 $this->dropAllDBEntities();
                 $schema->load($this->db);
-                Output::verbose(sprintf("Schema %s was successfully deployed\n", $classname), 1);
+                Output::verbose(
+                    sprintf(
+                        "Schema %s was successfully deployed", $classname
+                    ), 1
+                );
                 Helper::writeRevisionFile(0);
             }
             catch (\Exception $e) {
@@ -44,15 +45,17 @@ class initController extends DatasetsController
      * Запрашивает удаление всех таблиц в БД
      * @return bool
      */
-    private function askForRewriteInformation()
-    {
+    private function askForRewriteInformation() {
         if (Helper::get('quiet')) {
             return true;
         }
         $c = '';
         do {
             if ($c != "\n") {
-                Output::verbose("Are you really shure you want to delete ALL tables in DB [y/n] ", 1);
+                Output::verbose(
+                    "Are you really shure you want to delete ALL tables in DB [y/n] ",
+                    1
+                );
             }
             $c = trim(fgets(STDIN));
 

@@ -7,13 +7,11 @@ namespace lib;
  * Выполняет миграции
  * @author guyfawkes
  */
-class migrateController extends DatasetsController
-{
+class migrateController extends DatasetsController {
 
     protected $queries = array();
 
-    public function runStrategy()
-    {
+    public function runStrategy() {
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
@@ -40,15 +38,15 @@ class migrateController extends DatasetsController
         }
         $str = $this->args['m'];
         if (is_numeric($str)) {
-            $search_migration = (int)$str;
+            $search_migration = (int) $str;
             if ($search_migration !== 0) {
-                $class = sprintf(
+                $class            = sprintf(
                     '%s\Migration%d',
-                    str_replace('/', '\\', Helper::get('savedir')),
+                    Helper::get('savedir_ns'),
                     $search_migration
                 );
-                $o = new $class;
-                $meta = $o->getMetadata();
+                $o                = new $class;
+                $meta             = $o->getMetadata();
                 $target_migration = $meta['timestamp'];
             }
             else {
@@ -65,7 +63,7 @@ class migrateController extends DatasetsController
             );
         }
 
-        $datasets = $this->args['datasets'];
+        $datasets   = $this->args['datasets'];
         $tablesList = array();
         if (!empty($datasets)) {
             if (!isset($this->args['loadData'])) {
@@ -101,7 +99,8 @@ class migrateController extends DatasetsController
         }
         else {
             Output::verbose(
-                sprintf("Starting migration from %s (revision %d) to %s\n",
+                sprintf(
+                    "Starting migration from %s (revision %d) to %s\n",
                     $start_str, $revision, $target_str
                 ), 1
             );
@@ -111,7 +110,8 @@ class migrateController extends DatasetsController
 
         $direction = 'Up';
         if ($revision > 0) {
-            $direction = $mHelper['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
+            $direction = $mHelper['data'][$revision]['time'] <=
+                         $target_migration ? 'Up' : 'Down';
         }
 
         if ($direction === 'Down') {
@@ -130,8 +130,10 @@ class migrateController extends DatasetsController
                  */
                 if ($time > $timestamp) {
                     Output::verbose(
-                        sprintf("%s skipped, because is is lesser %s",
-                            $time_str, $start_str), 2
+                        sprintf(
+                            "%s skipped, because is is lesser %s",
+                            $time_str, $start_str
+                        ), 2
                     );
                     continue;
                 }
@@ -144,8 +146,10 @@ class migrateController extends DatasetsController
                         $revision = 0;
                     }
                     Output::verbose(
-                        sprintf("%s skipped, because is less or equal %s",
-                            $time_str, $target_str), 2
+                        sprintf(
+                            "%s skipped, because is less or equal %s",
+                            $time_str, $target_str
+                        ), 2
                     );
                     break;
                 }
@@ -153,15 +157,19 @@ class migrateController extends DatasetsController
             else {
                 if ($time <= $timestamp) {
                     Output::verbose(
-                        sprintf("%s skipped, because is less or equal %s\n",
-                            $time_str, $start_str), 2
+                        sprintf(
+                            "%s skipped, because is less or equal %s\n",
+                            $time_str, $start_str
+                        ), 2
                     );
                     continue;
                 }
                 if ($time > $target_migration) {
                     Output::verbose(
-                        sprintf("%s skipped, because is greater %s\n",
-                            $time_str, $target_str), 2
+                        sprintf(
+                            "%s skipped, because is greater %s\n",
+                            $time_str, $target_str
+                        ), 2
                     );
                     break;
                 }
@@ -170,14 +178,20 @@ class migrateController extends DatasetsController
 
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
-                    Output::verbose(sprintf("Executing migration for %s (# %d)\n",
-                        $time_str, $rev), 1);
+                    Output::verbose(
+                        sprintf(
+                            "Executing migration for %s (# %d)\n",
+                            $time_str, $rev
+                        ), 1
+                    );
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
-                        Output::verbose(sprintf(
-                            "Execute migration for tables:\n--- %s",
-                            implode("\n--- ", array_keys($tables))
-                        ), 2);
+                        Output::verbose(
+                            sprintf(
+                                "Execute migration for tables:\n--- %s",
+                                implode("\n--- ", array_keys($tables))
+                            ), 2
+                        );
                         Helper::applyMigration(
                             $rev, $this->db, $direction, $tables
                         );
@@ -187,8 +201,12 @@ class migrateController extends DatasetsController
                 }
                 else {
                     // это SQL-запрос
-                    Output::verbose(sprintf("Executing SQL for table: %s",
-                        $tablename), 1);
+                    Output::verbose(
+                        sprintf(
+                            "Executing SQL for table: %s",
+                            $tablename
+                        ), 1
+                    );
                     $this->db->query($rev);
                 }
             }

@@ -12,8 +12,8 @@ class Output {
     /**
      * Распечатывает сообщение в STDOUT
      * @static
-     * @param string $msg Текст сообщения
-     * @param int $level Уровень вывода
+     * @param string $msg   Текст сообщения
+     * @param int    $level Уровень вывода
      */
     static function verbose($msg, $level = 1) {
         if (!Helper::get('quiet') && intval(Helper::get('verbose')) >= $level) {
