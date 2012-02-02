@@ -827,8 +827,6 @@ class Helper {
         }
         $ts    = time();
         $lines = self::getRevisionLines();
-        //print_r($lines);
-        //var_dump($revision);
         $b = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);

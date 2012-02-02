@@ -84,6 +84,11 @@ class createController extends DatasetsController {
                     $revision, $this->_migrationFileName
                 ), 1
             );
+            /**
+             * Добавилась миграция, нужно пересобрать карты связей и миграций
+             * TODO: передавать миграцию и получать только связанные с ней изменения
+             */
+            Registry::resetAll();
         }
         else {
             Output::verbose(

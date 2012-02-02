@@ -157,8 +157,6 @@ class ControllersChain implements IController {
                 {
                     Helper::set($key, $value);
                 }
-                var_dump($action);
-                print_r(Helper::getConfig());
             }
         }
     }

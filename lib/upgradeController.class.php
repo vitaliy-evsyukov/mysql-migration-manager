@@ -19,22 +19,29 @@ class upgradeController extends AbstractController {
         // подключение к временной БД
         $db = Helper::getTmpDbObject(sprintf('full_temp_db_%d', time()));
         // путь для сохранения временной миграции
-        $path = sprintf(
+        $path    = sprintf(
             '%s/%s_temp_migration_%d/', sys_get_temp_dir(),
             Helper::get('prefix'), time()
         );
-        if (!is_dir($path)) {
-            if (!mkdir($path, 0777, true)) {
-                throw new \Exception(sprintf(
-                    'Cannot to create directory %s', $path
-                ));
-            }
-            else {
-                Output::verbose(
-                    sprintf('Temporary directory %s created', $path), 1
-                );
+        $saveDir = sprintf('%sdata/migrations/', $path);
+        $pathes  = array($path, $saveDir);
+        foreach ($pathes as $p) {
+            if (!is_dir($p)) {
+                if (!mkdir($p, 0777, true)) {
+                    throw new \Exception(sprintf(
+                        'Cannot to create directory %s', $path
+                    ));
+                }
+                else {
+                    Output::verbose(
+                        sprintf('Temporary directory %s created', $p), 1
+                    );
+                }
             }
         }
+        set_include_path(
+            implode(PATH_SEPARATOR, array(get_include_path(), $path))
+        );
         $chain = Helper::getController('deploy', $this->args, $db);
         /**
          * Для апгрейда мы должны считать временную и развернутую базу эталоном,
@@ -50,7 +57,7 @@ class upgradeController extends AbstractController {
         $create->setNext($migrate);
         $chain->setNext($create);
         // подменим для контроллеров путь к миграциям
-        $tempSave = array('savedir' => $path);
+        $tempSave = array('savedir' => $saveDir);
         $chain->setSandbox(
             array(
                  'schema'  => $tempSave,
