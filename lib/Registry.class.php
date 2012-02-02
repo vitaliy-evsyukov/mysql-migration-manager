@@ -59,7 +59,7 @@ namespace lib;
             $path       = Helper::get('cachedir');
             $fname      = "{$path}Schema.class.php";
             $refs_fname = "{$path}References.class.php";
-            $message    = 'Refresh references? [y/n] ';
+            $message    = 'Refresh initial references? [y/n] ';
             $ns         = Helper::get('cachedir_ns');
             if (Helper::askToRewrite($refs_fname, $message)) {
                 $message = sprintf(
@@ -96,6 +96,7 @@ namespace lib;
                 $classname      = sprintf('%s\References', $ns);
                 $refsObj        = new $classname;
                 self::$_refsMap = $refsObj->getRefs();
+                print_r(self::$_refsMap);
                 unset($refsObj);
             }
         }
@@ -130,6 +131,16 @@ namespace lib;
             self::prepareMap();
         }
         return self::$_refsMap;
+    }
+
+    /**
+     * Сбрасывает кеши связей и миграций
+     * @static
+     *
+     */
+    public static function resetAll() {
+        self::$_refsMap = array();
+        self::$_migrations = array();
     }
 
     /**

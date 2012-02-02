@@ -65,8 +65,6 @@ abstract class DatasetsController extends AbstractController {
             throw new \Exception("Invalid foreign keys checks status: {$state}\n");
         }
         $command = "SET foreign_key_checks = {$state};";
-        var_dump($this->db->getDatabaseName());
-        Output::verbose($command, 3);
         if ($state) {
             $this->db->query($command);
         }

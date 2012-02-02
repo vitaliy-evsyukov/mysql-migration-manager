@@ -119,8 +119,6 @@ class MysqliHelper {
     }
 
     private function executeCommands() {
-        var_dump($this->_databaseName);
-        var_dump($this->_commands);
         if (!empty($this->_commands)) {
             foreach ($this->_commands as $command) {
                 $this->query($command);
