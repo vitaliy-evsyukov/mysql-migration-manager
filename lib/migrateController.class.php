@@ -13,7 +13,6 @@ class migrateController extends DatasetsController {
 
     public function runStrategy() {
         $mHelper = Helper::getAllMigrations();
-        print_r($mHelper);
 
         if (empty($mHelper['migrations'])) {
             Output::verbose("No revisions have been created", 1);
@@ -33,7 +32,6 @@ class migrateController extends DatasetsController {
             $revision = $this->args['revision'];
         }
         Output::verbose(sprintf('You are at revision %d', $revision), 1);
-        sleep(2);
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
         }
