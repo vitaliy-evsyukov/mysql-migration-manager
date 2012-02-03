@@ -59,46 +59,49 @@ namespace lib;
             $path       = Helper::get('cachedir');
             $fname      = "{$path}Schema.class.php";
             $refs_fname = "{$path}References.class.php";
-            $message    = 'Refresh initial references? [y/n] ';
             $ns         = Helper::get('cachedir_ns');
-            if (Helper::askToRewrite($refs_fname, $message)) {
-                $message = sprintf(
-                    'Parse schema directory %s again? [y/n] ',
-                    Helper::get('schemadir')
-                );
-                if (Helper::askToRewrite($fname, $message)) {
-                    $queries = Helper::parseSchemaFiles();
-                    Helper::writeInFile($fname, '', $queries);
-                }
-                else {
-                    $classname = sprintf('%s\Schema', $ns);
-                    $schemaObj = new $classname;
-                    $queries   = $schemaObj->getQueries();
-                    unset($schemaObj);
-                }
-                if (!empty($queries)) {
-                    foreach ($queries as $tablename => &$q) {
-                        self::$_migrations[$tablename][0] = $q;
-                    }
-                    Output::verbose('Starting to search initial references', 1);
-                    // получить начальные связи
-                    self::$_refsMap = Helper::getInitialRefs($queries);
-                }
-                else {
-                    Output::verbose(
-                        'No initial revisions and references found', 1
-                    );
-                }
-                unset($queries);
-                Helper::createReferencesCache($refs_fname, self::$_refsMap);
+            $message    = sprintf(
+                'Parse schema directory %s again? [y/n] ',
+                Helper::get('schemadir')
+            );
+            if (Helper::askToRewrite($fname, $message)) {
+                $queries = Helper::parseSchemaFiles();
+                Helper::writeInFile($fname, '', $queries);
             }
             else {
-                $classname      = sprintf('%s\References', $ns);
-                $refsObj        = new $classname;
-                self::$_refsMap = $refsObj->getRefs();
-                print_r(self::$_refsMap);
-                unset($refsObj);
+                $classname = sprintf('%s\Schema', $ns);
+                $schemaObj = new $classname;
+                $queries   = $schemaObj->getQueries();
+                unset($schemaObj);
             }
+            if (!empty($queries)) {
+                foreach ($queries as $tablename => &$q) {
+                    self::$_migrations[$tablename][0] = $q;
+                }
+                Output::verbose('Starting to search initial references', 1);
+                // получить начальные связи
+                $message = sprintf(
+                    'Refresh initial references or get from cache %s? [y/n] ',
+                    $refs_fname
+                );
+                if (Helper::askToRewrite($refs_fname, $message)) {
+                    self::$_refsMap = Helper::getInitialRefs($queries);
+                    Helper::createReferencesCache($refs_fname, self::$_refsMap);
+                }
+                else {
+                    $classname      = sprintf('%s\References', $ns);
+                    $refsObj        = new $classname;
+                    self::$_refsMap = $refsObj->getRefs();
+                    print_r(self::$_refsMap);
+                    unset($refsObj);
+                }
+            }
+            else {
+                Output::verbose(
+                    'No initial revisions and references found', 1
+                );
+            }
+            unset($queries);
         }
         Output::verbose('Collecting maps of revisions and references', 1);
         self::parseMigrations(true);
@@ -136,10 +139,10 @@ namespace lib;
     /**
      * Сбрасывает кеши связей и миграций
      * @static
-     *
+
      */
     public static function resetAll() {
-        self::$_refsMap = array();
+        self::$_refsMap    = array();
         self::$_migrations = array();
     }
 
