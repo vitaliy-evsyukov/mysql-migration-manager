@@ -23,7 +23,8 @@ class upgradeController extends AbstractController {
             '%s/%s_temp_migration_%d/', sys_get_temp_dir(),
             Helper::get('prefix'), time()
         );
-        $saveDir = sprintf('%sdata/migrations/', $path);
+        $saveDir = str_replace('\\', '/', Helper::get('savedir_ns'));
+        $saveDir = sprintf('%s%s/', $path, $saveDir);
         $pathes  = array($path, $saveDir);
         foreach ($pathes as $p) {
             if (!is_dir($p)) {
