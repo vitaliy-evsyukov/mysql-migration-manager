@@ -74,6 +74,12 @@ class Helper {
      * @var bool
      */
     private static $_prepareStandardDirectories = false;
+    /**
+     * Массив с действиями, которые уже запросили ввода пользователя
+     * Необходим для того, чтобы в цепочках не повторять вопросы
+     * @var array
+     */
+    private static $_executedRequests = array();
 
     /**
      * @static
@@ -492,7 +498,7 @@ class Helper {
         MysqliHelper $db, array $queries
     ) {
         foreach ($queries as $table => $stmts) {
-            Output::verbose(sprintf('Executing query for %s', $table), 2);
+            Output::verbose(sprintf('Executing queries for %s', $table), 2);
             /*
              * Для одной сущности может быть как одна, так и несколько
              * групп запросов, содержащих строки с SQL-операторами
@@ -500,6 +506,7 @@ class Helper {
             if (!is_array($stmts)) {
                 $stmts = array($stmts);
             }
+            $summa_time = 0;
             foreach ($stmts as $queries) {
                 /*
                  * Из строки множества операторов необходимо вычленить
@@ -525,11 +532,13 @@ class Helper {
                 if (!is_array($queries)) {
                     $queries = explode(";\n", $queries);
                 }
+                // каждый запрос может состоять из нескольких запросов
                 foreach ($queries as $query) {
                     $query = trim($query);
                     if (empty($query)) {
                         continue;
                     }
+                    $start = microtime(1);
                     if (!$db->query($query)) {
                         Output::error(
                             sprintf(
@@ -537,8 +546,15 @@ class Helper {
                             )
                         );
                     }
+                    $summa_time += (microtime(1) - $start);
                 }
             }
+            Output::verbose(
+                sprintf(
+                    'Summary queries executing time for %s is %f secs.', $table,
+                    $summa_time
+                ), 3
+            );
         }
     }
 
@@ -827,7 +843,7 @@ class Helper {
         }
         $ts    = time();
         $lines = self::getRevisionLines();
-        $b = ($revision === 0);
+        $b     = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
             if ((int) $data[0] === $revision) {
@@ -1046,7 +1062,7 @@ class Helper {
     public static function writeInFile(
         $fname, $name, array $queries, $tpl = 'tpl/schema.tpl'
     ) {
-        $search = array('queries', 'tables', 'name', 'ns');
+        $search  = array('queries', 'tables', 'name', 'ns');
         $sep     = "\",\n" . str_repeat(' ', 8) . '"';
         $replace = array(
             self::recursiveImplode($queries),
@@ -1083,6 +1099,102 @@ class Helper {
     }
 
     /**
+     * Вспомогательные действия с файлами схемы
+     * @static
+     * @param array  $queries       Ссылка на массив запросов
+     * @param array  $views         Ссылка на массив запросов для вьюх
+     * @param array  $includeTables Массив таблиц, которые нужно использовать
+     * @param string $file          Имя файла
+     * @return bool
+     */
+    private static function schemaFileRoutines(
+        array &$queries, array &$views, array $includeTables, $file
+    ) {
+        $exclude        = !empty($includeTables);
+        $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
+        $patternView    =
+            '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
+        $patternRoutine =
+            '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
+        // если файл - получим данные о его имени
+        $fileInfo = pathinfo($file);
+        // если это SQL-файл, заберем его содержимое
+        if (strcasecmp($fileInfo['extension'], 'sql') === 0) {
+            $entityname = $fileInfo['filename'];
+            Output::verbose(
+                sprintf(
+                    '--- Get content for %s', $entityname
+                ), 3
+            );
+            if ($exclude && !isset($includeTables[$entityname])) {
+                return false;
+            }
+            $q = file_get_contents($file);
+            if ($q === ';') {
+                return false;
+            }
+            $tmp = array($entityname => $q);
+            if (preg_match($patternTable, $q)) {
+                /**
+                 * Если это таблица, заменим начало объявления и допишем ее
+                 * в начало массива запросов
+                 * TODO: сделать проверку на то, что начало объявления
+                 * именно CREATE TABLE, без IF NOT EXISTS
+                 */
+                $q                = str_replace(
+                    'CREATE TABLE ',
+                    'CREATE TABLE IF NOT EXISTS ', $q
+                );
+                $tmp[$entityname] = $q;
+                // сложение необходимо для сохранения ключей массивов
+                $queries = $tmp + $queries;
+            }
+            else {
+                $matches = array();
+                if (preg_match($patternView, $q, $matches)) {
+                    /**
+                     * Если это вьюха, то сделаем CREATE OR REPLACE
+                     * и меняем создателя на CURRENT_USER
+                     * TODO: по аналогии с таблицей сделать проверку
+                     */
+                    $search           = array(
+                        $matches[1], 'CREATE '
+                    );
+                    $replace          = array(
+                        'CURRENT_USER', 'CREATE OR REPLACE '
+                    );
+                    $q                = str_replace(
+                        $search, $replace, $q
+                    );
+                    $tmp[$entityname] = $q;
+                    /**
+                     * дописываем вьюхи в отдельный массив,
+                     * который добавим в конец всего
+                     */
+                    $views += $tmp;
+                }
+                else {
+                    /**
+                     *  Если это триггер, процедура или функция, меняем создателя
+                     */
+                    if (preg_match($patternRoutine, $q, $matches)) {
+                        $q                = str_replace(
+                            $matches[1], 'CURRENT_USER', $q
+                        );
+                        $tmp[$entityname] = sprintf(
+                            "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
+                            $matches[2], $entityname, $q
+                        );
+                        // и дописываем такие сущности в конец массива запросов
+                        $queries += $tmp;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Проходит по папке с файлами схемы и собирает их
      * @param array $includeTables Хеш с именами таблиц, которые нужно включать, в качестве ключей
      * @return array Массив запросов
@@ -1096,14 +1208,8 @@ class Helper {
             );
         }
         else {
-            $dirs           = array($schemadir);
-            $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
-            $patternView    =
-                '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
-            $patternRoutine =
-                '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
-            $exclude        = !empty($includeTables);
-            $views          = array();
+            $dirs  = array($schemadir);
+            $views = array();
             while (!empty($dirs)) {
                 $dir = array_pop($dirs);
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
@@ -1112,89 +1218,18 @@ class Helper {
                 while ($file = readdir($handle)) {
                     if ($file != '.' && $file != '..' && is_readable($file)) {
                         if (is_file($file)) {
-                            // если файл - получим данные о его имени
-                            $fileInfo = pathinfo($file);
-                            // если это SQL-файл, заберем его содержимое
-                            if (strcasecmp($fileInfo['extension'], 'sql') === 0
+                            if (self::schemaFileRoutines(
+                                $queries, $views, $includeTables, $file
+                            )
                             ) {
-                                $entityname = $fileInfo['filename'];
-                                Output::verbose(
-                                    sprintf(
-                                        '--- Get content for %s', $entityname
-                                    ), 3
-                                );
-                                if ($exclude &&
-                                    !isset($includeTables[$entityname])
-                                ) {
-                                    continue;
-                                }
-                                $q = file_get_contents($file);
-                                if ($q === ';') {
-                                    continue;
-                                }
-                                $tmp = array($entityname => $q);
-                                if (preg_match($patternTable, $q)) {
-                                    /*
-                                    * Если это таблица, заменим начало объявления и допишем ее в начало массива запросов
-                                    * TODO: сделать проверку на то, что начало объявления именно CREATE TABLE, без IF NOT EXISTS
-                                    */
-                                    $q                = str_replace(
-                                        'CREATE TABLE ',
-                                        'CREATE TABLE IF NOT EXISTS ', $q
-                                    );
-                                    $tmp[$entityname] = $q;
-                                    // сложение необходимо для сохранения ключей массивов
-                                    $queries = $tmp + $queries;
-                                }
-                                else {
-                                    $matches = array();
-                                    if (preg_match(
-                                        $patternView, $q, $matches
-                                    )
-                                    ) {
-                                        /*
-                                        * Если это вьюха, то сделаем CREATE OR REPLACE и меняем создателя на CURRENT_USER
-                                        * TODO: по аналогии с таблицей сделать проверку
-                                        */
-                                        $search           = array(
-                                            $matches[1], 'CREATE '
-                                        );
-                                        $replace          = array(
-                                            'CURRENT_USER', 'CREATE OR REPLACE '
-                                        );
-                                        $q                = str_replace(
-                                            $search, $replace, $q
-                                        );
-                                        $tmp[$entityname] = $q;
-                                        // дописываем вьюхи в отдельный массив, который в конец добавим в конец всего
-                                        $views += $tmp;
-                                    }
-                                    else {
-                                        /*
-                                        *  Если это триггер, процедура или функция, меняем создателя
-                                        */
-                                        if (preg_match(
-                                            $patternRoutine, $q, $matches
-                                        )
-                                        ) {
-                                            $q                = str_replace(
-                                                $matches[1], 'CURRENT_USER', $q
-                                            );
-                                            $tmp[$entityname] = sprintf(
-                                                "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
-                                                $matches[2], $entityname, $q
-                                            );
-                                            // и дописываем такие сущности в конец массива запросов
-                                            $queries += $tmp;
-                                        }
-                                    }
-                                }
+                                continue;
                             }
                         }
                         elseif (is_dir($file)) {
-                            /*
-                            * Если это директория, то допишем ее имя к строке поддиректорий и добавим в стек директорий
-                            */
+                            /**
+                             * Если это директория, то допишем ее имя к строке
+                             * поддиректорий и добавим в стек директорий
+                             */
                             $dir_to_add = $dir . DIR_SEP . $file;
                             array_push($dirs, $dir_to_add);
                             Output::verbose(
@@ -1206,7 +1241,10 @@ class Helper {
                 closedir($handle);
             }
         }
-        // вьхи идут после хранимых процедур, функций и триггеров, которые в свою очередь идут после таблиц
+        /**
+         * вьхи идут после хранимых процедур, функций и триггеров,
+         * которые в свою очередь идут после таблиц
+         */
         $queries += $views;
         return $queries;
     }
@@ -1218,27 +1256,35 @@ class Helper {
      * @return boolean Результат ввода пользователя
      */
     public static function askToRewrite($filename, $message = '') {
-        if (self::get('quiet') || !file_exists($filename)) {
-            return true;
+        $hash = md5($filename);
+        if (self::getAnswer($hash)) {
+            // если уже отвечали, нет смысла запрашивать ввод пользователя
+            return false;
         }
-        $c       = '';
-        $choices = array(
-            'y' => true,
-            'n' => false
-        );
-        do {
-            if ($c != "\n") {
-                if (empty($message)) {
-                    $message =
-                        'File %s already exists. Do you really want to override it? [y/n] ';
+        else {
+            if (self::get('quiet') || !file_exists($filename)) {
+                return true;
+            }
+            $c       = '';
+            $choices = array(
+                'y' => true,
+                'n' => false
+            );
+            do {
+                if ($c != "\n") {
+                    if (empty($message)) {
+                        $message =
+                            'File %s already exists. Do you really want to override it? [y/n] ';
+                    }
+                    printf($message, $filename);
                 }
-                printf($message, $filename);
-            }
-            $c = mb_strtolower(trim(fgets(STDIN)));
-            if (isset($choices[$c])) {
-                return $choices[$c];
-            }
-        } while (true);
+                $c = mb_strtolower(trim(fgets(STDIN)));
+                if (isset($choices[$c])) {
+                    self::saveAnswer($hash, $c);
+                    return $choices[$c];
+                }
+            } while (true);
+        }
     }
 
     /**
@@ -1274,6 +1320,29 @@ class Helper {
         $content .= "  );\n  protected \$rev = {$version};\n}\n";
 
         return $content;
+    }
+
+    /**
+     * Сохраняет ответ в списке
+     * @static
+     * @param string $answer Название вопроса (ключ)
+     * @param string $value  Ответ пользователя (по умолчанию "1")
+     */
+    public static function saveAnswer($answer, $value = '1') {
+        self::$_executedRequests[$answer] = $value;
+    }
+
+    /**
+     * Получить сохраненный ответ пользователя
+     * @static
+     * @param string $answer Название вопроса (ключ)
+     * @return mixed|bool Ответ пользователя, по умолчанию false
+     */
+    public static function getAnswer($answer) {
+        $value = false;
+        isset(self::$_executedRequests[$answer]) &&
+        ($value = self::$_executedRequests[$answer]);
+        return $value;
     }
 
 }

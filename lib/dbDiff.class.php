@@ -20,7 +20,7 @@ class dbDiff {
      * Запросы в обе стороны, связанные и использованные таблицы
      * @var array
      */
-    private $_difference = array(
+    private $_diff = array(
         'up'     => array(),
         'down'   => array(),
         'tables' => array(
@@ -35,25 +35,26 @@ class dbDiff {
      * @param MysqliHelper $temp    Соединение с временной БД
      */
     public function __construct(MysqliHelper $current, MysqliHelper $temp) {
-        $this->_currentTable   = $this->getDbName($current);
-        $this->_tempTable      = $this->getDbName($temp);
+        $this->_currentTable   = $current->getDatabaseName();
+        $this->_tempTable      = $temp->getDatabaseName();
         $this->_currentAdapter = $current;
     }
 
     /**
-     * Получает имя базы данных
-     * @param MysqliHelper $connection Объект соединения
-     * @return string
+     * Добавляет описание связи
+     * @param string $tableName       Описываемая таблица
+     * @param string $referencedTable Связанная с ней
      */
-    private function getDbName(MysqliHelper $connection) {
-        /*
-          $sql = "SELECT DATABASE() as dbname";
-          $res = $connection->query($sql);
-          $row = $res->fetch_array(MYSQLI_ASSOC);
-          $res->free_result();
-          return $row['dbname'];
-         */
-        return $connection->getDatabaseName();
+    private function addReferenced($tableName, $referencedTable) {
+        $this->_diff['tables']['refs'][$tableName][$referencedTable] = 1;
+    }
+
+    /**
+     * Помечает таблицу как использованную
+     * @param string $tableName
+     */
+    private function markUsed($tableName) {
+        $this->_diff['tables']['used'][$tableName] = 1;
     }
 
     /**
@@ -62,40 +63,63 @@ class dbDiff {
      * @return array
      */
     private function parseDiff(array $output = array()) {
-        $comment = '';
-        $tmp     = array();
-        $result  = array();
-        $index   = 0;
+        $comment    = '';
+        $tableName  = '';
+        $tmp        = array();
+        $result     = array();
+        $index      = 0;
+        $endMarker  = '-- }';
+        $actionType = '';
         foreach ($output as $line) {
             // если строка состоит только из whitespace'ов
             if (ctype_space($line)) {
                 continue;
             }
             if (strpos($line, '--') === 0) {
-                // это комментарий с именем таблицы
-                $comment = explode('|', trim(substr($line, 2)));
-                $comment = str_replace('`', '', $comment);
-                if (is_array($comment)) {
-                    // множество зависимых таблиц
-                    $tableName = array_shift($comment);
-                    foreach ($comment as $table) {
-                        $this->_difference['tables']['refs'][$tableName][$table] =
-                            1;
+                // это комментарий с информацией о запросе
+                $comment .= str_replace('`', '', substr($line, 2));
+                if (strpos($line, $endMarker) === 0) {
+                    // это конец комментария
+                    try {
+                        $data    = json_decode($comment);
+                        $comment = '';
+                        if ($data) {
+                            $tableName  = $data->name;
+                            $actionType = $data->action_type;
+                            if (isset($data->referenced_tables) &&
+                                is_array($data->referenced_tables)
+                            ) {
+                                // множество зависимых таблиц
+                                foreach ($data->referenced_tables as $table) {
+                                    $this->addReferenced($tableName, $table);
+                                }
+                            }
+                            $this->markUsed($tableName);
+                            $tmp   = array();
+                            $index = 0;
+                            isset($result['desc'][$tableName]) &&
+                            ($index = sizeof($result['desc'][$tableName]));
+                        }
+                    } catch (\Exception $e) {
+                        Output::error($e->getMessage());
+                        $tableName = '';
                     }
-                    $comment = $tableName;
                 }
-                $this->_difference['tables']['used'][$comment] = 1;
-                $tmp                                           = array();
-                $index                                         = 0;
-                isset($result['desc'][$comment]) &&
-                ($index = sizeof($result['desc'][$comment]));
             }
             else {
                 $tmp[] = $line;
-                if (!empty($comment)) {
-                    // добавим предыдущие собранные данные в результирующий массив
-                    $result['desc'][$comment][$index] =
-                        trim(implode("\n", $tmp));
+                if (!empty($tableName)) {
+                    /*
+                    * добавим предыдущие собранные данные в результирующий массив
+                    * делать это необходимо здесь, поскольку иначе нужна
+                    * дополнительная проверка, достигнут ли конец массива,
+                    * и "неиспользованный" остаток все равно придется добавить
+                    * к последнему обнаруженному комментарию с именем таблицы
+                    */
+                    $result['desc'][$tableName][$index] = array(
+                        'sql'  => trim(implode("\n", $tmp)),
+                        'type' => $actionType
+                    );
                 }
             }
         }
@@ -107,7 +131,7 @@ class dbDiff {
      * Делегирует работу mysqldiff
      * @return array
      */
-    public function getDifference() {
+    public function getDiff() {
 
         $params = array('host', 'user', 'password');
         $groups = array('', 'tmp_');
@@ -138,8 +162,8 @@ class dbDiff {
             Output::verbose("Command {$full}", 2);
             exec($full, $output, $return_status);
             if (!empty($output)) {
-                $result                       = $this->parseDiff($output);
-                $this->_difference[$dirs[$i]] = $result['desc'];
+                $result                 = $this->parseDiff($output);
+                $this->_diff[$dirs[$i]] = $result['desc'];
             }
             else {
                 Output::verbose(
@@ -149,7 +173,7 @@ class dbDiff {
             $groups = array_reverse($groups);
         }
 
-        return $this->_difference;
+        return $this->_diff;
     }
 
 }

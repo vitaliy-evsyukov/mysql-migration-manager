@@ -51,7 +51,7 @@ class createController extends DatasetsController {
         }
         Output::verbose('Starting to search changes', 1);
         $diffObj = new dbDiff($this->db, $tempDb);
-        $diff    = $diffObj->getDifference();
+        $diff    = $diffObj->getDiff();
         Output::verbose('Search of changes completed', 1);
         if (!empty($diff['up']) || !empty($diff['down'])) {
             $revision    = Helper::getLastRevision();
