@@ -12,7 +12,6 @@ use \Mysqli;
 abstract class AbstractMigration {
 
     /**
-     *
      * @var MysqliHelper
      */
     protected $db;
@@ -28,44 +27,65 @@ abstract class AbstractMigration {
 
     /**
      * Устанавливает таблицы, операторы для которых необходимо выполнять
-     * @param array $tablesList 
+     * @param array $tablesList
      */
     public function setTables(array $tablesList = array()) {
         $this->_tables = $tablesList;
     }
 
     private function runDirection($direction) {
-        $start = microtime(1);
         if (!empty($this->_tables)) {
             $direction = array_intersect_key($direction, $this->_tables);
         }
-        Output::verbose(
-                sprintf('Intersection tables time: %f', (microtime(1) - $start)),
-                3
-        );
         $start = microtime(1);
         if (!empty($direction)) {
+            $res = array(
+                'start'  => array(),
+                'finish' => array()
+            );
+            foreach ($direction as $table => $statements) {
+                foreach ($statements as $statement) {
+                    $key = 'start';
+                    if (is_array($statement) && isset($statement['type'])) {
+                        if (in_array(
+                            $statement['type'],
+                            array('change_partitions', 'add_fk')
+                        )
+                        ) {
+                            $key = 'finish';
+                        }
+                        $res[$key][$table][] = $statement['sql'];
+                    } else {
+                        $res[$key][$table][] = $statement;
+                    }
+                }
+            }
+            $direction = $res;
+            print_r($direction);
+            unset($res);
             if ((int) Helper::get('verbose') === 3) {
-                Helper::_debug_queryMultipleDDL($this->db, $direction);
+                foreach ($direction as $order => $ddl) {
+                    Output::verbose(
+                        sprintf('Run %s order of queries...', $order), 3
+                    );
+                    Helper::_debug_queryMultipleDDL($this->db, $ddl);
+                }
             }
             else {
-                $start_i = microtime(1);
-                $query = array();
-                foreach ($direction as $statements) {
-                    $query[] = implode("\n", $statements);
+                $query   = array();
+                foreach ($direction as $statements_group) {
+                    foreach ($statements_group as $statements) {
+                        $query[] = implode("\n", $statements);
+                    }
                 }
-                Output::verbose(
-                        sprintf('Implode time: %f', (microtime(1) - $start_i)),
-                        3
-                );
                 Helper::queryMultipleDDL(
-                        $this->db, implode("\n", $query)
+                    $this->db, implode("\n", $query)
                 );
             }
         }
         Output::verbose(
-                sprintf('Summary execution time: %f', (microtime(1) - $start)),
-                3
+            sprintf('Summary execution time: %f', (microtime(1) - $start)),
+            3
         );
     }
 
@@ -83,7 +103,7 @@ abstract class AbstractMigration {
 
     public function getStatements() {
         return array(
-            'up' => $this->up,
+            'up'   => $this->up,
             'down' => $this->down
         );
     }
