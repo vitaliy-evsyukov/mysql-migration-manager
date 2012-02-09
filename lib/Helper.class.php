@@ -672,11 +672,14 @@ class Helper {
 
     /**
      * Возвращает информацию о изменениях таблиц в базе с течением времени
-     * @param array $tablesList
+     * @param array $tablesList Список необходимых таблиц
+     * @param bool  $getRefs    Нужно ли получать начальные связи
      * @return array
      */
-    public static function getTimeline(array $tablesList = array()) {
-        $migrations = Registry::getAllMigrations();
+    public static function getTimeline(
+        array $tablesList = array(), $getRefs = true
+    ) {
+        $migrations = Registry::getAllMigrations(true, $getRefs);
         if (!empty($tablesList)) {
             // получить все связи таблиц
             $refs = Registry::getAllRefs();
@@ -886,13 +889,16 @@ class Helper {
         Output::verbose(
             sprintf("Deploy temporary database %s", $db->getDatabaseName()), 1
         );
-        self::$_currentTempDb = $db;
         $db->setCommand("SET foreign_key_checks = 0;");
-        $timeline       = self::getTimeline();
+        /**
+         * Так как при разворачивании временной БД выполняются все операторы,
+         * то строить связи нет необходимости, равно как и передавать список
+         * необходимых таблиц
+         */
+        $timeline       = self::getTimeline(array(), false);
         $usedMigrations = array();
         foreach ($timeline as $tables) {
             foreach ($tables as $tablename => $revision) {
-                $start = microtime(1);
                 if (is_int($revision)) {
                     $what = sprintf(
                         "migration %d for table %s", $revision, $tablename
@@ -910,18 +916,11 @@ class Helper {
                         $db, array($tablename => $revision)
                     );
                 }
-                $stop = microtime(1);
-                $t    = $stop - $start;
-                if (!Helper::get('quiet')) {
-                    Output::verbose(
-                        sprintf('Completed %s; time: %f seconds', $what, $t), 3
-                    );
-                }
             }
         }
         ;
         $db->query("SET foreign_key_checks = 1;");
-        Output::verbose("Deploy temporary database was finished\n", 1);
+        Output::verbose("Deploy temporary database was finished", 1);
     }
 
     /**
