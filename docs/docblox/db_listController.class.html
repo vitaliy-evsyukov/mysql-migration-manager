@@ -102,8 +102,8 @@
 Показывает список доступных миграций</p>
 <div class="long-description"></div>
 <dl class="class-info">
-<dt>Parent(s)</dt>
-<dd><a href="db_AbstractController.class.html#%5Clib%5CAbstractController">\lib\AbstractController</a></dd>
+<dt>Implements</dt>
+<dd><a href="db_IController.class.html#%5Clib%5CIController">\lib\IController</a></dd>
 <dt>Author</dt>
 <dd>guyfawkes
          
@@ -111,48 +111,6 @@
 </dl>
 <h3>Properties</h3>
 <div>
-<a id="\lib\listController::$args" class="anchor"></a><div class="property protected inherited_from ">
-<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">array
-                 <span class="highlight">$args</span>= 'array()'
-                </code><div class="description">
-<span class="attribute">inherited</span><p class="short-description"></p><small>Inherited from:
-                        <a href="db_AbstractController.class.html#%5Clib%5CAbstractController::%24%24args">\lib\AbstractController::$$args</a></small>
-</div>
-<div class="code-tabs">
-<div class="long-description"></div>
-<strong>Default value</strong><code>array()</code><strong>Details</strong><dl class="property-info">
-<dt>Type</dt>
-<dd>array</dd>
-<dt>Inherited_from</dt>
-<dd>
-<a href="db_AbstractController.class.html#%5Clib%5CAbstractController::%24%24args">\lib\AbstractController::$$args</a>
-         
-    </dd>
-</dl>
-</div>
-<div class="clear"></div>
-</div>
-<a id="\lib\listController::$db" class="anchor"></a><div class="property protected inherited_from ">
-<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">\lib\MysqliHelper
-                 <span class="highlight">$db</span>= 'null'
-                </code><div class="description">
-<span class="attribute">inherited</span><p class="short-description"></p><small>Inherited from:
-                        <a href="db_AbstractController.class.html#%5Clib%5CAbstractController::%24%24db">\lib\AbstractController::$$db</a></small>
-</div>
-<div class="code-tabs">
-<div class="long-description"></div>
-<strong>Default value</strong><code>null</code><strong>Details</strong><dl class="property-info">
-<dt>Type</dt>
-<dd><a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a></dd>
-<dt>Inherited_from</dt>
-<dd>
-<a href="db_AbstractController.class.html#%5Clib%5CAbstractController::%24%24db">\lib\AbstractController::$$db</a>
-         
-    </dd>
-</dl>
-</div>
-<div class="clear"></div>
-</div>
 <a id="\lib\listController::$queries" class="anchor"></a><div class="property protected">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">array
                  <span class="highlight">$queries</span>= 'array()'
@@ -170,47 +128,7 @@
 </div>
 <h3>Methods</h3>
 <div>
-<a id="\lib\listController::__construct()" class="anchor"></a><div class="method public inherited_from ">
-<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">__construct</span><span class="nb-faded-text">(
-          <a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a> | null $db
-              =
-              null, array $args
-              =
-              array()
-          )
-        </span>
-        :
-          void</code><div class="description">
-<span class="attribute">inherited</span><p class="short_description">Создает экземлпяр класса контроллера</p>
-<small>Inherited from:
-                    <a href="db_AbstractController.class.html#%5Clib%5CAbstractController::__construct()">\lib\AbstractController::__construct()</a></small>
-</div>
-<div class="code-tabs">
-<div class="long-description"></div>
-<strong>Parameters</strong><table class="argument-info">
-<thead><tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr></thead>
-<tr>
-<th>$db</th>
-<td>
-<a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a> | null</td>
-<td><em><p>Объект соединения</p>
-</em></td>
-</tr>
-<tr>
-<th>$args</th>
-<td>array</td>
-<td><em><p>Массив аргументов, переданных пользователем</p>
-</em></td>
-</tr>
-</table>
-</div>
-<div class="clear"></div>
-</div>
-<a id="\lib\listController::draw_text_table()" class="anchor"></a><div class="method private">
+<a id="\lib\listController::drawTextTable()" class="anchor"></a><div class="method private">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private"><span class="highlight">drawTextTable</span><span class="nb-faded-text">(
           array $table, array $headers
           )
@@ -257,8 +175,8 @@
           )
         </span>
         :
-          void</code><div class="description"><p class="short_description"></p></div>
-<div class="code-tabs"></div>
+          void</code><div class="description"><p class="short_description">Запускает основную операцию контроллера</p></div>
+<div class="code-tabs"><div class="long-description"></div></div>
 <div class="clear"></div>
 </div>
 </div>

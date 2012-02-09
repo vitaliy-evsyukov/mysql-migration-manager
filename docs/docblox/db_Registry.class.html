@@ -238,6 +238,41 @@
 </div>
 <div class="clear"></div>
 </div>
+<a id="\lib\Registry::parseMigrations()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">parseMigrations</span><span class="nb-faded-text">(
+          bool $check
+              =
+              false
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Находит файлы миграций и сохраняет необходимые данные из них</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$check</th>
+<td>bool</td>
+<td><em><p>Проверять, есть ли данный файл в списке миграций</p>
+</em></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
 <a id="\lib\Registry::prepareMap()" class="anchor"></a><div class="method private">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private"><span class="highlight">prepareMap</span><span class="nb-faded-text">(
           bool $loadSQL
@@ -254,19 +289,19 @@ self::$_migrations = array(
              111111 => 1,
              111112 => 2
      )
-);</p>
-</div>
-<div class="code-tabs">
-<div class="long-description"><p>self::$_refsMap = array(
+);
+self::$_refsMap = array(
      'table1' => array(
              'table2' => 1,
              'table3' => 1
      )
 );
-</code></p>
-
-<p>Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
-Для массива ссылок указывается таблица, а для нее - связанные таблицы.</p></div>
+</code>
+Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
+Для массива ссылок указывается таблица, а для нее - связанные таблицы.</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
 <strong>Parameters</strong><table class="argument-info">
 <thead><tr>
 <th>Name</th>
@@ -280,6 +315,26 @@ self::$_migrations = array(
 </em></td>
 </tr>
 </table>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Registry::resetAll()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">resetAll</span><span class="nb-faded-text">(
+          
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Сбрасывает кеши связей и миграций</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
 </div>
 <div class="clear"></div>
 </div>

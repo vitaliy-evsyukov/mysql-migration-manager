@@ -61,7 +61,6 @@ abstract class AbstractMigration {
                 }
             }
             $direction = $res;
-            print_r($direction);
             unset($res);
             if ((int) Helper::get('verbose') === 3) {
                 foreach ($direction as $order => $ddl) {

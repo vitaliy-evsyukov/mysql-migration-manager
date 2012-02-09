@@ -92,7 +92,6 @@ namespace lib;
                     $classname      = sprintf('%s\References', $ns);
                     $refsObj        = new $classname;
                     self::$_refsMap = $refsObj->getRefs();
-                    print_r(self::$_refsMap);
                     unset($refsObj);
                 }
             }
