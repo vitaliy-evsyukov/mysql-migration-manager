@@ -48,8 +48,9 @@ namespace lib;
      * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
      * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
      * @param bool $loadSQL Загружать ли содержимое SQL-файлов
+     * @param bool $getRefs Искать ли начальные связи
      */
-    private static function prepareMap($loadSQL = true) {
+    private static function prepareMap($loadSQL = true, $getRefs = true) {
         if ($loadSQL) {
             /*
              * Вначале соберем все данные из папки схемы
@@ -61,8 +62,8 @@ namespace lib;
             $refs_fname = "{$path}References.class.php";
             $ns         = Helper::get('cachedir_ns');
             $message    = sprintf(
-                'Parse schema directory %s again? [y/n] ',
-                Helper::get('schemadir')
+                'Parse schema directory %s or get schema from file %s? [y/n] ',
+                Helper::get('schemadir'), $fname
             );
             if (Helper::askToRewrite($fname, $message)) {
                 $queries = Helper::parseSchemaFiles();
@@ -78,21 +79,25 @@ namespace lib;
                 foreach ($queries as $tablename => &$q) {
                     self::$_migrations[$tablename][0] = $q;
                 }
-                Output::verbose('Starting to search initial references', 1);
-                // получить начальные связи
-                $message = sprintf(
-                    'Refresh initial references or get from cache %s? [y/n] ',
-                    $refs_fname
-                );
-                if (Helper::askToRewrite($refs_fname, $message)) {
-                    self::$_refsMap = Helper::getInitialRefs($queries);
-                    Helper::createReferencesCache($refs_fname, self::$_refsMap);
-                }
-                else {
-                    $classname      = sprintf('%s\References', $ns);
-                    $refsObj        = new $classname;
-                    self::$_refsMap = $refsObj->getRefs();
-                    unset($refsObj);
+                if ($getRefs) {
+                    Output::verbose('Starting to search initial references', 1);
+                    // получить начальные связи
+                    $message = sprintf(
+                        'Refresh initial references or get from cache %s? [y/n] ',
+                        $refs_fname
+                    );
+                    if (Helper::askToRewrite($refs_fname, $message)) {
+                        self::$_refsMap = Helper::getInitialRefs($queries);
+                        Helper::createReferencesCache(
+                            $refs_fname, self::$_refsMap
+                        );
+                    }
+                    else {
+                        $classname      = sprintf('%s\References', $ns);
+                        $refsObj        = new $classname;
+                        self::$_refsMap = $refsObj->getRefs();
+                        unset($refsObj);
+                    }
                 }
             }
             else {
@@ -115,11 +120,12 @@ namespace lib;
      * Возвращает картину миграций
      * @static
      * @param bool $loadSQL
+     * @param bool $getRefs
      * @return array
      */
-    public static function getAllMigrations($loadSQL = true) {
+    public static function getAllMigrations($loadSQL = true, $getRefs = true) {
         if (empty(self::$_migrations)) {
-            self::prepareMap($loadSQL);
+            self::prepareMap($loadSQL, $getRefs);
         }
         return self::$_migrations;
     }
