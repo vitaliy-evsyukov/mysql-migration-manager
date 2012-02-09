@@ -98,6 +98,15 @@ class Helper {
     }
 
     /**
+     * Установить временную БД
+     * @static
+     * @param \lib\MysqliHelper $db
+     */
+    public static function setCurrentTempDb(MysqliHelper $db) {
+        self::$_currentTempDb = $db;
+    }
+
+    /**
      * Parse command line into config options and commands with its parameters
      * @param array $args List of arguments provided from command line
      * @return array
@@ -641,16 +650,10 @@ class Helper {
             "%s %s  --no-old-defs --refs %s", self::get('mysqldiff_command'),
             implode(' ', $params_str), $db->getDatabaseName()
         );
-        $output  = array();
-        $status  = -1;
+        Output::verbose(sprintf('Executing command %s', $command), 3);
+        $output = array();
+        $status = -1;
         exec($command, $output, $status);
-        /*
-        if (empty($output)) {
-            throw new \Exception(
-                sprintf("An error was occured in command %s, return code %d",
-                    $command, $status)
-            );
-        }*/
         Output::verbose(
             sprintf(
                 'References search completed in: %f seconds',
@@ -659,17 +662,10 @@ class Helper {
         );
         $result = array();
         if (!empty($output)) {
-            foreach ($output as $line) {
-                $line = trim($line);
-                if (empty($line)) {
-                    continue;
-                }
-                $tables    = explode('|', $line);
-                $tableName = array_shift($tables);
-                foreach ($tables as $table) {
-                    $result[$tableName][$table] = 1;
-                }
-            }
+            $diffObj = new dbDiff();
+            $diffObj->parseDiff($output);
+            $result = $diffObj->getTablesInfo();
+            $result = $result['refs'];
         }
         return $result;
     }
@@ -1089,11 +1085,14 @@ class Helper {
         $search  = array('ns', 'refs');
         $replace = array(
             self::get('cachedir_ns'),
-            self::recursiveImplode($references)
+            self::recursiveImplode($references, 2)
         );
         if (!file_exists($filename) || is_writable($filename)) {
             file_put_contents(
                 $filename, self::createContent($search, $replace, $tpl)
+            );
+            Output::verbose(
+                sprintf('References cache saved in file %s', $filename), 1
             );
         }
     }
@@ -1263,6 +1262,7 @@ class Helper {
         }
         else {
             if (self::get('quiet') || !file_exists($filename)) {
+                self::saveAnswer($hash, 'y');
                 return true;
             }
             $c       = '';

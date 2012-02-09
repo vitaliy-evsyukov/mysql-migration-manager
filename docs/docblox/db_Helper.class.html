@@ -118,11 +118,40 @@
 </div>
 <div class="clear"></div>
 </div>
+<a id="\lib\Helper::$_currentTempDb" class="anchor"></a><div class="property private">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private">\lib\MysqliHelper
+                 <span class="highlight">$_currentTempDb</span>= 'null'
+                </code><div class="description">
+<span class="attribute">static</span><p class="short-description">Текущая разворачиваемая временная БД</p></div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Default value</strong><code>null</code><strong>Details</strong><dl class="property-info">
+<dt>Type</dt>
+<dd><a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a></dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
 <a id="\lib\Helper::$_datasets" class="anchor"></a><div class="property protected">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">array
                  <span class="highlight">$_datasets</span>= 'array()'
                 </code><div class="description">
 <span class="attribute">static</span><p class="short-description"></p></div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Default value</strong><code>array()</code><strong>Details</strong><dl class="property-info">
+<dt>Type</dt>
+<dd>array</dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::$_executedRequests" class="anchor"></a><div class="property private">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private">array
+                 <span class="highlight">$_executedRequests</span>= 'array()'
+                </code><div class="description">
+<span class="attribute">static</span><p class="short-description">Массив с действиями, которые уже запросили ввода пользователя
+Необходим для того, чтобы в цепочках не повторять вопросы</p></div>
 <div class="code-tabs">
 <div class="long-description"></div>
 <strong>Default value</strong><code>array()</code><strong>Details</strong><dl class="property-info">
@@ -146,6 +175,20 @@
 </div>
 <div class="clear"></div>
 </div>
+<a id="\lib\Helper::$_prepareStandardDirectories" class="anchor"></a><div class="property private">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private">bool
+                 <span class="highlight">$_prepareStandardDirectories</span>= 'false'
+                </code><div class="description">
+<span class="attribute">static</span><p class="short-description">Приведены ли стандартные директории к виду полных путей</p></div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Default value</strong><code>false</code><strong>Details</strong><dl class="property-info">
+<dt>Type</dt>
+<dd>bool</dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
 <a id="\lib\Helper::$_revisionLines" class="anchor"></a><div class="property private">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private">array
                  <span class="highlight">$_revisionLines</span>= 'array()'
@@ -163,13 +206,13 @@
 <a id="\lib\Helper::$config" class="anchor"></a><div class="property protected">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">array
                  <span class="highlight">$config</span>= 'array(
-        'config' =&gt; null'
+        'config'         =&gt; null'
                 </code><div class="description">
 <span class="attribute">static</span><p class="short-description"></p></div>
 <div class="code-tabs">
 <div class="long-description"></div>
 <strong>Default value</strong><code>array(
-        'config' =&gt; null</code><strong>Details</strong><dl class="property-info">
+        'config'         =&gt; null</code><strong>Details</strong><dl class="property-info">
 <dt>Type</dt>
 <dd>array</dd>
 </dl>
@@ -179,13 +222,13 @@
 <a id="\lib\Helper::$config_tpl" class="anchor"></a><div class="property protected">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/property.png" alt="Property"><img src="images/icons/visibility_protected.png" style="margin-right: 5px" alt="protected">array
                  <span class="highlight">$config_tpl</span>= 'array(
-        'config' =&gt; array('short' =&gt; 'c''
+        'config'         =&gt; array('short' =&gt; 'c''
                 </code><div class="description">
 <span class="attribute">static</span><p class="short-description"></p></div>
 <div class="code-tabs">
 <div class="long-description"></div>
 <strong>Default value</strong><code>array(
-        'config' =&gt; array('short' =&gt; 'c'</code><strong>Details</strong><dl class="property-info">
+        'config'         =&gt; array('short' =&gt; 'c'</code><strong>Details</strong><dl class="property-info">
 <dt>Type</dt>
 <dd>array</dd>
 </dl>
@@ -397,6 +440,71 @@
 </div>
 <div class="clear"></div>
 </div>
+<a id="\lib\Helper::createContent()" class="anchor"></a><div class="method private">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private"><span class="highlight">createContent</span><span class="nb-faded-text">(
+          array $search, array $replace, string $tpl
+          )
+        </span>
+        :
+          string</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Утилитарная работа с получением содержимого шаблона и заменой</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$search</th>
+<td>array</td>
+<td><em><p>Массив местозаменителей</p>
+</em></td>
+</tr>
+<tr>
+<th>$replace</th>
+<td>array</td>
+<td><em><p>Массив соответствующих им замен</p>
+</em></td>
+</tr>
+<tr>
+<th>$tpl</th>
+<td>string</td>
+<td><em><p>Имя файла шаблона</p>
+</em></td>
+</tr>
+</table>
+<strong>Returns</strong><table class="argument-info">
+<thead><tr>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<td>string</td>
+<td></td>
+</tr>
+</table>
+<strong>Throws</strong><table class="argument-info">
+<thead><tr>
+<th>Exception</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<td><a href="http://php.net/manual/en/class.exception.php">\Exception</a></td>
+<td><em></em></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
 <a id="\lib\Helper::createMigrationContent()" class="anchor"></a><div class="method public">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">createMigrationContent</span><span class="nb-faded-text">(
           int $version, array $diff, int $ts, string $tpl
@@ -453,9 +561,56 @@
 </div>
 <div class="clear"></div>
 </div>
+<a id="\lib\Helper::createReferencesCache()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">createReferencesCache</span><span class="nb-faded-text">(
+          string $filename, array $references, string $tpl
+              =
+              'tpl/references.tpl'
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Создать файл кеша связей таблиц</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$filename</th>
+<td>string</td>
+<td><em><p>Имя файла</p>
+</em></td>
+</tr>
+<tr>
+<th>$references</th>
+<td>array</td>
+<td><em><p>Массив связей</p>
+</em></td>
+</tr>
+<tr>
+<th>$tpl</th>
+<td>string</td>
+<td><em><p>Файл шаблона</p>
+</em></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
 <a id="\lib\Helper::get()" class="anchor"></a><div class="method public">
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">get</span><span class="nb-faded-text">(
-          \lib\$key $key
+          string $key
           )
         </span>
         :
@@ -472,7 +627,7 @@
 </tr></thead>
 <tr>
 <th>$key</th>
-<td>\lib\$key</td>
+<td>string</td>
 <td><em><p>Название параметра</p>
 </em></td>
 </tr>
@@ -485,6 +640,49 @@
 <tr>
 <td>mixed | bool</td>
 <td>Значение или false в случае неудачи</td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::getActionName()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">getActionName</span><span class="nb-faded-text">(
+          <a href="db_IController.class.html#%5Clib%5CIController">\lib\IController</a> $controller
+          )
+        </span>
+        :
+          string</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Возвращает наименование действия, выполняемого контроллером</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$controller</th>
+<td><a href="db_IController.class.html#%5Clib%5CIController">\lib\IController</a></td>
+<td><em><p>Экземпляр класса</p>
+</em></td>
+</tr>
+</table>
+<strong>Returns</strong><table class="argument-info">
+<thead><tr>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<td>string</td>
+<td></td>
 </tr>
 </table>
 <strong>Details</strong><dl class="function-info">
@@ -517,6 +715,49 @@
 <td></td>
 </tr>
 </table>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::getAnswer()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">getAnswer</span><span class="nb-faded-text">(
+          string $answer
+          )
+        </span>
+        :
+          mixed | bool</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Получить сохраненный ответ пользователя</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$answer</th>
+<td>string</td>
+<td><em><p>Название вопроса (ключ)</p>
+</em></td>
+</tr>
+</table>
+<strong>Returns</strong><table class="argument-info">
+<thead><tr>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<td>mixed | bool</td>
+<td>Ответ пользователя, по умолчанию false</td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
 </div>
 <div class="clear"></div>
 </div>
@@ -556,16 +797,18 @@
               =
               null, array $args
               =
-              array()
+              array(), <a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a> | null $db
+              =
+              null
           )
         </span>
         :
-          <a href="db_AbstractController.class.html#%5Clib%5CAbstractController">\lib\AbstractController</a></code><div class="description">
-<span class="attribute">static</span><p class="short_description">TODO: прикрутить пул контроллеров
-Get available controller object</p>
+          <a href="db_AbstractController.class.html#%5Clib%5CAbstractController">\lib\AbstractController</a> | \lib\ChainController</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Получить объект контроллера или цепочку ответственности
+Без переданных параметров возвращает "help" контроллер</p>
 </div>
 <div class="code-tabs">
-<div class="long-description"><p>With no parameters supplied, returns "help" controller</p></div>
+<div class="long-description"></div>
 <strong>Parameters</strong><table class="argument-info">
 <thead><tr>
 <th>Name</th>
@@ -575,12 +818,21 @@ Get available controller object</p>
 <tr>
 <th>$name</th>
 <td>string</td>
-<td><em><p>Controller name</p></em></td>
+<td><em><p>Имя контроллера</p>
+</em></td>
 </tr>
 <tr>
 <th>$args</th>
 <td>array</td>
-<td><em><p>Optional controller arguments</p></em></td>
+<td><em><p>Массив аргументов</p>
+</em></td>
+</tr>
+<tr>
+<th>$db</th>
+<td>
+<a href="db_MysqliHelper.class.html#%5Clib%5CMysqliHelper">\lib\MysqliHelper</a> | null</td>
+<td><em><p>Объект подключения к БД</p>
+</em></td>
 </tr>
 </table>
 <strong>Returns</strong><table class="argument-info">
@@ -589,8 +841,9 @@ Get available controller object</p>
 <th>Description</th>
 </tr></thead>
 <tr>
-<td><a href="db_AbstractController.class.html#%5Clib%5CAbstractController">\lib\AbstractController</a></td>
-<td>Initialized controller, False if not found</td>
+<td>
+<a href="db_AbstractController.class.html#%5Clib%5CAbstractController">\lib\AbstractController</a> | \lib\ChainController</td>
+<td></td>
 </tr>
 </table>
 </div>
@@ -1322,7 +1575,9 @@ TODO: объединить методы создания соединения</p
 <a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">recursiveImplode</span><span class="nb-faded-text">(
           array $a, int $level
               =
-              1, string $spacer
+              1, bool $nowdoc
+              =
+              true, string $spacer
               =
               ' '
           )
@@ -1352,6 +1607,12 @@ TODO: объединить методы создания соединения</p
 </em></td>
 </tr>
 <tr>
+<th>$nowdoc</th>
+<td>bool</td>
+<td><em><p>Необходимо ли использовать Nowdoc или делать простые строки</p>
+</em></td>
+</tr>
+<tr>
 <th>$spacer</th>
 <td>string</td>
 <td><em><p>Строка, которой отбивается отступ</p>
@@ -1366,6 +1627,147 @@ TODO: объединить методы создания соединения</p
 <tr>
 <td>string</td>
 <td></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::saveAnswer()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">saveAnswer</span><span class="nb-faded-text">(
+          string $answer, string $value
+              =
+              '1'
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Сохраняет ответ в списке</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$answer</th>
+<td>string</td>
+<td><em><p>Название вопроса (ключ)</p>
+</em></td>
+</tr>
+<tr>
+<th>$value</th>
+<td>string</td>
+<td><em><p>Ответ пользователя (по умолчанию "1")</p>
+</em></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::schemaFileRoutines()" class="anchor"></a><div class="method private">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_private.png" style="margin-right: 5px" alt="private"><span class="highlight">schemaFileRoutines</span><span class="nb-faded-text">(
+          array $queries, array $views, array $includeTables, string $file
+          )
+        </span>
+        :
+          bool</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Вспомогательные действия с файлами схемы</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$queries</th>
+<td>array</td>
+<td><em><p>Ссылка на массив запросов</p>
+</em></td>
+</tr>
+<tr>
+<th>$views</th>
+<td>array</td>
+<td><em><p>Ссылка на массив запросов для вьюх</p>
+</em></td>
+</tr>
+<tr>
+<th>$includeTables</th>
+<td>array</td>
+<td><em><p>Массив таблиц, которые нужно использовать</p>
+</em></td>
+</tr>
+<tr>
+<th>$file</th>
+<td>string</td>
+<td><em><p>Имя файла</p>
+</em></td>
+</tr>
+</table>
+<strong>Returns</strong><table class="argument-info">
+<thead><tr>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<td>bool</td>
+<td></td>
+</tr>
+</table>
+<strong>Details</strong><dl class="function-info">
+<dt>Static</dt>
+<dd>
+         
+    </dd>
+</dl>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::set()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">set</span><span class="nb-faded-text">(
+          string $key, mixed $value
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Устанавливает значение параметра</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$key</th>
+<td>string</td>
+<td><em><p>Название параметра</p>
+</em></td>
+</tr>
+<tr>
+<th>$value</th>
+<td>mixed</td>
+<td><em><p>Значение</p>
+</em></td>
 </tr>
 </table>
 <strong>Details</strong><dl class="function-info">
@@ -1440,6 +1842,54 @@ TODO: объединить методы создания соединения</p
 <tr>
 <td>string</td>
 <td></td>
+</tr>
+</table>
+</div>
+<div class="clear"></div>
+</div>
+<a id="\lib\Helper::writeInFile()" class="anchor"></a><div class="method public">
+<a href="#" class="gripper"><img src="images/icons/arrow_right.png"><img src="images/icons/arrow_down.png" style="display: none;"></a><code><img src="images/icons/method.png" alt="method"><img src="images/icons/visibility_public.png" style="margin-right: 5px" alt="public"><span class="highlight">writeInFile</span><span class="nb-faded-text">(
+          string $fname, string $name, array $queries, string $tpl
+              =
+              'tpl/schema.tpl'
+          )
+        </span>
+        :
+          void</code><div class="description">
+<span class="attribute">static</span><p class="short_description">Сохраняет файл схемы
+TODO: объединить с записью миграциий</p>
+</div>
+<div class="code-tabs">
+<div class="long-description"></div>
+<strong>Parameters</strong><table class="argument-info">
+<thead><tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr></thead>
+<tr>
+<th>$fname</th>
+<td>string</td>
+<td><em><p>Имя файла</p>
+</em></td>
+</tr>
+<tr>
+<th>$name</th>
+<td>string</td>
+<td><em><p>Имя схемы данных</p>
+</em></td>
+</tr>
+<tr>
+<th>$queries</th>
+<td>array</td>
+<td><em><p>Массив запросов</p>
+</em></td>
+</tr>
+<tr>
+<th>$tpl</th>
+<td>string</td>
+<td><em><p>Путь к файлу шаблона</p>
+</em></td>
 </tr>
 </table>
 </div>

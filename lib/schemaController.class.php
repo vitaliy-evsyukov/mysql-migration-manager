@@ -68,6 +68,7 @@ class schemaController extends DatasetsController {
             $class->load($this->db);
             Output::verbose('Schema deploy finished', 1);
         }
+        Helper::setCurrentTempDb($this->db);
         Helper::writeRevisionFile(0);
     }
 

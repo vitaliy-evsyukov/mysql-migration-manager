@@ -11,19 +11,52 @@ use \Mysqli;
  */
 class MysqliHelper {
 
+    /**
+     * Номер ошибки "MySQL server has gone away"
+     */
     const MYSQL_SERVER_HAS_GONE_AWAY = 2006;
     /**
-     *
+     * Экземпляр Mysqli-адаптера
      * @var Mysqli
      */
     private $_db = null;
+    /**
+     * Имя базы данных
+     * @var string
+     */
     private $_databaseName = '';
+    /**
+     * Адрес сервера БД
+     * @var string
+     */
     private $_host = '';
+    /**
+     * Имя пользователя
+     * @var string
+     */
     private $_user = '';
+    /**
+     * Пароль пользователя
+     * @var string
+     */
     private $_password = '';
+    /**
+     * Массив обязательных команд при (пере)подключении
+     * @var array
+     */
     private $_commands = array();
+    /**
+     * Количество попыток переустановить соединение с сервером БД
+     * @var int
+     */
     private $_retriesCount = 3;
 
+    /**
+     * @param string $host     Адрес сервера БД
+     * @param string $user     Имя пользователя
+     * @param string $password Пароль
+     * @param string $db       Имя базы данных
+     */
     public function __construct($host, $user, $password, $db = '') {
         $this->_host         = $host;
         $this->_user         = $user;
@@ -75,6 +108,13 @@ class MysqliHelper {
         return $r;
     }
 
+    /**
+     * Вызывает метод Mysqli
+     * @param string $name      Имя метода
+     * @param array  $arguments Массив аргументов
+     * @return mixed
+     * @throws \Exception
+     */
     public function __call($name, $arguments) {
         if (!method_exists($this->_db, $name)) {
             throw new \Exception(sprintf('Method %s does not exists', $name));
@@ -114,10 +154,18 @@ class MysqliHelper {
         }
     }
 
+    /**
+     * Возвращает значение параметра из класса-обертки или из Mysqli
+     * @param string $name
+     * @return mixed
+     */
     public function __get($name) {
         return $this->_db->$name;
     }
 
+    /**
+     * Выполняет набор обязательных команд при (пере)подключении
+     */
     private function executeCommands() {
         if (!empty($this->_commands)) {
             foreach ($this->_commands as $command) {
@@ -126,6 +174,10 @@ class MysqliHelper {
         }
     }
 
+    /**
+     * Устанавливает соединение с сервером БД
+     * @throws \Exception
+     */
     private function connect() {
         $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
         if ($this->_db->connect_errno) {

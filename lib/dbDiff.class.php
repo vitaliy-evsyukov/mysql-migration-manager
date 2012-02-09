@@ -34,9 +34,11 @@ class dbDiff {
      * @param MysqliHelper $current Соединение с текущей БД
      * @param MysqliHelper $temp    Соединение с временной БД
      */
-    public function __construct(MysqliHelper $current, MysqliHelper $temp) {
-        $this->_currentTable   = $current->getDatabaseName();
-        $this->_tempTable      = $temp->getDatabaseName();
+    public function __construct(
+        MysqliHelper $current = null, MysqliHelper $temp = null
+    ) {
+        $current && ($this->_currentTable = $current->getDatabaseName());
+        $temp && ($this->_tempTable = $temp->getDatabaseName());
         $this->_currentAdapter = $current;
     }
 
@@ -62,7 +64,7 @@ class dbDiff {
      * @param array $output Вывод mysqldiff
      * @return array
      */
-    private function parseDiff(array $output = array()) {
+    public function parseDiff(array $output = array()) {
         $comment    = '';
         $tableName  = '';
         $tmp        = array();
@@ -174,6 +176,15 @@ class dbDiff {
         }
 
         return $this->_diff;
+    }
+
+    /**
+     * Возвращает информацию об использованных и ссылающихся таблицах
+     * Результат - хеш из ключей used и refs
+     * @return array
+     */
+    public function getTablesInfo() {
+        return $this->_diff['tables'];
     }
 
 }
