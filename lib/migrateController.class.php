@@ -209,7 +209,7 @@ class migrateController extends DatasetsController {
                     $this->db->query($rev);
                 }
             }
-            //sleep(10);
+            sleep(10);
         }
 
         if ($target_migration === 0) {

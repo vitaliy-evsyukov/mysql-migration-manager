@@ -956,7 +956,7 @@ class Helper {
                      * Если необходимо использовать Nowdoc, применим
                      * ее только для SQL-операторов
                      */
-                    if ($nowdoc && $k === 'sql') {
+                    if ($nowdoc && !in_array($k, array('type'))) {
                         $tmp .= "<<<'EOT'\n";
                         $tmp .= $v;
                         $tmp .= "\nEOT\n";
@@ -1066,7 +1066,7 @@ class Helper {
         $search  = array('queries', 'tables', 'name', 'ns');
         $sep     = "\",\n" . str_repeat(' ', 8) . '"';
         $replace = array(
-            self::recursiveImplode($queries),
+            self::recursiveImplode($queries, 1, true),
             '"' . implode($sep, array_keys($queries)) . '"', $name,
             self::get('cachedir_ns')
         );
