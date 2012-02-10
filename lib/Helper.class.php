@@ -941,16 +941,22 @@ class Helper {
         foreach ($a as $k => $v) {
             $tmp = $depth;
             if (!is_int($k)) {
+                // выведем строковые ключи
                 $tmp = sprintf("%s'%s' => ", $depth, $k);
             }
             if (is_array($v)) {
+                // если значение - массив, рекурсивно обработаем его
                 $tmp .= self::recursiveImplode(
                     $v, ($level + 1), $nowdoc, $spacer
                 );
             }
             else {
                 if (is_string($v)) {
-                    if ($nowdoc) {
+                    /**
+                     * Если необходимо использовать Nowdoc, применим
+                     * ее только для SQL-операторов
+                     */
+                    if ($nowdoc && $k === 'sql') {
                         $tmp .= "<<<'EOT'\n";
                         $tmp .= $v;
                         $tmp .= "\nEOT\n";
