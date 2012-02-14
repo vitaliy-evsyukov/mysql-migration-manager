@@ -938,6 +938,7 @@ class Helper {
         $result = array();
         $depth  = str_repeat($spacer, $level * 3);
         $depth2 = str_repeat($spacer, ($level - 1) * 3);
+        $last_key = key(array_slice($a, -1, 1, TRUE));
         foreach ($a as $k => $v) {
             $tmp = $depth;
             if (!is_int($k)) {
@@ -955,11 +956,15 @@ class Helper {
                     /**
                      * Если необходимо использовать Nowdoc, применим
                      * ее только для SQL-операторов
+                     * array - возможно, в будущем будет вайтлист ключей
                      */
                     if ($nowdoc && !in_array($k, array('type'))) {
                         $tmp .= "<<<'EOT'\n";
                         $tmp .= $v;
-                        $tmp .= "\nEOT\n";
+                        $tmp .= "\nEOT";
+                        if ($k !== $last_key) {
+                            $tmp .= "\n";
+                        }
                     }
                     else {
                         $tmp .= "'{$v}'";

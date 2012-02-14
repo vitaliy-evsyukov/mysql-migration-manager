@@ -119,8 +119,8 @@ class dbDiff {
                     * к последнему обнаруженному комментарию с именем таблицы
                     */
                     $result['desc'][$tableName][$index] = array(
-                        'sql'  => trim(implode("\n", $tmp)),
-                        'type' => $actionType
+                        'type' => $actionType,
+                        'sql'  => trim(implode("\n", $tmp))
                     );
                 }
             }
