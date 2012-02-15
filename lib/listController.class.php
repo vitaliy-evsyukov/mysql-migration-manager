@@ -21,7 +21,7 @@ class listController implements IController {
             throw new \Exception('There are no revisions');
         }
         $current = Helper::getCurrentRevision();
-        Output::verbose(sprintf("Current revision: %d\n\n", $current), 1);
+        Output::verbose(sprintf("Current revision: %d\n", $current), 1);
         Output::verbose(
             sprintf(
                 $this->drawTextTable(

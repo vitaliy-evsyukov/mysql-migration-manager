@@ -726,7 +726,7 @@ class Helper {
     public static function getAllMigrations() {
         self::$_revisionLines = array();
         self::$_currRevision  = -1;
-        $migrationsDir        = self::get('savedir');
+        $migrationsDir        = self::get('savedir') . '/';
         $migrationsListFile   = $migrationsDir . self::get('versionfile');
         $markerFile           = $migrationsDir . self::get('version_marker');
         $result               = array(
