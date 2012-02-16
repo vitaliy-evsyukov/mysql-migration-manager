@@ -1130,7 +1130,8 @@ class Helper {
                              'ROW_FORMAT'
                         ), $search
                     );
-                    foreach ($search as $index => &$value) {
+                }
+				foreach ($search as $index => &$value) {
                         $pattern = "/ {$value}=\w+/ims";
                         if (preg_match($pattern, $content, $m)) {
                             $value     = $m[0];
@@ -1139,7 +1140,6 @@ class Helper {
                         else {
                             unset($search[$index]);
                         }
-                    }
                 }
                 if (!preg_match('/\s*IF\s+NOT\s+EXISTS\s+/ims', $content)) {
                     $search[]  = 'CREATE TABLE';
@@ -1153,13 +1153,15 @@ class Helper {
                 }
                 break;
             default:
-                $search[]  = $content;
-                $replace[] = sprintf(
-                    "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
-                    $type, $extra['entity'], $content
-                );
-                break;
-        }
+				if (!preg_match('/DELIMITER ;;/ims', $content)) {
+					$search[]  = $content;
+					$replace[] = sprintf(
+						"DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
+						$type, $extra['entity'], $content
+					);
+					break;
+				}
+		}
         if (isset($extra['definer'])) {
             $search[]  = $extra['definer'];
             $replace[] = 'CURRENT_USER';
@@ -1168,13 +1170,14 @@ class Helper {
             if (preg_match('/DEFINER=(.*?)\s+/ims', $content, $m)) {
                 $search[]  = $m[1];
                 $replace[] = 'CURRENT_USER';
+				//print_r($search);print_r($replace);die();
             }
         }
         /**
-        print_r($search);
-        print_r($replace);
-        echo "-----------------\n";
-         **/
+         * print_r($search);
+         * print_r($replace);
+         * echo "-----------------\n";
+         */
         return str_replace($search, $replace, $content);
     }
 
