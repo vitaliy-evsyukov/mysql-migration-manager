@@ -935,9 +935,9 @@ class Helper {
     public static function recursiveImplode(
         array $a, $level = 1, $nowdoc = true, $spacer = ' '
     ) {
-        $result = array();
-        $depth  = str_repeat($spacer, $level * 3);
-        $depth2 = str_repeat($spacer, ($level - 1) * 3);
+        $result   = array();
+        $depth    = str_repeat($spacer, $level * 3);
+        $depth2   = str_repeat($spacer, ($level - 1) * 3);
         $last_key = key(array_slice($a, -1, 1, TRUE));
         foreach ($a as $k => $v) {
             $tmp = $depth;
@@ -1108,6 +1108,77 @@ class Helper {
     }
 
     /**
+     * Удаляет мусор из определений сущностей
+     * @static
+     * @param string $content Описание сущности
+     * @param string $type    Тип сущности
+     * @param array  $extra   Массив дополнительной информации (ключи definer и entity)
+     * @return string
+     */
+    public static function stripTrash($content, $type, array $extra = array()) {
+        $search  = array();
+        $replace = array();
+        switch ($type) {
+            case 'table':
+                $search[] = 'AUTO_INCREMENT';
+                if (preg_match('/\s*ENGINE=InnoDB\s*/ims', $content)) {
+                    $search = array_merge(
+                        array(
+                             'CHECKSUM',
+                             'AVG_ROW_LENGTH',
+                             'DELAY_KEY_WRITE',
+                             'ROW_FORMAT'
+                        ), $search
+                    );
+                    foreach ($search as $index => &$value) {
+                        $pattern = "/ {$value}=\w+/ims";
+                        if (preg_match($pattern, $content, $m)) {
+                            $value     = $m[0];
+                            $replace[] = '';
+                        }
+                        else {
+                            unset($search[$index]);
+                        }
+                    }
+                }
+                if (!preg_match('/\s*IF\s+NOT\s+EXISTS\s+/ims', $content)) {
+                    $search[]  = 'CREATE TABLE';
+                    $replace[] = 'CREATE TABLE IF NOT EXISTS';
+                }
+                break;
+            case 'view':
+                if (!preg_match('/\s*OR\s+REPLACE\s+/ims', $content)) {
+                    $search[]  = 'CREATE ';
+                    $replace[] = 'CREATE OR REPLACE ';
+                }
+                break;
+            default:
+                $search[]  = $content;
+                $replace[] = sprintf(
+                    "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
+                    $type, $extra['entity'], $content
+                );
+                break;
+        }
+        if (isset($extra['definer'])) {
+            $search[]  = $extra['definer'];
+            $replace[] = 'CURRENT_USER';
+        }
+        else {
+            if (preg_match('/DEFINER=(.*?)\s+/ims', $content, $m)) {
+                $search[]  = $m[1];
+                $replace[] = 'CURRENT_USER';
+            }
+        }
+        /**
+        print_r($search);
+        print_r($replace);
+        echo "-----------------\n";
+         **/
+        return str_replace($search, $replace, $content);
+    }
+
+    /**
      * Вспомогательные действия с файлами схемы
      * @static
      * @param array  $queries       Ссылка на массив запросов
@@ -1144,38 +1215,19 @@ class Helper {
             }
             $tmp = array($entityname => $q);
             if (preg_match($patternTable, $q)) {
-                /**
-                 * Если это таблица, заменим начало объявления и допишем ее
-                 * в начало массива запросов
-                 * TODO: сделать проверку на то, что начало объявления
-                 * именно CREATE TABLE, без IF NOT EXISTS
+                $tmp[$entityname] = self::stripTrash($q, 'table');
+                /*
+                 * сложение необходимо для сохранения ключей массивов
+                 * таблицы добавляем в начало массива
                  */
-                $q                = str_replace(
-                    'CREATE TABLE ',
-                    'CREATE TABLE IF NOT EXISTS ', $q
-                );
-                $tmp[$entityname] = $q;
-                // сложение необходимо для сохранения ключей массивов
                 $queries = $tmp + $queries;
             }
             else {
                 $matches = array();
                 if (preg_match($patternView, $q, $matches)) {
-                    /**
-                     * Если это вьюха, то сделаем CREATE OR REPLACE
-                     * и меняем создателя на CURRENT_USER
-                     * TODO: по аналогии с таблицей сделать проверку
-                     */
-                    $search           = array(
-                        $matches[1], 'CREATE '
+                    $tmp[$entityname] = self::stripTrash(
+                        $q, 'view', array('definer' => $matches[1])
                     );
-                    $replace          = array(
-                        'CURRENT_USER', 'CREATE OR REPLACE '
-                    );
-                    $q                = str_replace(
-                        $search, $replace, $q
-                    );
-                    $tmp[$entityname] = $q;
                     /**
                      * дописываем вьюхи в отдельный массив,
                      * который добавим в конец всего
@@ -1187,12 +1239,13 @@ class Helper {
                      *  Если это триггер, процедура или функция, меняем создателя
                      */
                     if (preg_match($patternRoutine, $q, $matches)) {
-                        $q                = str_replace(
-                            $matches[1], 'CURRENT_USER', $q
-                        );
-                        $tmp[$entityname] = sprintf(
-                            "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
-                            $matches[2], $entityname, $q
+                        $tmp[$entityname] = self::stripTrash(
+                            $q,
+                            $matches[2],
+                            array(
+                                 'definer'  => $matches[1],
+                                 'entity'   => $entityname
+                            )
                         );
                         // и дописываем такие сущности в конец массива запросов
                         $queries += $tmp;
