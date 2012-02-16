@@ -65,9 +65,12 @@ class getsqlController extends AbstractController {
             Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
-                $col   = $row[$operations['cols'][$entity]['list']];
+                // имя сущности
+                $col = $row[$operations['cols'][$entity]['list']];
+                // ее описание
                 $value = $operations['cols'][$entity]['def'];
                 if (!empty($opts[$entity])) {
+                    // если имя не подходит под регулярное выражение, пропустим
                     if (!preg_match('/^' . $opts[$entity] . '/', $col)) {
                         continue;
                     }
@@ -96,6 +99,9 @@ class getsqlController extends AbstractController {
                     }
                     $data[$value] .= str_repeat(
                         ';', (int) ($entity !== 'TABLE') + 1
+                    );
+                    $data[$value] = Helper::stripTrash(
+                        $data[$value], $entity, array('entity' => $col)
                     );
                     file_put_contents($filename, $data[$value]);
                 }
