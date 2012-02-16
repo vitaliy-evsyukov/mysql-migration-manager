@@ -1119,7 +1119,7 @@ class Helper {
         $search  = array();
         $replace = array();
         switch ($type) {
-            case 'table':
+            case 'TABLE':
                 $search[] = 'AUTO_INCREMENT';
                 if (preg_match('/\s*ENGINE=InnoDB\s*/ims', $content)) {
                     $search = array_merge(
@@ -1146,7 +1146,7 @@ class Helper {
                     $replace[] = 'CREATE TABLE IF NOT EXISTS';
                 }
                 break;
-            case 'view':
+            case 'VIEW':
                 if (!preg_match('/\s*OR\s+REPLACE\s+/ims', $content)) {
                     $search[]  = 'CREATE ';
                     $replace[] = 'CREATE OR REPLACE ';
@@ -1215,7 +1215,7 @@ class Helper {
             }
             $tmp = array($entityname => $q);
             if (preg_match($patternTable, $q)) {
-                $tmp[$entityname] = self::stripTrash($q, 'table');
+                $tmp[$entityname] = self::stripTrash($q, 'TABLE');
                 /*
                  * сложение необходимо для сохранения ключей массивов
                  * таблицы добавляем в начало массива
@@ -1226,7 +1226,7 @@ class Helper {
                 $matches = array();
                 if (preg_match($patternView, $q, $matches)) {
                     $tmp[$entityname] = self::stripTrash(
-                        $q, 'view', array('definer' => $matches[1])
+                        $q, 'VIEW', array('definer' => $matches[1])
                     );
                     /**
                      * дописываем вьюхи в отдельный массив,
