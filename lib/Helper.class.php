@@ -1195,8 +1195,9 @@ class Helper {
     ) {
         $exclude        = !empty($includeTables);
         $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
-        $patternView    =
-            '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW/ims';
+        /*$patternView    =
+            '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW\s+(?:.*)\s+AS\s+\(?(.*?)\)?\s+(?:WITH\s+(.*?))?;$/ims';*/
+        $patternView = '/^CREATE(?:(?:.*?)\s+ALGORITHM=(?:.*?))?(?:\s+DEFINER=(.*?))?(?:\s+SQL\s+SECURITY\s+(?:DEFINER|INVOKER))?\s+VIEW\s+(?:.*?)\s+(?:\(.*?\)\s+)?AS\s+\(?(.*?)\)?\s*(?:WITH\s+(?:.*?))?;$/';
         $patternRoutine =
             '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
         // если файл - получим данные о его имени
@@ -1228,8 +1229,12 @@ class Helper {
             else {
                 $matches = array();
                 if (preg_match($patternView, $q, $matches)) {
-                    $tmp[$entityname] = self::stripTrash(
+                    $view_entityname = $entityname . '_view';
+                    $tmp[$view_entityname] = self::stripTrash(
                         $q, 'VIEW', array('definer' => $matches[1])
+                    );
+                    $tmp[$view_entityname] = sprintf(
+                        "DROP TABLE IF EXISTS %s;\n%s", $entityname, $tmp[$view_entityname]
                     );
                     /**
                      * дописываем вьюхи в отдельный массив,
@@ -1307,7 +1312,7 @@ class Helper {
             }
         }
         /**
-         * вьхи идут после хранимых процедур, функций и триггеров,
+         * вьюхи идут после хранимых процедур, функций и триггеров,
          * которые в свою очередь идут после таблиц
          */
         $queries += $views;
