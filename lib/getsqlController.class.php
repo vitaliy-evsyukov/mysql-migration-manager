@@ -13,20 +13,33 @@ class getsqlController extends AbstractController {
     private $_choice = null;
 
     public function runStrategy() {
-        $entities   = array('TABLE', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
+        $entities = array('TABLE', 'VIEW', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
+        /**
+         * ops - ключ операторов для показа списка
+         * links - какой оператор нужен для показа сущностей какого типа
+         * cols
+         * - ключ list для сущности показывает, где находится ее имя
+         * - ключ def показывает, в каком столбце ее описание
+         */
         $operations = array(
             'ops'   => array(
+                "SHOW FULL TABLES WHERE Table_type LIKE '%%%s'",
                 'SHOW %sS',
                 "SHOW %s STATUS WHERE Db='" . Helper::get('db') . "'"
             ),
             'links' => array(
                 'TABLE'     => 0,
-                'TRIGGER'   => 0,
-                'FUNCTION'  => 1,
-                'PROCEDURE' => 1
+                'VIEW'      => 0,
+                'TRIGGER'   => 1,
+                'FUNCTION'  => 2,
+                'PROCEDURE' => 2
             ),
             'cols'  => array(
                 'TABLE'     => array(
+                    'list'  => 0,
+                    'def'   => 1
+                ),
+                'VIEW'      => array(
                     'list' => 0,
                     'def'  => 1
                 ),
@@ -67,7 +80,7 @@ class getsqlController extends AbstractController {
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
                 // имя сущности
                 $col = $row[$operations['cols'][$entity]['list']];
-                // ее описание
+                // столбец, где находится ее описание
                 $value = $operations['cols'][$entity]['def'];
                 if (!empty($opts[$entity])) {
                     // если имя не подходит под регулярное выражение, пропустим
@@ -98,11 +111,29 @@ class getsqlController extends AbstractController {
                         }
                     }
                     $data[$value] .= str_repeat(
-                        ';', (int) ($entity !== 'TABLE') + 1
+                        ';', (int)(!in_array($entity, array('TABLE', 'VIEW'))) + 1
                     );
                     $data[$value] = Helper::stripTrash(
                         $data[$value], $entity, array('entity' => $col)
                     );
+                    if ($entity === 'VIEW') {
+                        /**
+                         * Получим описания полей вьюхи и создадим врем енную таблицу с таким же именем
+                         */
+                        $q = "SHOW FIELDS FROM {$col}";
+                        $fieldsRes = $this->db->query($q);
+                        $fields = array();
+                        while ($fieldsRow = $fieldsRes->fetch_array(MYSQLI_BOTH)) {
+                            $fields[] = sprintf('%s %s', $fieldsRow['Field'], $fieldsRow['Type']);
+                        }
+                        $tempTable = sprintf('CREATE TABLE %s (%s);', $col, implode(', ', $fields));
+                        file_put_contents(sprintf('%stables/%s.sql', $path, $col), $tempTable);
+                        Output::verbose(
+                            sprintf(
+                                'Temporary table structure for view %s created', $col
+                            ), 1
+                        );
+                    }
                     file_put_contents($filename, $data[$value]);
                 }
                 else {
