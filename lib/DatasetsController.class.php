@@ -84,8 +84,8 @@ abstract class DatasetsController extends AbstractController {
 
     /**
      * Корректно выполняет множество запросов
-     * @param string $query Запросы с разделителем
-     * @param bool $inTransaction Запросы исполняются в транзакции
+     * @param string $query         Запросы с разделителем
+     * @param bool   $inTransaction Запросы исполняются в транзакции
      */
     protected function multiQuery($query, $inTransaction = false) {
         $counter = 1;
@@ -113,37 +113,53 @@ abstract class DatasetsController extends AbstractController {
 
     /**
      * Удаляет все содержимое БД
-     * TODO: refactoring
      */
     protected function dropAllDBEntities() {
-        $routines = array('FUNCTION', 'PROCEDURE');
-        $queries = array();
-        foreach ($routines as $routine) {
-            $res = $this->db->query(
-                sprintf(
-                    "SHOW %s STATUS WHERE Db='%s'", $routine,
-                    $this->db->getDatabaseName()
+        $operations = array(
+            'list'  => array(
+                "SHOW FULL TABLES WHERE Table_type LIKE '%%%s'",
+                'SHOW %sS',
+                "SHOW %s STATUS WHERE Db='" . $this->db->getDatabaseName() . "'"
+            ),
+            'links' => array(
+                'FUNCTION'  => array(
+                    'list' => 2,
+                    'name' => 1
+                ),
+                'PROCEDURE' => array(
+                    'list' => 2,
+                    'name' => 1
+                ),
+                'TRIGGER'   => array(
+                    'list' => 1,
+                    'name' => 0
+                ),
+                'VIEW'      => array(
+                    'list' => 0,
+                    'name' => 0
+                ),
+                'TABLE'     => array(
+                    'list' => 0,
+                    'name' => 0
                 )
-            );
-            while ($row = $res->fetch_array(MYSQLI_NUM)) {
-                $queries[$row[1]] = sprintf("DROP %s %s;", $routine, $row[1]);
+            )
+        );
+
+        $queries = array();
+        foreach ($operations['links'] as $entity => $definition) {
+            $query = $operations['list'][$definition['list']];
+            $res   = $this->db->query(sprintf($query, $entity));
+            if ($res) {
+                while ($row = $res->fetch_array(MYSQLI_NUM)) {
+                    $name = $row[$definition['name']];
+                    $queries[$name] = sprintf("DROP %s %s;", $entity, $name);
+                }
+                $res->free_result();
             }
-            $res->free_result();
         }
-        $res = $this->db->query('SHOW TRIGGERS;');
-        while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            $queries[$row[0]] = sprintf("DROP TRIGGER %s;", $row[0]);
-        }
-        $res->free_result();
-        $res     = $this->db->query('SHOW FULL TABLES;');
-        while ($row = $res->fetch_array(MYSQLI_NUM)) {
-            $what             = $row[1] === 'VIEW' ? 'VIEW' : 'TABLE';
-            $queries[$row[0]] = sprintf("DROP %s %s;", $what, $row[0]);
-        }
-        $res->free_result();
+
         if (!empty($queries)) {
-            Output::verbose("Views and tables and routines are dropping now", 1
-            );
+            Output::verbose("Views and tables and routines are dropping now", 1);
             Output::verbose(
                 sprintf(
                     "--- %s", implode("\n--- ", array_keys($queries))
