@@ -221,7 +221,7 @@ class Helper {
         }
 
         $ctrlName = 'lib\\' . $name .
-                    'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
+            'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
         try {
             if (!$db) {
                 $db = self::getDbObject();
@@ -295,9 +295,10 @@ class Helper {
         }
         if (!$flag) {
             Output::verbose(sprintf('Create database %s', $dbName), 2);
-            $connection->query(
-                "CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;"
-            );
+            $query = "CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;";
+            if (!$connection->query($query)) {
+                throw new \Exception(sprintf('Cannot create database %s', $dbName));
+            }
         }
         $connection->select_db($dbName);
     }
@@ -785,7 +786,7 @@ class Helper {
         usort(
             $result['migrations'], function ($a, $b) use ($result) {
                 return ($result['data'][$a]['time'] >
-                        $result['data'][$b]['time']) ? 1 : -1;
+                    $result['data'][$b]['time']) ? 1 : -1;
             }
         );
         return $result;
@@ -835,9 +836,9 @@ class Helper {
         $path     = self::get('savedir');
         $filename = $path . self::get('versionfile');
         $marker   = $path . self::get('version_marker');
-        $ts    = time();
-        $lines = self::getRevisionLines();
-        $b     = ($revision === 0);
+        $ts       = time();
+        $lines    = self::getRevisionLines();
+        $b        = ($revision === 0);
         foreach ($lines as $line) {
             $data = explode('|', $line);
             if ((int) $data[0] === $revision) {
@@ -1132,15 +1133,15 @@ class Helper {
                         ), $search
                     );
                 }
-				foreach ($search as $index => &$value) {
-                        $pattern = "/ {$value}=\w+/ims";
-                        if (preg_match($pattern, $content, $m)) {
-                            $value     = $m[0];
-                            $replace[] = '';
-                        }
-                        else {
-                            unset($search[$index]);
-                        }
+                foreach ($search as $index => &$value) {
+                    $pattern = "/ {$value}=\w+/ims";
+                    if (preg_match($pattern, $content, $m)) {
+                        $value     = $m[0];
+                        $replace[] = '';
+                    }
+                    else {
+                        unset($search[$index]);
+                    }
                 }
                 if (!preg_match('/\s*IF\s+NOT\s+EXISTS\s+/ims', $content)) {
                     $search[]  = 'CREATE TABLE';
@@ -1154,15 +1155,15 @@ class Helper {
                 }
                 break;
             default:
-				if (!preg_match('/DELIMITER ;;/ims', $content)) {
-					$search[]  = $content;
-					$replace[] = sprintf(
-						"DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
-						$type, $extra['entity'], $content
-					);
-					break;
-				}
-		}
+                if (!preg_match('/DELIMITER ;;/ims', $content)) {
+                    $search[]  = $content;
+                    $replace[] = sprintf(
+                        "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
+                        $type, $extra['entity'], $content
+                    );
+                    break;
+                }
+        }
         if (isset($extra['definer'])) {
             $search[]  = $extra['definer'];
             $replace[] = 'CURRENT_USER';
@@ -1171,7 +1172,7 @@ class Helper {
             if (preg_match('/DEFINER=(.*?)\s+/ims', $content, $m)) {
                 $search[]  = $m[1];
                 $replace[] = 'CURRENT_USER';
-				//print_r($search);print_r($replace);die();
+                //print_r($search);print_r($replace);die();
             }
         }
         /**
@@ -1194,11 +1195,11 @@ class Helper {
     private static function schemaFileRoutines(
         array &$queries, array &$views, array $includeTables, $file
     ) {
-        $exclude        = !empty($includeTables);
-        $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
+        $exclude      = !empty($includeTables);
+        $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
         /*$patternView    =
             '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW\s+(?:.*)\s+AS\s+\(?(.*?)\)?\s+(?:WITH\s+(.*?))?;$/ims';*/
-        $patternView = '/^CREATE(?:(?:.*?)\s+ALGORITHM=(?:.*?))?(?:\s+DEFINER=(.*?))?(?:\s+SQL\s+SECURITY\s+(?:DEFINER|INVOKER))?\s+VIEW\s+(?:.*?)\s+(?:\(.*?\)\s+)?AS\s+\(?(.*?)\)?\s*(?:WITH\s+(?:.*?))?;$/';
+        $patternView    = '/^CREATE(?:(?:.*?)\s+ALGORITHM=(?:.*?))?(?:\s+DEFINER=(.*?))?(?:\s+SQL\s+SECURITY\s+(?:DEFINER|INVOKER))?\s+VIEW\s+(?:.*?)\s+(?:\(.*?\)\s+)?AS\s+\(?(.*?)\)?\s*(?:WITH\s+(?:.*?))?;$/';
         $patternRoutine =
             '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
         // если файл - получим данные о его имени
@@ -1230,7 +1231,7 @@ class Helper {
             else {
                 $matches = array();
                 if (preg_match($patternView, $q, $matches)) {
-                    $view_entityname = $entityname . '_view';
+                    $view_entityname       = $entityname . '_view';
                     $tmp[$view_entityname] = self::stripTrash(
                         $q, 'VIEW', array('definer' => $matches[1])
                     );
@@ -1380,7 +1381,7 @@ class Helper {
     static function _createMigrationContent($version, $diff) {
         $content =
             "<?php\n class Migration{$version} extends AbstractMigration\n{\n" .
-            "  protected \$up = array(\n";
+                "  protected \$up = array(\n";
         foreach ($diff['up'] as $sql) {
             $content .= "    '{$sql}',\n";
         }
@@ -1413,7 +1414,7 @@ class Helper {
     public static function getAnswer($answer) {
         $value = false;
         isset(self::$_executedRequests[$answer]) &&
-        ($value = self::$_executedRequests[$answer]);
+            ($value = self::$_executedRequests[$answer]);
         return $value;
     }
 
