@@ -835,11 +835,6 @@ class Helper {
         $path     = self::get('savedir');
         $filename = $path . self::get('versionfile');
         $marker   = $path . self::get('version_marker');
-        if (is_file($filename) && !is_writable($filename)) {
-            throw new \Exception(sprintf(
-                "File %s is write-protected", $filename
-            ));
-        }
         $ts    = time();
         $lines = self::getRevisionLines();
         $b     = ($revision === 0);
@@ -847,15 +842,21 @@ class Helper {
             $data = explode('|', $line);
             if ((int) $data[0] === $revision) {
                 $b = true;
+                break;
             }
         }
         if (!$b) {
             $lines[] = sprintf(
                 "%d|%s|%d", $revision, date('d.m.Y H:i:s', $ts), $ts
             );
+            if (is_file($filename) && !is_writable($filename)) {
+                throw new \Exception(sprintf(
+                    "File %s is write-protected", $filename
+                ));
+            }
+            file_put_contents($filename, implode("\n", $lines));
         }
         self::$_revisionLines = $lines;
-        file_put_contents($filename, implode("\n", $lines));
         if (is_file($marker) && !is_writable($marker)) {
             throw new \Exception(sprintf(
                 'Cannot write revision marker to file: %s', $marker
