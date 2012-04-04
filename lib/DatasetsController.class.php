@@ -20,12 +20,18 @@ abstract class DatasetsController extends AbstractController {
 
     public function __construct(MysqliHelper $db, array $args = array()) {
         // вынести в разбор параметров
+        var_dump($args);
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
-                $arg_data          = explode('=', $arg);
-                $param_name        = str_replace('-', '', $arg_data[0]);
-                $param_value       = str_replace('"', '', $arg_data[1]);
-                $args[$param_name] = $param_value;
+                $arg_data = explode('=', $arg);
+                /**
+                 * Если параметр был передан корректно (в форме имя=значение)
+                 */
+                if (sizeof($arg_data) !== 1) {
+                    $param_name        = str_replace('-', '', $arg_data[0]);
+                    $param_value       = str_replace('"', '', $arg_data[1]);
+                    $args[$param_name] = $param_value;
+                }
                 unset($args[$index]);
             }
         }
@@ -151,7 +157,7 @@ abstract class DatasetsController extends AbstractController {
             $res   = $this->db->query(sprintf($query, $entity));
             if ($res) {
                 while ($row = $res->fetch_array(MYSQLI_NUM)) {
-                    $name = $row[$definition['name']];
+                    $name           = $row[$definition['name']];
                     $queries[$name] = sprintf("DROP %s %s;", $entity, $name);
                 }
                 $res->free_result();
