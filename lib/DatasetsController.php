@@ -20,7 +20,6 @@ abstract class DatasetsController extends AbstractController {
 
     public function __construct(MysqliHelper $db, array $args = array()) {
         // вынести в разбор параметров
-        var_dump($args);
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
                 $arg_data = explode('=', $arg);

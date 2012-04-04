@@ -1,8 +1,8 @@
 [main]
 host=db-master.local
-user=pasha
-password=SZDFCs#21
-db=default_sm
+user=user
+password=12345
+db=test_db
 cachedir=data/cache
 savedir=data/migrations
 datasetsdir=data/datasets
@@ -16,6 +16,6 @@ mysqldiff_command="mysqldiff --logs-folder=/var/web/mysql-migration-manager/logs
 prefix=username
 
 [tmpdb]
-tmp_host=db-dev.sotmarket.ru
-tmp_user=crm_test
-tmp_password=xp39vfnd783hd8
+tmp_host=localhost
+tmp_user=test
+tmp_password=12345
