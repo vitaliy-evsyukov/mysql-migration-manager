@@ -680,13 +680,17 @@ class Helper {
     public static function getTimeline(
         array $tablesList = array(), $getRefs = true
     ) {
-        $migrations = Registry::getAllMigrations(true, $getRefs);
+        $migrations  = Registry::getAllMigrations(true, $getRefs);
+        $tablesToAdd = array();
         if (!empty($tablesList)) {
             // получить все связи таблиц
             $refs = Registry::getAllRefs();
-            // получить те, которых не хватает
+            // получить те, которые связаны
             $tablesToAdd = self::getRefs($refs, $tablesList);
-            $tablesList  = array_merge($tablesList, $tablesToAdd);
+            // получить те, которых не хватает. Это не нужно для мержа, но нужно в условии ниже
+            $tablesToAdd = array_diff_key($tablesToAdd, $tablesList);
+            // объединить те, которые были пераданы, с теми, которые с ними связаны
+            $tablesList = array_merge($tablesList, $tablesToAdd);
         }
         else {
             $tablesList = $migrations;
@@ -694,10 +698,25 @@ class Helper {
         $timeline = array();
         foreach ($tablesList as $tableName => $t) {
             foreach ($migrations[$tableName] as $timestamp => $revision) {
+                /**
+                 * Если были таблицы, которых не хватало, добавим их в таймлайн с меткой времени, равной 1
+                 * Это необходимо для того, чтобы пропустить нулевую ревизию (SQL) и выполнить ревизию SQL для них
+                 */
+                if (!empty($tablesToAdd) && ($timestamp === 0) && isset($tablesToAdd[$tableName])) {
+                    $timestamp = 1;
+                }
                 $timeline[$timestamp][$tableName] = $revision;
             }
         }
         ksort($timeline);
+
+        if ($getRefs) {
+            Output::verbose(sprintf("Summary of tables:\n--- %s", implode("\n--- ", array_keys($tablesList))), 3);
+            Output::verbose(
+                sprintf("Tables which are referenced:\n--- %s", implode("\n--- ", array_keys($tablesToAdd))), 3
+            );
+        }
+
         return $timeline;
     }
 
