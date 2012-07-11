@@ -1,6 +1,3 @@
-[submodule "data"]
-	path = data
-	url = ssh://git@dev-01.sotmarket.ru:522/sotm-db-data.git
 [submodule "mysqldiff"]
 	path = mysqldiff
 	url = ssh://git@dev-01.sotmarket.ru:522/mysql_diff.git
