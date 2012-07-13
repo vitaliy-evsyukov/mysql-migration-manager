@@ -1,6 +1,6 @@
 <?php
 
-namespace %%ns%%;
+namespace data\migrations;
 
 use lib\AbstractMigration;
 
