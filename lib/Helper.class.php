@@ -125,8 +125,7 @@ class Helper {
         if ($opts === false) {
             Output::error('mmm: ' . reset(GetOpt::errors()));
             exit(1);
-        }
-        else {
+        } else {
             $parsed_args['options'] = $opts;
         }
 
@@ -166,8 +165,8 @@ class Helper {
             // получить данные
             if (!is_dir($dsdir) || !is_readable($dsdir)) {
                 throw new \Exception(sprintf(
-                    "Directory %s with datasets is not exists", $dsdir
-                ));
+                                         "Directory %s with datasets is not exists", $dsdir
+                                     ));
             }
 
             $handle = opendir($dsdir);
@@ -211,7 +210,8 @@ class Helper {
      * @param string                 $name Имя контроллера
      * @param array                  $args Массив аргументов
      * @param \lib\MysqliHelper|null $db   Объект подключения к БД
-     * @return AbstractController|ChainController
+     * @throws \Exception
+     * @return AbstractController|ControllersChain
      */
     public static function getController(
         $name = null, $args = array(), MysqliHelper $db = null
@@ -220,8 +220,7 @@ class Helper {
             return new helpController;
         }
 
-        $ctrlName = 'lib\\' . $name .
-            'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
+        $ctrlName = 'lib\\' . $name . 'Controller'; // http://php.net/manual/en/language.namespaces.dynamic.php
         try {
             if (!$db) {
                 $db = self::getDbObject();
@@ -315,8 +314,7 @@ class Helper {
             foreach ($config as $option => $value) {
                 $conf[$option] = $value;
             }
-        }
-        else {
+        } else {
             if ($db) {
                 return $db;
             }
@@ -340,12 +338,17 @@ class Helper {
             $dirs = array($dirs);
         }
         if (empty($dirs)) {
-            $dirs = array('savedir', 'cachedir', 'schemadir');
+            // папки по умолчанию
             if (!self::$_prepareStandardDirectories) {
+                $dirs       = array('savedir', 'cachedir', 'schemadir');
+                $namespaces = array(
+                    'savedir'  => SAVEDIR_NS,
+                    'cachedir' => CACHEDIR_NS
+                );
                 foreach ($dirs as &$dir) {
-                    self::set(
-                        "{$dir}_ns", str_replace('/', '\\', self::get($dir))
-                    );
+                    if (isset($namespaces[$dir])) {
+                        self::set("{$dir}_ns", $namespaces[$dir]);
+                    }
                     self::set($dir, DIR . self::get($dir) . DIR_SEP);
                 }
                 self::$_prepareStandardDirectories = true;
@@ -354,8 +357,7 @@ class Helper {
         foreach ($dirs as $dir) {
             if (isset(self::$config[$dir])) {
                 $dirname = self::$config[$dir];
-            }
-            else {
+            } else {
                 $dirname = $dir;
                 $dir     = basename(rtrim($dir, '/'));
             }
@@ -411,8 +413,8 @@ class Helper {
         $tmpdb = self::getDbObject($c);
         if (!$tmpdb->set_charset("utf8")) {
             throw new \Exception(sprintf(
-                "SET CHARACTER SET utf8 error: %s\n", $tmpdb->error
-            ));
+                                     "SET CHARACTER SET utf8 error: %s\n", $tmpdb->error
+                                 ));
         }
         register_shutdown_function(
             function() use($c, $tmpdb) {
@@ -628,13 +630,11 @@ class Helper {
             $db->setCommand("SET foreign_key_checks = 0;");
             if ((int) self::get('verbose') === 3) {
                 self::_debug_queryMultipleDDL($db, $data);
-            }
-            else {
+            } else {
                 self::queryMultipleDDL($db, implode("\n", $data));
             }
             $db->query("SET foreign_key_checks = 1;");
-        }
-        else {
+        } else {
             $db = self::$_currentTempDb;
         }
 
@@ -691,8 +691,7 @@ class Helper {
             $tablesToAdd = array_diff_key($tablesToAdd, $tablesList);
             // объединить те, которые были пераданы, с теми, которые с ними связаны
             $tablesList = array_merge($tablesList, $tablesToAdd);
-        }
-        else {
+        } else {
             $tablesList = $migrations;
         }
         $timeline = array();
@@ -741,6 +740,7 @@ class Helper {
 
     /**
      * Возвращает список всех миграций и связанных с ними данных
+     * @throws \Exception
      * @return array
      */
     public static function getAllMigrations() {
@@ -792,11 +792,8 @@ class Helper {
                     self::$_lastRevision          = $migrationId;
                 }
                 fclose($handler);
-            }
-            else {
-                throw new \Exception(sprintf(
-                    "Failed to open file %s", $migrationsListFile
-                ));
+            } else {
+                throw new \Exception(sprintf("Failed to open file %s", $migrationsListFile));
             }
         }
         if (self::$_currRevision === -1) {
@@ -871,16 +868,16 @@ class Helper {
             );
             if (is_file($filename) && !is_writable($filename)) {
                 throw new \Exception(sprintf(
-                    "File %s is write-protected", $filename
-                ));
+                                         "File %s is write-protected", $filename
+                                     ));
             }
             file_put_contents($filename, implode("\n", $lines));
         }
         self::$_revisionLines = $lines;
         if (is_file($marker) && !is_writable($marker)) {
             throw new \Exception(sprintf(
-                'Cannot write revision marker to file: %s', $marker
-            ));
+                                     'Cannot write revision marker to file: %s', $marker
+                                 ));
         }
         file_put_contents($marker, "#{$revision}");
         return $ts;
@@ -929,8 +926,7 @@ class Helper {
                         self::applyMigration($revision, $db);
                         $usedMigrations[$revision] = 1;
                     }
-                }
-                else {
+                } else {
                     $what = sprintf("sql for %s", $tablename);
                     // это SQL-запрос
                     self::_debug_queryMultipleDDL(
@@ -971,8 +967,7 @@ class Helper {
                 $tmp .= self::recursiveImplode(
                     $v, ($level + 1), $nowdoc, $spacer
                 );
-            }
-            else {
+            } else {
                 if (is_string($v)) {
                     /**
                      * Если необходимо использовать Nowdoc, применим
@@ -986,12 +981,10 @@ class Helper {
                         if ($k !== $last_key) {
                             $tmp .= "\n";
                         }
-                    }
-                    else {
+                    } else {
                         $tmp .= "'{$v}'";
                     }
-                }
-                else {
+                } else {
                     $tmp .= $v;
                 }
             }
@@ -1034,11 +1027,10 @@ class Helper {
         $tpl_file = DIR . $tpl;
         if (is_file($tpl_file) && is_readable($tpl_file)) {
             $content = file_get_contents($tpl_file);
-        }
-        else {
+        } else {
             throw new \Exception(sprintf(
-                'Template file %s not exists or is not readable', $tpl_file
-            ));
+                                     'Template file %s not exists or is not readable', $tpl_file
+                                 ));
         }
         foreach ($search as &$placeholder) {
             $placeholder = "%%{$placeholder}%%";
@@ -1157,8 +1149,7 @@ class Helper {
                     if (preg_match($pattern, $content, $m)) {
                         $value     = $m[0];
                         $replace[] = '';
-                    }
-                    else {
+                    } else {
                         unset($search[$index]);
                     }
                 }
@@ -1186,8 +1177,7 @@ class Helper {
         if (isset($extra['definer'])) {
             $search[]  = $extra['definer'];
             $replace[] = 'CURRENT_USER';
-        }
-        else {
+        } else {
             if (preg_match('/DEFINER=(.*?)\s+/ims', $content, $m)) {
                 $search[]  = $m[1];
                 $replace[] = 'CURRENT_USER';
@@ -1246,8 +1236,7 @@ class Helper {
                  * таблицы добавляем в начало массива
                  */
                 $queries = $tmp + $queries;
-            }
-            else {
+            } else {
                 $matches = array();
                 if (preg_match($patternView, $q, $matches)) {
                     $view_entityname       = $entityname . '_view';
@@ -1262,8 +1251,7 @@ class Helper {
                      * который добавим в конец всего
                      */
                     $views += $tmp;
-                }
-                else {
+                } else {
                     /**
                      *  Если это триггер, процедура или функция, меняем создателя
                      */
@@ -1297,8 +1285,7 @@ class Helper {
             Output::verbose(
                 sprintf('There are no schema files in %s', $schemadir), 1
             );
-        }
-        else {
+        } else {
             $dirs  = array($schemadir);
             $views = array();
             while (!empty($dirs)) {
@@ -1315,8 +1302,7 @@ class Helper {
                             ) {
                                 continue;
                             }
-                        }
-                        elseif (is_dir($file)) {
+                        } elseif (is_dir($file)) {
                             /**
                              * Если это директория, то допишем ее имя к строке
                              * поддиректорий и добавим в стек директорий
@@ -1351,8 +1337,7 @@ class Helper {
         if (self::getAnswer($hash)) {
             // если уже отвечали, нет смысла запрашивать ввод пользователя
             return false;
-        }
-        else {
+        } else {
             if (self::get('quiet') || !file_exists($filename)) {
                 self::saveAnswer($hash, 'y');
                 return true;

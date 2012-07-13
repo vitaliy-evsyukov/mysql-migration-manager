@@ -63,6 +63,8 @@ abstract class DatasetsController extends AbstractController {
     /**
      * Переключает проверку внешних ключей
      * @param int $state
+     * @throws \Exception
+     * @return void
      */
     public function toogleFK($state) {
         $state = (int) $state;

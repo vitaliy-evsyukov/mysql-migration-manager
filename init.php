@@ -3,6 +3,9 @@
 define('DIR_SEP', DIRECTORY_SEPARATOR);
 define('DIR', __DIR__ . DIR_SEP);
 define('NO_COMMAND', -1);
+define('SAVEDIR_NS', 'data\migrations');
+define('CACHEDIR_NS', 'data\cache');
+
 date_default_timezone_set('Europe/Moscow');
 spl_autoload_register('mmpAutoload');
 mb_internal_encoding('UTF-8');
@@ -10,8 +13,19 @@ set_include_path(DIR);
 
 function mmpAutoload($class) {
     $include_parts = explode(PATH_SEPARATOR, get_include_path());
+    $isMigration   = strpos($class, SAVEDIR_NS);
+    if (false !== $isMigration) {
+        $migrationName = substr($class, strlen(SAVEDIR_NS) + 1);
+    }
+    var_dump($class);
+    var_dump($isMigration);
     foreach ($include_parts as $dir) {
-        $filename = $dir . str_replace('\\', '/', $class) . '.class.php';
+        if ($isMigration) {
+            $filename = $dir . \lib\Helper::get('savedir') . DIR_SEP . $migrationName . '.class.php';
+        } else {
+            $filename = $dir . str_replace('\\', '/', $class) . '.class.php';
+        }
+        var_dump($filename);
         if (file_exists($filename)) {
             require_once $filename;
             return;
@@ -25,8 +39,7 @@ function mmpAutoload($class) {
         foreach ($order as $field) {
             if (empty($item[$field])) {
                 $tmp[$field] = '<empty>';
-            }
-            else {
+            } else {
                 $tmp[$field] = $item[$field];
             }
         }
@@ -36,9 +49,9 @@ function mmpAutoload($class) {
         );
     }
     throw new Exception(sprintf(
-        "Class %s not found in %s\nBack trace:\n%s\n", $class, $dir,
-        implode("\n", $debug)
-    ), NO_COMMAND);
+                            "Class %s not found in %s\nBack trace:\n%s\n", $class, $dir,
+                            implode("\n", $debug)
+                        ), NO_COMMAND);
 
 }
 
