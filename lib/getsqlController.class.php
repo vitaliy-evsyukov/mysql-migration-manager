@@ -118,7 +118,7 @@ class getsqlController extends AbstractController {
                     );
                     if ($entity === 'VIEW') {
                         /**
-                         * Получим описания полей вьюхи и создадим врем енную таблицу с таким же именем
+                         * Получим описания полей вьюхи и создадим временную таблицу с таким же именем
                          */
                         $q = "SHOW FIELDS FROM {$col}";
                         $fieldsRes = $this->db->query($q);

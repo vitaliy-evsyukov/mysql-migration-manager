@@ -13,19 +13,21 @@ set_include_path(DIR);
 
 function mmpAutoload($class) {
     $include_parts = explode(PATH_SEPARATOR, get_include_path());
-    $isMigration   = strpos($class, SAVEDIR_NS);
-    if (false !== $isMigration) {
-        $migrationName = substr($class, strlen(SAVEDIR_NS) + 1);
+    $notStandard = false;
+    foreach (array('savedir' => SAVEDIR_NS, 'cachedir' => CACHEDIR_NS) as $nsDir => $ns) {
+        $notStandard = strpos($class, $ns);
+        if (false !== $notStandard) {
+            $notStandard = $nsDir;
+            $class = substr($class, strlen($ns) + 1);
+            break;
+        }
     }
-    var_dump($class);
-    var_dump($isMigration);
     foreach ($include_parts as $dir) {
-        if ($isMigration) {
-            $filename = $dir . \lib\Helper::get('savedir') . DIR_SEP . $migrationName . '.class.php';
+        if ($notStandard) {
+            $filename = \lib\Helper::get($notStandard) . DIR_SEP . $class . '.class.php';
         } else {
             $filename = $dir . str_replace('\\', '/', $class) . '.class.php';
         }
-        var_dump($filename);
         if (file_exists($filename)) {
             require_once $filename;
             return;
@@ -48,10 +50,8 @@ function mmpAutoload($class) {
             $tmp
         );
     }
-    throw new Exception(sprintf(
-                            "Class %s not found in %s\nBack trace:\n%s\n", $class, $dir,
-                            implode("\n", $debug)
-                        ), NO_COMMAND);
-
+    throw new Exception(
+        sprintf("Class %s not found in %s\nBack trace:\n%s\n", $class, $dir, implode("\n", $debug)), NO_COMMAND
+    );
 }
 
