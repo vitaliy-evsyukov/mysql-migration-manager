@@ -58,7 +58,6 @@ class upgradeController extends AbstractController {
         $create->setNext($migrate);
         $chain->setNext($create);
         // подменим для контроллеров путь к миграциям
-        var_dump($saveDir);
         $tempSave = array('savedir' => $saveDir);
         $chain->setSandbox(
             array(

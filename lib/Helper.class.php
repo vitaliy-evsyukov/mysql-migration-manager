@@ -390,7 +390,6 @@ class Helper
      */
     public static function get($key)
     {
-        var_dump(sprintf('%s => %s', $key, isset(self::$config[$key]) ? self::$config[$key] : 'нихуя'));
         return isset(self::$config[$key]) ? self::$config[$key] : false;
     }
 
@@ -969,7 +968,7 @@ class Helper
                 }
             }
         }
-        ;
+        Output::verbose(sprintf('--- Execution of %s finished', $what), 3);
         $db->query("SET foreign_key_checks = 1;");
         Output::verbose("Deploy temporary database was finished", 1);
     }
@@ -987,46 +986,50 @@ class Helper
         array $a, $level = 1, $nowdoc = true, $spacer = ' '
     )
     {
-        $result = array();
-        $depth = str_repeat($spacer, $level * 3);
-        $depth2 = str_repeat($spacer, ($level - 1) * 3);
-        $last_key = key(array_slice($a, -1, 1, TRUE));
-        foreach ($a as $k => $v) {
-            $tmp = $depth;
-            if (!is_int($k)) {
-                // выведем строковые ключи
-                $tmp = sprintf("%s'%s' => ", $depth, $k);
-            }
-            if (is_array($v)) {
-                // если значение - массив, рекурсивно обработаем его
-                $tmp .= self::recursiveImplode(
-                    $v, ($level + 1), $nowdoc, $spacer
-                );
-            } else {
-                if (is_string($v)) {
-                    /**
-                     * Если необходимо использовать Nowdoc, применим
-                     * ее только для SQL-операторов
-                     * array - возможно, в будущем будет вайтлист ключей
-                     */
-                    if ($nowdoc && !in_array($k, array('type'))) {
-                        $tmp .= "<<<'EOT'\n";
-                        $tmp .= $v;
-                        $tmp .= "\nEOT";
-                        if ($k !== $last_key) {
-                            $tmp .= "\n";
+        $resultStr = 'array()';
+        if (!empty($a)) {
+            $result = array();
+            $depth = str_repeat($spacer, $level * 4);
+            $depth2 = str_repeat($spacer, ($level - 1) * 4);
+            $last_key = key(array_slice($a, -1, 1, TRUE));
+            foreach ($a as $k => $v) {
+                $tmp = $depth;
+                if (!is_int($k)) {
+                    // выведем строковые ключи
+                    $tmp = sprintf("%s'%s' => ", $depth, $k);
+                }
+                if (is_array($v)) {
+                    // если значение - массив, рекурсивно обработаем его
+                    $tmp .= self::recursiveImplode(
+                        $v, ($level + 1), $nowdoc, $spacer
+                    );
+                } else {
+                    if (is_string($v)) {
+                        /**
+                         * Если необходимо использовать Nowdoc, применим
+                         * ее только для SQL-операторов
+                         * array - возможно, в будущем будет вайтлист ключей
+                         */
+                        if ($nowdoc && !in_array($k, array('type'))) {
+                            $tmp .= "<<<'EOT'\n";
+                            $tmp .= $v;
+                            $tmp .= "\nEOT";
+                            if ($k !== $last_key) {
+                                $tmp .= "\n";
+                            }
+                        } else {
+                            $tmp .= "'{$v}'";
                         }
                     } else {
-                        $tmp .= "'{$v}'";
+                        $tmp .= $v;
                     }
-                } else {
-                    $tmp .= $v;
                 }
+                $result[] = $tmp;
             }
-            $result[] = $tmp;
+            $sep = ",\n";
+            $resultStr = sprintf("array(\n%s\n%s)", implode($sep, $result), $depth2);
         }
-        $sep = ",\n";
-        return sprintf("array(\n%s\n%s)", implode($sep, $result), $depth2);
+        return $resultStr;
     }
 
     /**
