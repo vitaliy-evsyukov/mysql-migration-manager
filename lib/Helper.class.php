@@ -1326,6 +1326,7 @@ class Helper
     public static function parseSchemaFiles(array $includeTables = array())
     {
         $queries = array();
+        $views = array();
         $schemadir = Helper::get('schemadir');
         if (!is_dir($schemadir) || !is_readable($schemadir)) {
             Output::verbose(
@@ -1333,7 +1334,6 @@ class Helper
             );
         } else {
             $dirs = array($schemadir);
-            $views = array();
             while (!empty($dirs)) {
                 $dir = array_pop($dirs);
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
