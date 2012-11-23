@@ -14,6 +14,7 @@ version_marker=marker.txt
 verbose=3
 mysqldiff_command="mysqldiff --logs-folder=/var/web/mysql-migration-manager/logs"
 prefix=username
+static_name=1
 
 [tmpdb]
 tmp_host=localhost

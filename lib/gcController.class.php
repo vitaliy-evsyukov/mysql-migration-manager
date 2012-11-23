@@ -14,8 +14,8 @@ class gcController extends DatasetsController {
         $res      = $this->db->query('SHOW DATABASES;');
         $queries  = array();
         $patterns = array(
-            '/db_\S{32}/', '/' . Helper::get('db') . '_\S{10}/',
-            '/test_mysqldiff-temp-[\d_]*/', '/full_temp_db_\S{10}/'
+            '/db_\S{32}/', '/' . Helper::get('db') . '_(_temporary_db|\S{10})/',
+            '/test_mysqldiff-temp-[\d_]*/', '/full_temp_db_(1|\S{10})/'
         );
         while ($row = $res->fetch_array(MYSQLI_NUM)) {
             $flag = false;

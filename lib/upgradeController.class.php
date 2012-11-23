@@ -17,7 +17,7 @@ class upgradeController extends AbstractController {
         // повторение команды для базы, которую нужно проапгрейдить
         $this->db->setCommand('SET foreign_key_checks = 0');
         // подключение к временной БД
-        $db = Helper::getTmpDbObject(sprintf('full_temp_db_%d', time()));
+        $db = Helper::getTmpDbObject(sprintf('full_temp_db_%d', (int) Helper::get('static_name') ? 1 : time()));
         // путь для сохранения временной миграции
         $path    = sprintf(
             '%s/%s_temp_migration_%d/', sys_get_temp_dir(),

@@ -34,7 +34,8 @@ class Helper
         'tmp_password' => array('req_val'),
         'cachedir' => array('req_val'),
         'schemadir' => array('req_val'),
-        'prefix' => array('req_val')
+        'prefix' => array('req_val'),
+        'static_name' => array('static_name')
     );
     /**
      * @var array
@@ -51,7 +52,8 @@ class Helper
         'verbose' => null,
         'versionfile' => null,
         'version_marker' => null,
-        'prefix' => null
+        'prefix' => null,
+        'static_name' => null
     );
     /**
      * @var array
@@ -465,7 +467,7 @@ class Helper
      */
     static function getCurrentVersion()
     {
-        return time();
+        return (int) self::get('static_name') ? '_temporary_db' : time();
     }
 
     /**
