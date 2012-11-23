@@ -13,10 +13,10 @@ versionfile=revisions.txt
 version_marker=marker.txt
 verbose=3
 mysqldiff_command="mysqldiff --logs-folder=/var/web/mysql-migration-manager/logs"
-prefix=username
-static_name=1
 
 [tmpdb]
+tmp_db_name=tempdb
+tmp_add_suffix=0
 tmp_host=localhost
 tmp_user=test
 tmp_password=12345

@@ -6,7 +6,9 @@ namespace lib;
  * Registry
  * Сохраняет список миграций
  * @author guyfawkes
- */ class Registry {
+ */
+class Registry
+{
 
     /**
      * @var array
@@ -17,15 +19,18 @@ namespace lib;
      */
     private static $_refsMap = array();
 
-    private function __construct() {
+    private function __construct()
+    {
 
     }
 
-    private function __clone() {
+    private function __clone()
+    {
 
     }
 
-    private function __wakeup() {
+    private function __wakeup()
+    {
 
     }
 
@@ -50,7 +55,8 @@ namespace lib;
      * @param bool $loadSQL Загружать ли содержимое SQL-файлов
      * @param bool $getRefs Искать ли начальные связи
      */
-    private static function prepareMap($loadSQL = true, $getRefs = true) {
+    private static function prepareMap($loadSQL = true, $getRefs = true)
+    {
         if ($loadSQL) {
             /*
              * Вначале соберем все данные из папки схемы
@@ -63,7 +69,8 @@ namespace lib;
             $ns         = Helper::get('cachedir_ns');
             $message    = sprintf(
                 'Parse schema directory %s or get schema from file %s? [y/n] ',
-                Helper::get('schemadir'), $fname
+                Helper::get('schemadir'),
+                $fname
             );
             if (Helper::askToRewrite($fname, $message)) {
                 $queries = Helper::parseSchemaFiles();
@@ -89,7 +96,8 @@ namespace lib;
                     if (Helper::askToRewrite($refs_fname, $message)) {
                         self::$_refsMap = Helper::getInitialRefs($queries);
                         Helper::createReferencesCache(
-                            $refs_fname, self::$_refsMap
+                            $refs_fname,
+                            self::$_refsMap
                         );
                     }
                     else {
@@ -102,7 +110,8 @@ namespace lib;
             }
             else {
                 Output::verbose(
-                    'No initial revisions and references found', 1
+                    'No initial revisions and references found',
+                    1
                 );
             }
             unset($queries);
@@ -123,10 +132,12 @@ namespace lib;
      * @param bool $getRefs
      * @return array
      */
-    public static function getAllMigrations($loadSQL = true, $getRefs = true) {
+    public static function getAllMigrations($loadSQL = true, $getRefs = true)
+    {
         if (empty(self::$_migrations)) {
             self::prepareMap($loadSQL, $getRefs);
         }
+
         return self::$_migrations;
     }
 
@@ -134,19 +145,21 @@ namespace lib;
      * Возвращает карту ссылок
      * @return array
      */
-    public static function getAllRefs() {
+    public static function getAllRefs()
+    {
         if (empty(self::$_refsMap)) {
             self::prepareMap();
         }
+
         return self::$_refsMap;
     }
 
     /**
      * Сбрасывает кеши связей и миграций
      * @static
-
      */
-    public static function resetAll() {
+    public static function resetAll()
+    {
         self::$_refsMap    = array();
         self::$_migrations = array();
     }
@@ -156,7 +169,8 @@ namespace lib;
      * @static
      * @param bool $check Проверять, есть ли данный файл в списке миграций
      */
-    public static function parseMigrations($check = false) {
+    public static function parseMigrations($check = false)
+    {
         $migratedir = Helper::get('savedir');
         if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
@@ -168,11 +182,13 @@ namespace lib;
                 // Наименование имеет вид типа Migration2.class.php
                 $className =
                     Helper::get('savedir_ns') . '\\' .
-                    pathinfo(
                         pathinfo(
-                            $file, PATHINFO_FILENAME
-                        ), PATHINFO_FILENAME
-                    );
+                            pathinfo(
+                                $file,
+                                PATHINFO_FILENAME
+                            ),
+                            PATHINFO_FILENAME
+                        );
                 $class     = new $className;
                 if ($class instanceof AbstractMigration) {
                     $metadata = $class->getMetadata();
@@ -182,18 +198,19 @@ namespace lib;
                         }
                     }
                     Output::verbose(
-                        sprintf('Add migration %s to list', $file), 2
+                        sprintf('Add migration %s to list', $file),
+                        2
                     );
                     foreach ($metadata['tables'] as $tablename => $tmp) {
-                        self::$_migrations[$tablename][$metadata['timestamp']] =
-                            $metadata['revision'];
+                        self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
                     }
                     foreach ($metadata['refs'] as $refTable => $tables) {
                         if (!isset(self::$_refsMap[$refTable])) {
                             self::$_refsMap[$refTable] = array();
                         }
                         self::$_refsMap[$refTable] = array_merge(
-                            self::$_refsMap[$refTable], $tables
+                            self::$_refsMap[$refTable],
+                            $tables
                         );
                     }
                 }

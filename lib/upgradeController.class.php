@@ -8,20 +8,28 @@ namespace lib;
  * @author guyfawkes
  */
 
-class upgradeController extends AbstractController {
+class upgradeController extends AbstractController
+{
 
     /**
      * Запускает основную операцию контроллера
      */
-    public function runStrategy() {
+    public function runStrategy()
+    {
         // повторение команды для базы, которую нужно проапгрейдить
         $this->db->setCommand('SET foreign_key_checks = 0');
         // подключение к временной БД
-        $db = Helper::getTmpDbObject(sprintf('full_temp_db_%d', (int) Helper::get('static_name') ? 1 : time()));
+        $dbName = '';
+        if ((int)Helper::get('tmp_add_suffix')) {
+            $dbName = 'full_temp_db_' . Helper::get('tmp_db_name');
+        }
+        $db = Helper::getTmpDbObject($dbName);
         // путь для сохранения временной миграции
         $path    = sprintf(
-            '%s/%s_temp_migration_%d/', sys_get_temp_dir(),
-            Helper::get('prefix'), time()
+            '%s/%s_temp_migration_%d/',
+            sys_get_temp_dir(),
+            Helper::get('prefix'),
+            time()
         );
         $saveDir = str_replace('\\', '/', Helper::get('savedir_ns'));
         $saveDir = sprintf('%s%s/', $path, $saveDir);
@@ -29,13 +37,17 @@ class upgradeController extends AbstractController {
         foreach ($pathes as $p) {
             if (!is_dir($p)) {
                 if (!mkdir($p, 0777, true)) {
-                    throw new \Exception(sprintf(
-                        'Cannot to create directory %s', $path
-                    ));
+                    throw new \Exception(
+                        sprintf(
+                            'Cannot to create directory %s',
+                            $path
+                        )
+                    );
                 }
                 else {
                     Output::verbose(
-                        sprintf('Temporary directory %s created', $p), 1
+                        sprintf('Temporary directory %s created', $p),
+                        1
                     );
                 }
             }
@@ -53,7 +65,9 @@ class upgradeController extends AbstractController {
         // мигрировать начать нужно с нуля
         $this->args['revision'] = 0;
         $migrate                = Helper::getController(
-            'migrate', $this->args, $this->db
+            'migrate',
+            $this->args,
+            $this->db
         );
         $create->setNext($migrate);
         $chain->setNext($create);
