@@ -1436,6 +1436,10 @@ class Helper
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
                 $handle = opendir($dir);
                 chdir($dir);
+                $dirLen = mb_strlen($dir);
+                if (mb_substr($dir, $dirLen - 1, 1) !== DIR_SEP) {
+                    $dir .= DIR_SEP;
+                }
                 while ($file = readdir($handle)) {
                     if ($file != '.' && $file != '..' && is_readable($file)) {
                         if (is_file($file)) {
@@ -1454,7 +1458,7 @@ class Helper
                              * Если это директория, то допишем ее имя к строке
                              * поддиректорий и добавим в стек директорий
                              */
-                            $dir_to_add = $dir . DIR_SEP . $file;
+                            $dir_to_add = $dir . $file;
                             array_push($dirs, $dir_to_add);
                             Output::verbose(
                                 sprintf('Add subdirectory %s', $dir_to_add),
