@@ -53,7 +53,7 @@ class initController extends DatasetsController {
         do {
             if ($c != "\n") {
                 Output::verbose(
-                    "Are you really shure you want to delete ALL tables in DB [y/n] ",
+                    "Are you really sure you want to delete ALL tables in DB [y/n] ",
                     1
                 );
             }
