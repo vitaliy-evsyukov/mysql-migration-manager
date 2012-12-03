@@ -18,11 +18,11 @@ class initController extends DatasetsController {
                 $dshash = md5(implode('', array_keys($datasets)));
             }
             try {
+                $this->dropAllDBEntities();
                 $classname = sprintf(
                     '%s\Schema%s', Helper::get('cachedir_ns'), $dshash
                 );
                 $schema    = new $classname;
-                $this->dropAllDBEntities();
                 $schema->load($this->db);
                 Output::verbose(
                     sprintf(
@@ -33,7 +33,9 @@ class initController extends DatasetsController {
             }
             catch (\Exception $e) {
                 Output::verbose('Schema not found', 1);
-                Output::verbose($e->getMessage(), 2);
+                Output::verbose($e->getMessage(), 3);
+                $schema = Helper::getController('schema');
+                $schema->runStrategy();
             }
         }
         else {
