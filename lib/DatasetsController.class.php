@@ -93,6 +93,8 @@ abstract class DatasetsController extends AbstractController {
      * Корректно выполняет множество запросов
      * @param string $query         Запросы с разделителем
      * @param bool   $inTransaction Запросы исполняются в транзакции
+     * @throws \Exception
+     * @return void
      */
     protected function multiQuery($query, $inTransaction = false) {
         $counter = 1;
@@ -105,7 +107,7 @@ abstract class DatasetsController extends AbstractController {
             }
             do {
                 $counter++;
-            } while ($this->db->next_result());
+            } while ($this->db->more_results() && $this->db->next_result());
             $text = $this->db->error;
             $code = $this->db->errno;
             if ($code) {

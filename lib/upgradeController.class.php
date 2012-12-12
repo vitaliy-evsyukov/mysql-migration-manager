@@ -28,7 +28,7 @@ class upgradeController extends AbstractController
         $path    = sprintf(
             '%s/%s_temp_migration_%d/',
             sys_get_temp_dir(),
-            Helper::get('prefix'),
+            $dbName,
             time()
         );
         $saveDir = str_replace('\\', '/', Helper::get('savedir_ns'));
@@ -55,6 +55,7 @@ class upgradeController extends AbstractController
         set_include_path(
             implode(PATH_SEPARATOR, array(get_include_path(), $path))
         );
+        $this->args['overrideRevision'] = true;
         $chain = Helper::getController('deploy', $this->args, $db);
         /**
          * Для апгрейда мы должны считать временную и развернутую базу эталоном,
@@ -64,6 +65,7 @@ class upgradeController extends AbstractController
         $create->getController()->setTempDb($this->db);
         // мигрировать начать нужно с нуля
         $this->args['revision'] = 0;
+        $this->args['createSchema'] = false;
         $migrate                = Helper::getController(
             'migrate',
             $this->args,
@@ -77,11 +79,11 @@ class upgradeController extends AbstractController
             array(
                  'schema'  => $tempSave,
                  'create'  => $tempSave,
+                 // для migrate задаем окружение для индекса 1, т.к. индекс 0 у migrate происходит в пределах deploy
                  'migrate' => array(1 => $tempSave)
             )
         );
         $chain->runStrategy();
-
     }
 
 }

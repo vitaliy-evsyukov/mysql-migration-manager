@@ -10,7 +10,8 @@ use \Mysqli;
  * @author guyfawkes
  */
 
-class dbDiff {
+class dbDiff
+{
 
     private $_currentAdapter;
     protected $_currentTable;
@@ -36,7 +37,8 @@ class dbDiff {
      */
     public function __construct(
         MysqliHelper $current = null, MysqliHelper $temp = null
-    ) {
+    )
+    {
         $current && ($this->_currentTable = $current->getDatabaseName());
         $temp && ($this->_tempTable = $temp->getDatabaseName());
         $this->_currentAdapter = $current;
@@ -47,7 +49,8 @@ class dbDiff {
      * @param string $tableName       Описываемая таблица
      * @param string $referencedTable Связанная с ней
      */
-    private function addReferenced($tableName, $referencedTable) {
+    private function addReferenced($tableName, $referencedTable)
+    {
         $this->_diff['tables']['refs'][$tableName][$referencedTable] = 1;
     }
 
@@ -55,7 +58,8 @@ class dbDiff {
      * Помечает таблицу как использованную
      * @param string $tableName
      */
-    private function markUsed($tableName) {
+    private function markUsed($tableName)
+    {
         $this->_diff['tables']['used'][$tableName] = 1;
     }
 
@@ -64,7 +68,8 @@ class dbDiff {
      * @param array $output Вывод mysqldiff
      * @return array
      */
-    public function parseDiff(array $output = array()) {
+    public function parseDiff(array $output = array())
+    {
         $comment    = '';
         $tableName  = '';
         $tmp        = array();
@@ -100,7 +105,7 @@ class dbDiff {
                             $tmp   = array();
                             $index = 0;
                             isset($result['desc'][$tableName]) &&
-                            ($index = sizeof($result['desc'][$tableName]));
+                                ($index = sizeof($result['desc'][$tableName]));
                         }
                     } catch (\Exception $e) {
                         Output::error($e->getMessage());
@@ -133,8 +138,8 @@ class dbDiff {
      * Делегирует работу mysqldiff
      * @return array
      */
-    public function getDiff() {
-
+    public function getDiff()
+    {
         $params = array('host', 'user', 'password');
         $groups = array('', 'tmp_');
 
@@ -143,8 +148,8 @@ class dbDiff {
 
         for ($i = 0; $i < 2; $i++) {
             $params_str = array();
-            foreach ($params as $param) {
-                foreach ($groups as $index => $g) {
+            foreach ($groups as $index => $g) {
+                foreach ($params as $param) {
                     $value = Helper::get($g . $param);
                     $k     = $index + 1;
                     if (!empty($value)) {
@@ -153,13 +158,16 @@ class dbDiff {
                 }
             }
             $command = sprintf(
-                '%s %s', Helper::get('mysqldiff_command'),
+                '%s %s',
+                Helper::get('mysqldiff_command'),
                 implode(' ', $params_str)
             );
             $output  = array();
             $full    = sprintf(
-                '%s --list-tables --no-old-defs --save-quotes %s %s', $command,
-                $tables[$i], $tables[1 - $i]
+                '%s --list-tables --no-old-defs --save-quotes %s %s',
+                $command,
+                $tables[$i],
+                $tables[1 - $i]
             );
             Output::verbose("Command {$full}", 2);
             exec($full, $output, $return_status);
@@ -169,7 +177,8 @@ class dbDiff {
             }
             else {
                 Output::verbose(
-                    sprintf('Command %s returned nothing', $full), 3
+                    sprintf('Command %s returned nothing', $full),
+                    3
                 );
             }
             $groups = array_reverse($groups);
@@ -183,7 +192,8 @@ class dbDiff {
      * Результат - хеш из ключей used и refs
      * @return array
      */
-    public function getTablesInfo() {
+    public function getTablesInfo()
+    {
         return $this->_diff['tables'];
     }
 

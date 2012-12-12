@@ -10,13 +10,15 @@ namespace lib;
  * @author guyfawkes
  */
 
-class deployController extends DatasetsController {
+class deployController extends DatasetsController
+{
 
     /**
      * Делегирует работу последовательно схеме, миграциям и применению датасетов
      * Удаляет все содержимое БД перед началом работы
      */
-    public function runStrategy() {
+    public function runStrategy()
+    {
         $this->dropAllDBEntities();
         $toWork = array(
             'schema'  => array(
@@ -24,8 +26,11 @@ class deployController extends DatasetsController {
                 'loadData' => true
             ),
             'migrate' => array(
-                'datasets' => $this->args['datasets'],
-                'revision' => 0
+                'datasets'     => $this->args['datasets'],
+                // если нужно все равно начинать с нулевой миграции, а не с той, что будет после накатки схемы
+                'revision'     => !empty($this->args['overrideRevision']) ? 0 : null,
+                // если указан параметр, используем его для определения, нужно ли создавать "мигрированную" схему
+                'createSchema' => isset($this->args['createSchema']) ? $this->args['createSchema'] : true
             ),
             'applyds' => array('datasets' => $this->args['datasets'])
         );

@@ -136,15 +136,22 @@ class ControllersChain implements IController {
 
     /**
      * Выполнить изменение окружения
-     * @param $action
+     * @param string $action
      */
     private function runSandbox($action) {
         if (isset($this->_sandbox[$action])) {
             $currentIndex = 0;
+            /**
+             * Если запускаем не приведение к оригинальному состоянию, то для текущего действия увеличим счетчик, т.к.
+             * при вложенных друг в друга цепочках ответственностей может понадобиться иметь разное окружение
+             */
             if ($action !== 'original') {
                 $this->_controllerIndexes[$action]++;
                 $currentIndex = $this->_controllerIndexes[$action];
             }
+            /**
+             * Если для текущего уровня задано окружение, применим его
+             */
             if (isset($this->_sandbox[$action][$currentIndex])) {
                 Output::verbose(
                     sprintf(

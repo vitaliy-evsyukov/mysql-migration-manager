@@ -8,9 +8,11 @@
 
 namespace lib;
 
-class recoverController implements IController {
+class recoverController implements IController
+{
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         Helper::initDirs();
         Registry::parseMigrations();
         $lines        = array();
@@ -22,7 +24,9 @@ class recoverController implements IController {
                     continue;
                 }
                 $lines[$timestamp] = sprintf(
-                    "%d|%s|%d", $revision, date('d.m.Y H:i:s', $timestamp),
+                    "%d|%s|%d",
+                    $revision,
+                    date('d.m.Y H:i:s', $timestamp),
                     $timestamp
                 );
                 if ($max_revision < $revision) {
@@ -42,8 +46,10 @@ class recoverController implements IController {
             file_put_contents($filename, $value);
             Output::verbose(
                 sprintf(
-                    "Files %s was successfully restored", $filename
-                ), 1
+                    "File %s was successfully restored",
+                    $filename
+                ),
+                1
             );
         }
     }
