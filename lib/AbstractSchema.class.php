@@ -108,7 +108,14 @@ abstract class AbstractSchema
              * Если схема мигрированная и при этом не разворачивается - также произведем проверки
              */
             $result = false;
-            var_dump(func_get_args());
+            Output::verbose(
+                sprintf(
+                    'Schema is%smigrated and is%sdeploying',
+                    $migrated ? ' ' : ' not ',
+                    $deploying ? ' ' : ' not '
+                ),
+                3
+            );
             if (!$migrated || !$deploying) {
                 $className      = Helper::getSchemaClassName($hash, $migrated);
                 $class          = new $className;

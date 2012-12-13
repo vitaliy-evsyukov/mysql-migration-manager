@@ -247,42 +247,67 @@ class migrateController extends DatasetsController
 
         // если принудительно не запретили создавать схему
         if (!isset($this->args['createSchema']) || ($this->args['createSchema'] !== false)) {
-            Output::verbose('Create schema after migration with revision ' . $revision, 1);
-            $tmpDir                  = sys_get_temp_dir() . '/tmp_schema/';
-            $chain                   = Helper::getController('getsql', $this->args, $this->db);
-            $this->args['revision']  = $revision;
-            $this->args['notDeploy'] = true;
-            $sandbox                 = array('schemadir' => $tmpDir);
-            $chain->setNext(Helper::getController('schema', $this->args, $this->db));
-            $chain->setSandbox(
-                array(
-                     'getsql' => $sandbox,
-                     'schema' => $sandbox
-                )
-            );
-            $chain->runStrategy();
-            /**
-             * Удаление вложенных папок и файлов и затем удаление директории
-             */
-            $it = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($tmpDir),
-                \RecursiveIteratorIterator::CHILD_FIRST
-            );
-            foreach ($it as $file) {
-                if (in_array($file->getBasename(), array('.', '..'))) {
-                    continue;
-                }
-                elseif ($file->isDir()) {
-                    rmdir($file->getPathname());
-                }
-                elseif ($file->isFile() || $file->isLink()) {
-                    unlink($file->getPathname());
-                }
-            }
-            rmdir($tmpDir);
+            $this->createMigratedSchema($revision);
         }
 
         return true;
+    }
+
+    /**
+     * Создает мигрированную схему
+     * @param int $revision Ревизия, для которой создается схема
+     */
+    public function createMigratedSchema($revision)
+    {
+        $revision = (int)$revision;
+        $tmpDir   = sys_get_temp_dir() . '/tmp_schema/';
+        Output::verbose(
+            sprintf(
+                'Create schema after migration with revision %d in folder %s',
+                $revision,
+                $tmpDir
+            ),
+            1
+        );
+        $chain                   = Helper::getController('getsql', $this->args, $this->db);
+        $this->args['revision']  = $revision;
+        $this->args['notDeploy'] = true;
+        $sandbox                 = array('schemadir' => $tmpDir);
+        $chain->setNext(Helper::getController('schema', $this->args, $this->db));
+        $chain->setSandbox(
+            array(
+                 'getsql' => $sandbox,
+                 'schema' => $sandbox
+            )
+        );
+        $chain->runStrategy();
+        /**
+         * Удаление вложенных папок и файлов и затем удаление директории
+         */
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($tmpDir),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $file) {
+            if (in_array($file->getBasename(), array('.', '..'))) {
+                continue;
+            }
+            elseif ($file->isDir()) {
+                rmdir($file->getPathname());
+            }
+            elseif ($file->isFile() || $file->isLink()) {
+                unlink($file->getPathname());
+            }
+        }
+        rmdir($tmpDir);
+        Output::verbose(
+            sprintf(
+                'Migrated schema\'s creation with revision %d finished, folder %s removed',
+                $revision,
+                $tmpDir
+            ),
+            1
+        );
     }
 
 }

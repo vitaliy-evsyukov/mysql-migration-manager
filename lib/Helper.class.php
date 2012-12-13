@@ -451,7 +451,7 @@ class Helper
         }
         register_shutdown_function(
             function () use ($c, $tmpdb) {
-                //$tmpdb->query("DROP DATABASE `{$c['db']}`");
+                $tmpdb->query("DROP DATABASE `{$c['db']}`");
                 Output::verbose(
                     "Temporary database {$c['db']} was deleted",
                     2
@@ -1033,11 +1033,23 @@ class Helper
                         array($tablename => $revision)
                     );
                 }
+                Output::verbose(sprintf('--- Execution of %s finished', $what), 3);
             }
         }
-        Output::verbose(sprintf('--- Execution of %s finished', $what), 3);
         $db->query("SET foreign_key_checks = 1;");
         Output::verbose("Deploy temporary database was finished", 1);
+        /**
+         * Отсортируем массив использованных миграций по ключам по возрастанию, переставим внутренний указатель
+         * массива на его последний элемент и получим ключ этого элемента
+         */
+        ksort($usedMigrations);
+        end($usedMigrations);
+        $revision = key($usedMigrations);
+
+        if (!is_null($revision)) {
+            $migrationController = self::getController('migrate', array(), $db)->getController();
+            $migrationController->createMigratedSchema($revision);
+        }
     }
 
     /**
