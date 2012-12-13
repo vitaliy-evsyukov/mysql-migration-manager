@@ -9,7 +9,8 @@ use \Mysqli;
  * Обертка над Mysqli
  * @author guyfawkes
  */
-class MysqliHelper {
+class MysqliHelper
+{
 
     /**
      * Номер ошибки "MySQL server has gone away"
@@ -57,7 +58,8 @@ class MysqliHelper {
      * @param string $password Пароль
      * @param string $db       Имя базы данных
      */
-    public function __construct($host, $user, $password, $db = '') {
+    public function __construct($host, $user, $password, $db = '')
+    {
         $this->_host         = $host;
         $this->_user         = $user;
         $this->_password     = $password;
@@ -69,7 +71,8 @@ class MysqliHelper {
      * Добавляет команду или замещает список команд, которые нужно выполнять при реконнекте
      * @param array|string $command
      */
-    public function setCommand($command) {
+    public function setCommand($command)
+    {
         if (!is_array($command)) {
             $this->_commands[] = $command;
         }
@@ -83,15 +86,17 @@ class MysqliHelper {
      * Устанавливает количество попыток для реконнекта
      * @param int $count
      */
-    public function setRetriesCount($count) {
-        $this->_retriesCount = (int) $count;
+    public function setRetriesCount($count)
+    {
+        $this->_retriesCount = (int)$count;
     }
 
     /**
      * Получить имя текущей базы данных
      * @return string
      */
-    public function getDatabaseName() {
+    public function getDatabaseName()
+    {
         return $this->_databaseName;
     }
 
@@ -100,11 +105,13 @@ class MysqliHelper {
      * @param string $dbname
      * @return bool
      */
-    public function select_db($dbname) {
+    public function select_db($dbname)
+    {
         $r = $this->_db->select_db($dbname);
         if ($r) {
             $this->_databaseName = $dbname;
         }
+
         return $r;
     }
 
@@ -115,7 +122,8 @@ class MysqliHelper {
      * @return mixed
      * @throws \Exception
      */
-    public function __call($name, $arguments) {
+    public function __call($name, $arguments)
+    {
         if (!method_exists($this->_db, $name)) {
             throw new \Exception(sprintf('Method %s does not exists', $name));
         }
@@ -142,8 +150,10 @@ class MysqliHelper {
                     );*/
                     Output::verbose(
                         sprintf(
-                            '#%d: Trying to reconnect...', $counter
-                        ), 1
+                            '#%d: Trying to reconnect...',
+                            $counter
+                        ),
+                        1
                     );
                     $this->connect();
                 }
@@ -159,14 +169,16 @@ class MysqliHelper {
      * @param string $name
      * @return mixed
      */
-    public function __get($name) {
+    public function __get($name)
+    {
         return $this->_db->$name;
     }
 
     /**
      * Выполняет набор обязательных команд при (пере)подключении
      */
-    private function executeCommands() {
+    private function executeCommands()
+    {
         if (!empty($this->_commands)) {
             foreach ($this->_commands as $command) {
                 $this->query($command);
@@ -178,19 +190,22 @@ class MysqliHelper {
      * Устанавливает соединение с сервером БД
      * @throws \Exception
      */
-    private function connect() {
+    private function connect()
+    {
         $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
         if ($this->_db->connect_errno) {
             throw new \Exception(sprintf(
-                'Database connect error occured: %s (%d)',
-                $this->_db->connect_error, $this->_db->connect_errno
-            ));
+                                     'Database connect error occured: %s (%d)',
+                                     $this->_db->connect_error,
+                                     $this->_db->connect_errno
+                                 ));
         }
         $this->_db->select_db($this->_databaseName);
         if (!$this->_db->set_charset("utf8")) {
             throw new \Exception(sprintf(
-                'SET CHARACTER SET utf8 error: %s', $this->db->error
-            ));
+                                     'SET CHARACTER SET utf8 error: %s',
+                                     $this->db->error
+                                 ));
         }
         ;
         $this->executeCommands();

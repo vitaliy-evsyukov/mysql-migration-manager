@@ -57,29 +57,37 @@ class Registry
      */
     private static function prepareMap($loadSQL = true, $getRefs = true)
     {
+        $minRevision = 0;
         if ($loadSQL) {
             /*
              * Вначале соберем все данные из папки схемы
              * SQL считается первой ревизией
              */
             Output::verbose('Starting to search initial revisions', 1);
-            $path       = Helper::get('cachedir');
-            $fname      = "{$path}Schema.class.php";
-            $refs_fname = "{$path}References.class.php";
-            $ns         = Helper::get('cachedir_ns');
-            $message    = sprintf(
+            $path           = Helper::get('cachedir');
+            $fname          = Helper::getSchemaFile();
+            $refs_fname     = "{$path}References.class.php";
+            $ns             = Helper::get('cachedir_ns');
+            $message        = sprintf(
                 'Parse schema directory %s or get schema from file %s? [y/n] ',
                 Helper::get('schemadir'),
                 $fname
             );
-            if (Helper::askToRewrite($fname, $message)) {
-                $queries = Helper::parseSchemaFiles();
+            $schemaRewrited = false;
+            $schemaMigrated = (strpos($fname, 'migrated') !== false);
+            $params         = array($schemaMigrated, '', true);
+            if (Helper::askToRewrite($fname, $message, array('\lib\AbstractSchema', 'loadInstance'), $params)) {
+                // здесь мы можем перезаписывать только не "мигрированную" схему
+                $schemaRewrited = true;
+                $queries        = Helper::parseSchemaFiles();
                 Helper::writeInFile($fname, '', $queries);
+                $queries = $queries['queries'];
             }
             else {
-                $classname = sprintf('%s\Schema', $ns);
-                $schemaObj = new $classname;
-                $queries   = $schemaObj->getQueries();
+                $classname   = Helper::getSchemaClassName('', $schemaMigrated);
+                $schemaObj   = new $classname;
+                $queries     = $schemaObj->getQueries();
+                $minRevision = $schemaObj->getRevision();
                 unset($schemaObj);
             }
             if (!empty($queries)) {
@@ -93,7 +101,14 @@ class Registry
                         'Refresh initial references or get from cache %s? [y/n] ',
                         $refs_fname
                     );
-                    if (Helper::askToRewrite($refs_fname, $message)) {
+                    if (Helper::askToRewrite(
+                        $refs_fname,
+                        $message,
+                        function () use ($schemaRewrited) {
+                            return $schemaRewrited;
+                        }
+                    )
+                    ) {
                         self::$_refsMap = Helper::getInitialRefs($queries);
                         Helper::createReferencesCache(
                             $refs_fname,
@@ -117,7 +132,7 @@ class Registry
             unset($queries);
         }
         Output::verbose('Collecting maps of revisions and references', 1);
-        self::parseMigrations(true);
+        self::parseMigrations(true, $minRevision);
 
         foreach (self::$_migrations as &$data) {
             ksort($data);
@@ -167,11 +182,13 @@ class Registry
     /**
      * Находит файлы миграций и сохраняет необходимые данные из них
      * @static
-     * @param bool $check Проверять, есть ли данный файл в списке миграций
+     * @param bool $check       Проверять, есть ли данный файл в списке миграций
+     * @param int  $minRevision Собирать только те ревизии, которые больше переданной
      */
-    public static function parseMigrations($check = false)
+    public static function parseMigrations($check = false, $minRevision = 0)
     {
-        $migratedir = Helper::get('savedir');
+        $migratedir  = Helper::get('savedir');
+        $minRevision = (int)$minRevision;
         if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
             if ($check) {
@@ -197,20 +214,32 @@ class Registry
                             continue;
                         }
                     }
-                    Output::verbose(
-                        sprintf('Add migration %s to list', $file),
-                        2
-                    );
-                    foreach ($metadata['tables'] as $tablename => $tmp) {
-                        self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
-                    }
-                    foreach ($metadata['refs'] as $refTable => $tables) {
-                        if (!isset(self::$_refsMap[$refTable])) {
-                            self::$_refsMap[$refTable] = array();
+                    if ((int)$metadata['revision'] > $minRevision) {
+                        Output::verbose(
+                            sprintf('Add migration %s to list', $file),
+                            2
+                        );
+                        foreach ($metadata['tables'] as $tablename => $tmp) {
+                            self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
                         }
-                        self::$_refsMap[$refTable] = array_merge(
-                            self::$_refsMap[$refTable],
-                            $tables
+                        foreach ($metadata['refs'] as $refTable => $tables) {
+                            if (!isset(self::$_refsMap[$refTable])) {
+                                self::$_refsMap[$refTable] = array();
+                            }
+                            self::$_refsMap[$refTable] = array_merge(
+                                self::$_refsMap[$refTable],
+                                $tables
+                            );
+                        }
+                    }
+                    else {
+                        Output::verbose(
+                            sprintf(
+                                'Migration %s cannot be added to the list, because of its revision is lower or equal to %d',
+                                $file,
+                                $minRevision
+                            ),
+                            2
                         );
                     }
                 }

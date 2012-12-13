@@ -6,9 +6,12 @@ use lib\AbstractSchema;
 
 class Schema%%name%% extends AbstractSchema {
 
-    protected $tables = array(
+    protected $_tables = array(
         %%tables%%
     );
-    protected $queries=%%queries%%;
+
+    protected $_revision = %%revision%%;
+
+    protected $_queries = %%queries%%;
 
 }

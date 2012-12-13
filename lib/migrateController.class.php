@@ -7,15 +7,18 @@ namespace lib;
  * Выполняет миграции
  * @author guyfawkes
  */
-class migrateController extends DatasetsController {
+class migrateController extends DatasetsController
+{
 
     protected $queries = array();
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         $mHelper = Helper::getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
             Output::verbose("No revisions have been created", 1);
+
             return false;
         }
         $minMigration = current($mHelper['migrations']);
@@ -31,13 +34,14 @@ class migrateController extends DatasetsController {
         else {
             $revision = $this->args['revision'];
         }
+
         Output::verbose(sprintf('You are at revision %d', $revision), 1);
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
         }
         $str = $this->args['m'];
         if (is_numeric($str)) {
-            $search_migration = (int) $str;
+            $search_migration = (int)$str;
             if ($search_migration !== 0) {
                 $class            = sprintf(
                     '%s\Migration%d',
@@ -94,14 +98,18 @@ class migrateController extends DatasetsController {
 
         if ($revision === $maxMigration && $target_migration >= $timestamp) {
             Output::verbose('There are no newer migrations', 1);
+
             return false;
         }
         else {
             Output::verbose(
                 sprintf(
                     "Starting migration from %s (revision %d) to %s\n",
-                    $start_str, $revision, $target_str
-                ), 1
+                    $start_str,
+                    $revision,
+                    $target_str
+                ),
+                1
             );
         }
 
@@ -110,7 +118,7 @@ class migrateController extends DatasetsController {
         $direction = 'Up';
         if ($revision > 0) {
             $direction = $mHelper['data'][$revision]['time'] <=
-                         $target_migration ? 'Up' : 'Down';
+                $target_migration ? 'Up' : 'Down';
         }
 
         if ($direction === 'Down') {
@@ -131,8 +139,10 @@ class migrateController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "%s skipped, because is is lesser %s",
-                            $time_str, $start_str
-                        ), 2
+                            $time_str,
+                            $start_str
+                        ),
+                        2
                     );
                     continue;
                 }
@@ -147,8 +157,10 @@ class migrateController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "%s skipped, because is less or equal %s",
-                            $time_str, $target_str
-                        ), 2
+                            $time_str,
+                            $target_str
+                        ),
+                        2
                     );
                     break;
                 }
@@ -158,8 +170,10 @@ class migrateController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "%s skipped, because is less or equal %s\n",
-                            $time_str, $start_str
-                        ), 2
+                            $time_str,
+                            $start_str
+                        ),
+                        2
                     );
                     continue;
                 }
@@ -167,8 +181,10 @@ class migrateController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "%s skipped, because is greater %s\n",
-                            $time_str, $target_str
-                        ), 2
+                            $time_str,
+                            $target_str
+                        ),
+                        2
                     );
                     break;
                 }
@@ -180,8 +196,10 @@ class migrateController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "Executing migration for %s (# %d)\n",
-                            $time_str, $rev
-                        ), 1
+                            $time_str,
+                            $rev
+                        ),
+                        1
                     );
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
@@ -189,10 +207,14 @@ class migrateController extends DatasetsController {
                             sprintf(
                                 "Execute migration for tables:\n--- %s",
                                 implode("\n--- ", array_keys($tables))
-                            ), 2
+                            ),
+                            2
                         );
                         Helper::applyMigration(
-                            $rev, $this->db, $direction, $tables
+                            $rev,
+                            $this->db,
+                            $direction,
+                            $tables
                         );
                         $usedMigrations[$rev] = 1;
                         break;
@@ -204,7 +226,8 @@ class migrateController extends DatasetsController {
                         sprintf(
                             "Executing SQL for table: %s",
                             $tablename
-                        ), 1
+                        ),
+                        1
                     );
                     $this->db->query($rev);
                 }
@@ -221,7 +244,70 @@ class migrateController extends DatasetsController {
         }
 
         Helper::writeRevisionFile($revision);
+
+        // если принудительно не запретили создавать схему
+        if (!isset($this->args['createSchema']) || ($this->args['createSchema'] !== false)) {
+            $this->createMigratedSchema($revision);
+        }
+
         return true;
+    }
+
+    /**
+     * Создает мигрированную схему
+     * @param int $revision Ревизия, для которой создается схема
+     */
+    public function createMigratedSchema($revision)
+    {
+        $revision = (int)$revision;
+        $tmpDir   = sys_get_temp_dir() . '/tmp_schema/';
+        Output::verbose(
+            sprintf(
+                'Create schema after migration with revision %d in folder %s',
+                $revision,
+                $tmpDir
+            ),
+            1
+        );
+        $chain                   = Helper::getController('getsql', $this->args, $this->db);
+        $this->args['revision']  = $revision;
+        $this->args['notDeploy'] = true;
+        $sandbox                 = array('schemadir' => $tmpDir);
+        $chain->setNext(Helper::getController('schema', $this->args, $this->db));
+        $chain->setSandbox(
+            array(
+                 'getsql' => $sandbox,
+                 'schema' => $sandbox
+            )
+        );
+        $chain->runStrategy();
+        /**
+         * Удаление вложенных папок и файлов и затем удаление директории
+         */
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($tmpDir),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $file) {
+            if (in_array($file->getBasename(), array('.', '..'))) {
+                continue;
+            }
+            elseif ($file->isDir()) {
+                rmdir($file->getPathname());
+            }
+            elseif ($file->isFile() || $file->isLink()) {
+                unlink($file->getPathname());
+            }
+        }
+        rmdir($tmpDir);
+        Output::verbose(
+            sprintf(
+                'Migrated schema\'s creation with revision %d finished, folder %s removed',
+                $revision,
+                $tmpDir
+            ),
+            1
+        );
     }
 
 }

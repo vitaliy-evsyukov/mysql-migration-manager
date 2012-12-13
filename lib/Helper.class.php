@@ -130,7 +130,8 @@ class Helper
         array_shift($args);
         $opts = GetOpt::extractLeft($args, self::$config_tpl);
         if ($opts === false) {
-            Output::error('mmm: ' . reset(GetOpt::errors()));
+            $errors = (array)GetOpt::errors();
+            Output::error('mmm: ' . reset($errors));
             exit(1);
         }
         else {
@@ -654,7 +655,7 @@ class Helper
             if ($result) {
                 $result->free();
             }
-        } while ($db->next_result());
+        } while ($db->more_results() && $db->next_result());
         Output::verbose(
             sprintf(
                 'Multiple DDL execution finished: result set looping time: %f',
@@ -925,6 +926,7 @@ class Helper
     /**
      * Записывает информацию о ревизии
      * @param int $revision Номер ревизии
+     * @throws \Exception
      * @return int Таймстаймп для ревизии
      */
     public static function writeRevisionFile($revision)
@@ -950,19 +952,23 @@ class Helper
                 $ts
             );
             if (is_file($filename) && !is_writable($filename)) {
-                throw new \Exception(sprintf(
-                                         "File %s is write-protected",
-                                         $filename
-                                     ));
+                throw new \Exception(
+                    sprintf(
+                        "File %s is write-protected",
+                        $filename
+                    )
+                );
             }
             file_put_contents($filename, implode("\n", $lines));
         }
         self::$_revisionLines = $lines;
         if (is_file($marker) && !is_writable($marker)) {
-            throw new \Exception(sprintf(
-                                     'Cannot write revision marker to file: %s',
-                                     $marker
-                                 ));
+            throw new \Exception(
+                sprintf(
+                    'Cannot write revision marker to file: %s',
+                    $marker
+                )
+            );
         }
         file_put_contents($marker, "#{$revision}");
 
@@ -1027,11 +1033,23 @@ class Helper
                         array($tablename => $revision)
                     );
                 }
+                Output::verbose(sprintf('--- Execution of %s finished', $what), 3);
             }
         }
-        Output::verbose(sprintf('--- Execution of %s finished', $what), 3);
         $db->query("SET foreign_key_checks = 1;");
         Output::verbose("Deploy temporary database was finished", 1);
+        /**
+         * Отсортируем массив использованных миграций по ключам по возрастанию, переставим внутренний указатель
+         * массива на его последний элемент и получим ключ этого элемента
+         */
+        ksort($usedMigrations);
+        end($usedMigrations);
+        $revision = key($usedMigrations);
+
+        if (!is_null($revision)) {
+            $migrationController = self::getController('migrate', array(), $db)->getController();
+            $migrationController->createMigratedSchema($revision);
+        }
     }
 
     /**
@@ -1139,10 +1157,12 @@ class Helper
             $content = file_get_contents($tpl_file);
         }
         else {
-            throw new \Exception(sprintf(
-                                     'Template file %s not exists or is not readable',
-                                     $tpl_file
-                                 ));
+            throw new \Exception(
+                sprintf(
+                    'Template file %s not exists or is not readable',
+                    $tpl_file
+                )
+            );
         }
         foreach ($search as &$placeholder) {
             $placeholder = "%%{$placeholder}%%";
@@ -1185,26 +1205,48 @@ class Helper
         return self::createContent($search, $replace, $tpl);
     }
 
+    /**
+     * Заменяет ревизию в файле схемы
+     * @param string $filename
+     * @param int    $revision
+     */
+    public static function changeRevision($filename, $revision)
+    {
+        if (is_file($filename) && is_readable($filename) && is_writable($filename)) {
+            Output::verbose(sprintf('Change revision in schema %s to %d', $filename, $revision), 2);
+            $content = file_get_contents($filename);
+            $content = preg_replace('/(\$_revision\s=\s)(\d+)?;/', '${1}' . $revision . ';', $content);
+            file_put_contents($filename, $content);
+        }
+    }
 
     /**
      * Сохраняет файл схемы
      * TODO: объединить с записью миграциий
-     * @param string $fname   Имя файла
-     * @param string $name    Имя схемы данных
-     * @param array  $queries Массив запросов
-     * @param string $tpl     Путь к файлу шаблона
+     * @param string $fname    Имя файла
+     * @param string $name     Имя схемы данных
+     * @param array  $queries  Массив запросов
+     * @param string $tpl      Путь к файлу шаблона
+     * @param int    $revision Номер ревизии
      */
     public static function writeInFile(
-        $fname, $name, array $queries, $tpl = 'tpl/schema.tpl'
+        $fname, $name, array $queries, $tpl = 'tpl/schema.tpl', $revision = 0
     )
     {
-        $search  = array('queries', 'tables', 'name', 'ns');
-        $sep     = "\",\n" . str_repeat(' ', 8) . '"';
+        $hashes    = $queries['md5'];
+        $hashesTmp = array();
+        $separator = ",\n" . str_repeat(' ', 8);
+        foreach ($hashes as $entityName => $hash) {
+            $hashesTmp[] = sprintf('"%s" => "%s"', $entityName, $hash);
+        }
+        $queries = $queries['queries'];
+        $search  = array('queries', 'tables', 'name', 'ns', 'revision');
         $replace = array(
             self::recursiveImplode($queries, 1, true),
-            '"' . implode($sep, array_keys($queries)) . '"',
-            $name,
-            self::get('cachedir_ns')
+            implode($separator, $hashesTmp),
+            $revision ? $name . 'migrated' : $name,
+            self::get('cachedir_ns'),
+            $revision
         );
         if (!file_exists($fname) || is_writable($fname)) {
             file_put_contents(
@@ -1329,10 +1371,12 @@ class Helper
      * @param array  $views         Ссылка на массив запросов для вьюх
      * @param array  $includeTables Массив таблиц, которые нужно использовать
      * @param string $file          Имя файла
+     * @param array  $md5           Ссылка на массив хешей
+     * @param bool   $listOnly      Отдать только названия сущностей и хеши
      * @return bool
      */
     private static function schemaFileRoutines(
-        array &$queries, array &$views, array $includeTables, $file
+        array &$queries, array &$views, array $includeTables, $file, &$md5, $listOnly
     )
     {
         $exclude      = !empty($includeTables);
@@ -1361,50 +1405,56 @@ class Helper
             if ($q === ';') {
                 return false;
             }
-            $tmp = array($entityname => $q);
-            if (preg_match($patternTable, $q)) {
-                $tmp[$entityname] = self::stripTrash($q, 'TABLE');
-                /*
-                 * сложение необходимо для сохранения ключей массивов
-                 * таблицы добавляем в начало массива
-                 */
-                $queries = $tmp + $queries;
+            $md5[$entityname] = md5($q);
+            if ($listOnly) {
+                $queries[] = $entityname;
             }
             else {
-                $matches = array();
-                if (preg_match($patternView, $q, $matches)) {
-                    $view_entityname       = $entityname . '_view';
-                    $tmp[$view_entityname] = self::stripTrash(
-                        $q,
-                        'VIEW',
-                        array('definer' => $matches[1])
-                    );
-                    $tmp[$view_entityname] = sprintf(
-                        "DROP TABLE IF EXISTS %s;\n%s",
-                        $entityname,
-                        $tmp[$view_entityname]
-                    );
-                    /**
-                     * дописываем вьюхи в отдельный массив,
-                     * который добавим в конец всего
+                $tmp = array($entityname => $q);
+                if (preg_match($patternTable, $q)) {
+                    $tmp[$entityname] = self::stripTrash($q, 'TABLE');
+                    /*
+                     * сложение необходимо для сохранения ключей массивов
+                     * таблицы добавляем в начало массива
                      */
-                    $views += $tmp;
+                    $queries = $tmp + $queries;
                 }
                 else {
-                    /**
-                     *  Если это триггер, процедура или функция, меняем создателя
-                     */
-                    if (preg_match($patternRoutine, $q, $matches)) {
-                        $tmp[$entityname] = self::stripTrash(
+                    $matches = array();
+                    if (preg_match($patternView, $q, $matches)) {
+                        $view_entityname       = $entityname . '_view';
+                        $tmp[$view_entityname] = self::stripTrash(
                             $q,
-                            $matches[2],
-                            array(
-                                 'definer' => $matches[1],
-                                 'entity'  => $entityname
-                            )
+                            'VIEW',
+                            array('definer' => $matches[1])
                         );
-                        // и дописываем такие сущности в конец массива запросов
-                        $queries += $tmp;
+                        $tmp[$view_entityname] = sprintf(
+                            "DROP TABLE IF EXISTS %s;\n%s",
+                            $entityname,
+                            $tmp[$view_entityname]
+                        );
+                        /**
+                         * дописываем вьюхи в отдельный массив,
+                         * который добавим в конец всего
+                         */
+                        $views += $tmp;
+                    }
+                    else {
+                        /**
+                         *  Если это триггер, процедура или функция, меняем создателя
+                         */
+                        if (preg_match($patternRoutine, $q, $matches)) {
+                            $tmp[$entityname] = self::stripTrash(
+                                $q,
+                                $matches[2],
+                                array(
+                                     'definer' => $matches[1],
+                                     'entity'  => $entityname
+                                )
+                            );
+                            // и дописываем такие сущности в конец массива запросов
+                            $queries += $tmp;
+                        }
                     }
                 }
             }
@@ -1416,10 +1466,12 @@ class Helper
     /**
      * Проходит по папке с файлами схемы и собирает их
      * @param array $includeTables Хеш с именами таблиц, которые нужно включать, в качестве ключей
+     * @param bool  $listOnly      Нужно ли получить только список сущностей и их хеши
      * @return array Массив запросов
      */
-    public static function parseSchemaFiles(array $includeTables = array())
+    public static function parseSchemaFiles(array $includeTables = array(), $listOnly = false)
     {
+        $md5       = array();
         $queries   = array();
         $views     = array();
         $schemadir = Helper::get('schemadir');
@@ -1430,7 +1482,8 @@ class Helper
             );
         }
         else {
-            $dirs = array($schemadir);
+            $workingDirectory = getcwd();
+            $dirs             = array($schemadir);
             while (!empty($dirs)) {
                 $dir = array_pop($dirs);
                 Output::verbose(sprintf('Come into %s directory', $dir), 3);
@@ -1447,7 +1500,9 @@ class Helper
                                 $queries,
                                 $views,
                                 $includeTables,
-                                $file
+                                $file,
+                                $md5,
+                                $listOnly
                             )
                             ) {
                                 continue;
@@ -1469,6 +1524,8 @@ class Helper
                 }
                 closedir($handle);
             }
+            // возвращаем назад рабочую директорию
+            chdir($workingDirectory);
         }
         /**
          * вьюхи идут после хранимых процедур, функций и триггеров,
@@ -1476,48 +1533,66 @@ class Helper
          */
         $queries += $views;
 
-        return $queries;
+        // избавимся от возможных дублирующихся названий, т.к. могли быть собраны такие для временных таблиц для вьюх
+        if ($listOnly) {
+            $queries = array_unique($queries);
+        }
+
+        return array('queries' => $queries, 'md5' => $md5);
     }
 
     /**
      * Спрашивает у пользователя, необходимо ли перезаписывать файл
-     * @param string $filename Имя файла
-     * @param string $message  Сообщение
+     * @param string        $filename Имя файла
+     * @param string        $message  Сообщение
+     * @param callable      $fn       Функция, использумая для дополнительной проверки
+     * @param array         $fnArgs   Аргументы функции проверки
      * @return boolean Результат ввода пользователя
      */
-    public static function askToRewrite($filename, $message = '')
+    public static function askToRewrite($filename, $message = '', $fn = null, $fnArgs = array())
     {
         $hash = md5($filename);
         if (self::getAnswer($hash)) {
+
             // если уже отвечали, нет смысла запрашивать ввод пользователя
             return false;
         }
         else {
-            if (self::get('quiet') || !file_exists($filename)) {
-                self::saveAnswer($hash, 'y');
-
-                return true;
-            }
-            $c       = '';
             $choices = array(
                 'y' => true,
                 'n' => false
             );
-            do {
-                if ($c != "\n") {
-                    if (empty($message)) {
-                        $message =
-                            'File %s already exists. Do you really want to override it? [y/n] ';
-                    }
-                    printf($message, $filename);
+            if (self::get('quiet') || !file_exists($filename)) {
+                self::saveAnswer($hash, 'y');
+                $c = true;
+            }
+            else {
+                if (!is_null($fn)) {
+                    $c = call_user_func_array($fn, $fnArgs);
+                    self::saveAnswer($hash, array_search($c, $choices, true));
                 }
-                $c = mb_strtolower(trim(fgets(STDIN)));
-                if (isset($choices[$c])) {
-                    self::saveAnswer($hash, $c);
+                else {
+                    $realC = '';
+                    do {
+                        if ($realC !== "\n") {
+                            if (empty($message)) {
+                                $message =
+                                    'File %s already exists. Do you really want to override it? [y/n] ';
+                            }
+                            printf($message, $filename);
+                        }
+                        $realC = fgets(STDIN);
+                        $c     = mb_strtolower(trim($realC));
+                        if (isset($choices[$c])) {
+                            self::saveAnswer($hash, $c);
+                            $c = $choices[$c];
+                            break;
+                        }
+                    } while (true);
+                }
+            }
 
-                    return $choices[$c];
-                }
-            } while (true);
+            return $c;
         }
     }
 
@@ -1579,10 +1654,68 @@ class Helper
     public static function getAnswer($answer)
     {
         $value = false;
-        isset(self::$_executedRequests[$answer]) &&
-            ($value = self::$_executedRequests[$answer]);
+        isset(self::$_executedRequests[$answer]) && ($value = self::$_executedRequests[$answer]);
 
         return $value;
+    }
+
+    /**
+     * Возвращает имя файла схемы (или имя "по умолчанию", даже если файла не существует)
+     * @param string $hash            Хеш от датасетов
+     * @param bool   $defaultMigrated По умолчанию должна возвращаться "мигрированная" схема или "обычная"
+     * @throws \Exception
+     * @return string
+     */
+    public static function getSchemaFile($hash = '', $defaultMigrated = false)
+    {
+        $path    = self::get('cachedir');
+        $pattern = '%sSchema%s%s.class.php';
+        $files   = array(sprintf($pattern, $path, 'migrated', $hash), sprintf($pattern, $path, '', $hash));
+        $index   = -1;
+        foreach ($files as $key => $file) {
+            // если файл существует
+            if (is_file($file)) {
+                $index = $key;
+                Output::verbose('Founded schema file ' . $file, 2);
+            }
+            // если файл найден или нужна только мигрированная схема, выходим из цикла
+            if (($index !== -1) || $defaultMigrated) {
+                break;
+            }
+        }
+
+        if ($index === -1) {
+            $index = 1 - (int)$defaultMigrated;
+        }
+
+        $file = $files[$index];
+
+        if ($defaultMigrated) {
+            unset(self::$_executedRequests[md5($file)]);
+        }
+
+        // и доступен на чтение и запись, вернем его
+        if (is_file($file) && (!is_readable($file) || !is_writable($file))) {
+            throw new \Exception(sprintf('Cannot get schema file (tried %s, but has not RW access', $file));
+        }
+
+        return $file;
+    }
+
+    /**
+     * Возвращает имя класса схемы
+     * @param string $hash
+     * @param bool   $migrated
+     * @return \lib\AbstractSchema
+     */
+    public static function getSchemaClassName($hash, $migrated)
+    {
+        return sprintf(
+            '%s\Schema%s%s',
+            self::get('cachedir_ns'),
+            (string)$hash,
+            (bool)$migrated ? 'migrated' : ''
+        );
     }
 
 }

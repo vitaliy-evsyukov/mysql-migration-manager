@@ -8,11 +8,13 @@
 
 namespace lib;
 
-class getsqlController extends AbstractController {
+class getsqlController extends DatasetsController
+{
 
     private $_choice = null;
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         $entities = array('TABLE', 'VIEW', 'PROCEDURE', 'FUNCTION', 'TRIGGER');
         /**
          * ops - ключ операторов для показа списка
@@ -36,8 +38,8 @@ class getsqlController extends AbstractController {
             ),
             'cols'  => array(
                 'TABLE'     => array(
-                    'list'  => 0,
-                    'def'   => 1
+                    'list' => 0,
+                    'def'  => 1
                 ),
                 'VIEW'      => array(
                     'list' => 0,
@@ -71,7 +73,8 @@ class getsqlController extends AbstractController {
         $suffix = md5(time());
         foreach ($entities as $entity) {
             $op      = sprintf(
-                $operations['ops'][$operations['links'][$entity]], $entity
+                $operations['ops'][$operations['links'][$entity]],
+                $entity
             );
             $e_lower = strtolower($entity);
             Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
@@ -90,8 +93,11 @@ class getsqlController extends AbstractController {
                 }
                 Output::verbose(
                     sprintf(
-                        'Get %s %s description', $e_lower, $col
-                    ), 1
+                        'Get %s %s description',
+                        $e_lower,
+                        $col
+                    ),
+                    1
                 );
                 $q    = "SHOW CREATE {$entity} {$col}";
                 $desc = $this->db->query($q);
@@ -111,18 +117,21 @@ class getsqlController extends AbstractController {
                         }
                     }
                     $data[$value] .= str_repeat(
-                        ';', (int)(!in_array($entity, array('TABLE', 'VIEW'))) + 1
+                        ';',
+                        (int)(!in_array($entity, array('TABLE', 'VIEW'))) + 1
                     );
                     $data[$value] = Helper::stripTrash(
-                        $data[$value], $entity, array('entity' => $col)
+                        $data[$value],
+                        $entity,
+                        array('entity' => $col)
                     );
                     if ($entity === 'VIEW') {
                         /**
                          * Получим описания полей вьюхи и создадим временную таблицу с таким же именем
                          */
-                        $q = "SHOW FIELDS FROM {$col}";
+                        $q         = "SHOW FIELDS FROM {$col}";
                         $fieldsRes = $this->db->query($q);
-                        $fields = array();
+                        $fields    = array();
                         while ($fieldsRow = $fieldsRes->fetch_array(MYSQLI_BOTH)) {
                             $fields[] = sprintf('%s %s', $fieldsRow['Field'], $fieldsRow['Type']);
                         }
@@ -130,8 +139,10 @@ class getsqlController extends AbstractController {
                         file_put_contents(sprintf('%stables/%s.sql', $path, $col), $tempTable);
                         Output::verbose(
                             sprintf(
-                                'Temporary table structure for view %s created', $col
-                            ), 1
+                                'Temporary table structure for view %s created',
+                                $col
+                            ),
+                            1
                         );
                     }
                     file_put_contents($filename, $data[$value]);
@@ -140,8 +151,10 @@ class getsqlController extends AbstractController {
                     Output::verbose(
                         sprintf(
                             'Cannot to get description of %s %s',
-                            $e_lower, $col
-                        ), 1
+                            $e_lower,
+                            $col
+                        ),
+                        1
                     );
                 }
             }
@@ -150,7 +163,8 @@ class getsqlController extends AbstractController {
     }
 
     // TODO: рефакторинг
-    protected function askForRewrite($fname) {
+    protected function askForRewrite($fname)
+    {
         if (Helper::get('quiet')) {
             return true;
         }
@@ -167,16 +181,17 @@ class getsqlController extends AbstractController {
                 if ($c === 'Y') {
                     $this->_choice = true;
                 }
+
                 return true;
             }
             if ($c === 'N' or $c === 'n') {
                 if ($c === 'N') {
                     $this->_choice = false;
                 }
+
                 return false;
             }
-        }
-        while (true);
+        } while (true);
     }
 
 }
