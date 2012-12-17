@@ -80,6 +80,15 @@ class getsqlController extends DatasetsController
             Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
             Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
             $res = $this->db->query($op);
+            if (empty($res)) {
+                throw new \Exception(
+                    sprintf(
+                        'Cannot fetch list of %ss. Try to change your privileges. Error is %s',
+                        $e_lower,
+                        $this->db->getLastError()
+                    )
+                );
+            }
             while ($row = $res->fetch_array(MYSQLI_BOTH)) {
                 // имя сущности
                 $col = $row[$operations['cols'][$entity]['list']];
@@ -101,6 +110,16 @@ class getsqlController extends DatasetsController
                 );
                 $q    = "SHOW CREATE {$entity} {$col}";
                 $desc = $this->db->query($q);
+                if (empty($desc)) {
+                    throw new \Exception(
+                        sprintf(
+                            'Cannot view definition of %s called %s. Error is %s',
+                            $entity,
+                            $col,
+                            $this->db->getLastError()
+                        )
+                    );
+                }
                 $data = $desc->fetch_array(MYSQLI_BOTH);
                 if (isset($data[$value])) {
                     $filename = sprintf('%s%ss/%s.sql', $path, $e_lower, $col);
@@ -131,7 +150,16 @@ class getsqlController extends DatasetsController
                          */
                         $q         = "SHOW FIELDS FROM {$col}";
                         $fieldsRes = $this->db->query($q);
-                        $fields    = array();
+                        if (empty($fieldsRes)) {
+                            throw new \Exception(
+                                sprintf(
+                                    'Cannot fetch fields for view called %s. Error is %s',
+                                    $col,
+                                    $this->db->getLastError()
+                                )
+                            );
+                        }
+                        $fields = array();
                         while ($fieldsRow = $fieldsRes->fetch_array(MYSQLI_BOTH)) {
                             $fields[] = sprintf('%s %s', $fieldsRow['Field'], $fieldsRow['Type']);
                         }

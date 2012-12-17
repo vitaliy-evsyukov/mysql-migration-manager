@@ -263,7 +263,7 @@ class migrateController extends DatasetsController
         $tmpDir   = sys_get_temp_dir() . '/tmp_schema/';
         Output::verbose(
             sprintf(
-                'Create schema after migration with revision %d in folder %s',
+                'Create schema after migration with revision %d, files will be saved in folder %s',
                 $revision,
                 $tmpDir
             ),
