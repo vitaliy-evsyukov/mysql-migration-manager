@@ -735,13 +735,14 @@ class Helper
      * Возвращает информацию о изменениях таблиц в базе с течением времени
      * @param array $tablesList Список необходимых таблиц
      * @param bool  $getRefs    Нужно ли получать начальные связи
+     * @param bool  $full       Нужно ли получать все миграции
      * @return array
      */
     public static function getTimeline(
-        array $tablesList = array(), $getRefs = true
+        array $tablesList = array(), $getRefs = true, $full = false
     )
     {
-        $migrations  = Registry::getAllMigrations(true, $getRefs);
+        $migrations  = Registry::getAllMigrations(true, $getRefs, $full);
         $tablesToAdd = array();
         if (!empty($tablesList)) {
             // получить все связи таблиц

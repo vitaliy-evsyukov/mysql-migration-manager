@@ -113,13 +113,13 @@ class migrateController extends DatasetsController
             );
         }
 
-        $timeline = Helper::getTimeline($tablesList);
-
         $direction = 'Up';
         if ($revision > 0) {
             $direction = $mHelper['data'][$revision]['time'] <=
                 $target_migration ? 'Up' : 'Down';
         }
+
+        $timeline = Helper::getTimeline($tablesList, true, ($direction === 'Down'));
 
         if ($direction === 'Down') {
             $timeline = array_reverse($timeline, true);
