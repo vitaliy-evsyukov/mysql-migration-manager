@@ -53,6 +53,12 @@ class MysqliHelper
     private $_retriesCount = 3;
 
     /**
+     * Последняя произошедшая ошибка
+     * @var string
+     */
+    private $_lastError = '';
+
+    /**
      * @param string $host     Адрес сервера БД
      * @param string $user     Имя пользователя
      * @param string $password Пароль
@@ -136,6 +142,7 @@ class MysqliHelper
             $result = call_user_func_array($callback, $arguments);
             $errno  = $this->_db->errno;
             $error  = $this->_db->error;
+            $this->setError($error, $errno);
             if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
                 if (++$counter > $this->_retriesCount) {
                     throw new \Exception(sprintf('%s (%d)', $error, $errno));
@@ -209,6 +216,23 @@ class MysqliHelper
         }
         ;
         $this->executeCommands();
+    }
+
+    /**
+     * Сохраняет последнюю ошибку
+     * @param string $message
+     * @param int $code
+     */
+    private function setError($message, $code) {
+        $this->_lastError = sprintf('%s (%d)', $message, $code);
+    }
+
+    /**
+     * Возвращает последнюю ошибку
+     * @return string
+     */
+    public function getLastError() {
+        return $this->_lastError;
     }
 
 }
