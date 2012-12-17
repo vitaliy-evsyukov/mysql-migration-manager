@@ -54,8 +54,9 @@ class Registry
      * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
      * @param bool $loadSQL Загружать ли содержимое SQL-файлов
      * @param bool $getRefs Искать ли начальные связи
+     * @param bool $full
      */
-    private static function prepareMap($loadSQL = true, $getRefs = true)
+    private static function prepareMap($loadSQL = true, $getRefs = true, $full = false)
     {
         $minRevision = 0;
         if ($loadSQL) {
@@ -132,6 +133,9 @@ class Registry
             unset($queries);
         }
         Output::verbose('Collecting maps of revisions and references', 1);
+        if ($full) {
+            $minRevision = 0;
+        }
         self::parseMigrations(true, $minRevision);
 
         foreach (self::$_migrations as &$data) {
@@ -145,12 +149,13 @@ class Registry
      * @static
      * @param bool $loadSQL
      * @param bool $getRefs
+     * @param bool $full
      * @return array
      */
-    public static function getAllMigrations($loadSQL = true, $getRefs = true)
+    public static function getAllMigrations($loadSQL = true, $getRefs = true, $full = false)
     {
         if (empty(self::$_migrations)) {
-            self::prepareMap($loadSQL, $getRefs);
+            self::prepareMap($loadSQL, $getRefs, $full);
         }
 
         return self::$_migrations;
