@@ -8,9 +8,16 @@ namespace lib;
  * @author guyfawkes
  */
 
-abstract class DatasetsController extends AbstractController {
+abstract class DatasetsController extends AbstractController
+{
 
     protected $_datasetInfo = array();
+
+    /**
+     * Список ключей, которые не имеют значения
+     * @var array
+     */
+    protected $_argKeys = array();
 
     /**
      *
@@ -18,18 +25,24 @@ abstract class DatasetsController extends AbstractController {
      */
     protected $_chain = null;
 
-    public function __construct(MysqliHelper $db, array $args = array()) {
+    public function __construct(MysqliHelper $db, array $args = array())
+    {
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
-                $arg_data = explode('=', $arg);
+                $arg_data   = explode('=', $arg);
+                $param_name = str_replace('-', '', $arg_data[0]);
                 /**
                  * Если параметр был передан корректно (в форме имя=значение)
                  */
                 if (sizeof($arg_data) !== 1) {
-                    $param_name        = str_replace('-', '', $arg_data[0]);
                     $param_value       = str_replace('"', '', $arg_data[1]);
                     $args[$param_name] = $param_value;
+                }
+                else {
+                    if (in_array($param_name, $this->_argKeys, true)) {
+                        $args[$param_name] = 1;
+                    }
                 }
                 unset($args[$index]);
             }
@@ -55,7 +68,8 @@ abstract class DatasetsController extends AbstractController {
      * Дает добавить к текущей цепи дополнительные элементы
      * @param ControllersChain $chain
      */
-    public function setChain(ControllersChain $chain) {
+    public function setChain(ControllersChain $chain)
+    {
         $this->_chain = $chain;
     }
 
@@ -66,8 +80,9 @@ abstract class DatasetsController extends AbstractController {
      * @throws \Exception
      * @return void
      */
-    public function toogleFK($state) {
-        $state = (int) $state;
+    public function toogleFK($state)
+    {
+        $state = (int)$state;
         if (!in_array($state, array(0, 1))) {
             throw new \Exception("Invalid foreign keys checks status: {$state}\n");
         }
@@ -84,8 +99,10 @@ abstract class DatasetsController extends AbstractController {
      * Загружает данные датасетов
      * @return array
      */
-    protected function loadDatasetInfo() {
+    protected function loadDatasetInfo()
+    {
         $load_data = (empty($this->args['loadData']) xor true);
+
         return Helper::getDatasetInfo($this->args['datasets'], $load_data);
     }
 
@@ -96,7 +113,8 @@ abstract class DatasetsController extends AbstractController {
      * @throws \Exception
      * @return void
      */
-    protected function multiQuery($query, $inTransaction = false) {
+    protected function multiQuery($query, $inTransaction = false)
+    {
         $counter = 1;
         try {
             $ret  = $this->db->multi_query($query);
@@ -123,7 +141,8 @@ abstract class DatasetsController extends AbstractController {
     /**
      * Удаляет все содержимое БД
      */
-    protected function dropAllDBEntities() {
+    protected function dropAllDBEntities()
+    {
         $operations = array(
             'list'  => array(
                 "SHOW FULL TABLES WHERE Table_type LIKE '%%%s'",
@@ -171,8 +190,10 @@ abstract class DatasetsController extends AbstractController {
             Output::verbose("Views and tables and routines are dropping now", 1);
             Output::verbose(
                 sprintf(
-                    "--- %s", implode("\n--- ", array_keys($queries))
-                ), 2
+                    "--- %s",
+                    implode("\n--- ", array_keys($queries))
+                ),
+                2
             );
             $this->multiQuery(implode('', $queries));
         }
@@ -182,7 +203,8 @@ abstract class DatasetsController extends AbstractController {
      * Получить цепочку ответственности
      * @return \lib\ControllersChain
      */
-    public function getChain() {
+    public function getChain()
+    {
         return $this->_chain;
     }
 

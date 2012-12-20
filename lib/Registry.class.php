@@ -19,6 +19,8 @@ class Registry
      */
     private static $_refsMap = array();
 
+    private static $_schemaType = null;
+
     private function __construct()
     {
 
@@ -32,6 +34,14 @@ class Registry
     private function __wakeup()
     {
 
+    }
+
+    /**
+     * Устанавливает тип схемы, которую нужно найти
+     * @param $type
+     */
+    public static function setSchemaType($type) {
+        self::$_schemaType = $type;
     }
 
     /**
@@ -66,7 +76,7 @@ class Registry
              */
             Output::verbose('Starting to search initial revisions', 1);
             $path           = Helper::get('cachedir');
-            $fname          = Helper::getSchemaFile();
+            $fname          = Helper::getSchemaFile('', self::$_schemaType);
             $refs_fname     = "{$path}References.class.php";
             $ns             = Helper::get('cachedir_ns');
             $message        = sprintf(

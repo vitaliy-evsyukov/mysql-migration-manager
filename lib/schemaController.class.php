@@ -33,7 +33,19 @@ class schemaController extends DatasetsController
             $dshash = md5(implode('', array_keys($datasets)));
         }
 
-        $fname            = Helper::getSchemaFile($dshash, (bool)$revision);
+        if ($revision) {
+            $schemaType = AbstractSchema::MIGRATED;
+        }
+        else {
+            if (!empty($this->args['useOriginalSchema'])) {
+                $schemaType = AbstractSchema::ORIGINAL;
+            }
+            else {
+                $schemaType = null;
+            }
+        }
+
+        $fname            = Helper::getSchemaFile($dshash, $schemaType);
         $isMigratedSchema = (strpos($fname, 'migrated') !== false);
         $message          = "Schema's file %s already exists. Do you want to override it? [y/n] ";
         $checkFn          = array('\lib\AbstractSchema', 'loadInstance');
@@ -73,9 +85,9 @@ class schemaController extends DatasetsController
             }
         }
         else {
-            $classname = Helper::getSchemaClassName($dshash, $isMigratedSchema);
-            $class     = new $classname;
-            $schemaRevision  = $class->getRevision();
+            $classname      = Helper::getSchemaClassName($dshash, $isMigratedSchema);
+            $class          = new $classname;
+            $schemaRevision = $class->getRevision();
             if ($revision && ($revision !== $schemaRevision)) {
                 Helper::changeRevision($fname, $revision);
             }

@@ -65,9 +65,11 @@ class ControllersChain implements IController {
     /**
      * Запускает цепочку
      * @param int $state Состояние элемента, определяющее поведение
+     * @return mixed
      */
     public function runStrategy($state = 0) {
         $state = (int) $state;
+        $result = null;
         if ($this->_controller) {
             if ($state === self::FK_OFF) {
                 $this->_controller->toogleFK($state);
@@ -77,7 +79,7 @@ class ControllersChain implements IController {
                 sprintf('Run %s', $action), 3
             );
             $this->runSandbox($action);
-            $this->_controller->runStrategy();
+            $result = $this->_controller->runStrategy();
             $this->resetSandbox();
             $state++;
             if ($this->_next) {
@@ -89,6 +91,7 @@ class ControllersChain implements IController {
                 $this->_controller->toogleFK($state);
             }
         }
+        return $result;
     }
 
     /**

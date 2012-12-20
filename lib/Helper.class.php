@@ -1662,17 +1662,21 @@ class Helper
 
     /**
      * Возвращает имя файла схемы (или имя "по умолчанию", даже если файла не существует)
-     * @param string $hash            Хеш от датасетов
-     * @param bool   $defaultMigrated По умолчанию должна возвращаться "мигрированная" схема или "обычная"
+     * @param string $hash       Хеш от датасетов
+     * @param string $schemaType По умолчанию должна возвращаться "мигрированная" схема или "обычная"
      * @throws \Exception
      * @return string
      */
-    public static function getSchemaFile($hash = '', $defaultMigrated = false)
+    public static function getSchemaFile($hash = '', $schemaType = null)
     {
-        $path    = self::get('cachedir');
-        $pattern = '%sSchema%s%s.class.php';
-        $files   = array(sprintf($pattern, $path, 'migrated', $hash), sprintf($pattern, $path, '', $hash));
-        $index   = -1;
+        $path         = self::get('cachedir');
+        $pattern      = '%sSchema%s%s.class.php';
+        $files        = array(
+            AbstractSchema::MIGRATED => sprintf($pattern, $path, 'migrated', $hash),
+            AbstractSchema::ORIGINAL => sprintf($pattern, $path, '', $hash)
+        );
+        $index        = -1;
+        $needMigrated = ($schemaType === AbstractSchema::MIGRATED);
         foreach ($files as $key => $file) {
             // если файл существует
             if (is_file($file)) {
@@ -1680,18 +1684,18 @@ class Helper
                 Output::verbose('Founded schema file ' . $file, 2);
             }
             // если файл найден или нужна только мигрированная схема, выходим из цикла
-            if (($index !== -1) || $defaultMigrated) {
+            if ((!$schemaType && ($index !== -1)) || ($index === $schemaType) || $needMigrated) {
                 break;
             }
         }
 
         if ($index === -1) {
-            $index = 1 - (int)$defaultMigrated;
+            $index = $needMigrated ? AbstractSchema::MIGRATED : AbstractSchema::ORIGINAL;
         }
 
         $file = $files[$index];
 
-        if ($defaultMigrated) {
+        if ($needMigrated) {
             unset(self::$_executedRequests[md5($file)]);
         }
 

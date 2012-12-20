@@ -12,6 +12,8 @@ class migrateController extends DatasetsController
 
     protected $queries = array();
 
+    protected $_argKeys = array('verify');
+
     public function runStrategy()
     {
         $mHelper = Helper::getAllMigrations();
@@ -111,6 +113,18 @@ class migrateController extends DatasetsController
                 ),
                 1
             );
+        }
+
+        $isModified = false;
+        if (isset($this->args['verify'])) {
+            $verifyObj  = Helper::getController('verify', $this->args, $this->db);
+            $isModified = $verifyObj->runStrategy();
+        }
+
+        if ($isModified) {
+            Output::verbose('Migration canceled');
+
+            return false;
         }
 
         $direction = 'Up';

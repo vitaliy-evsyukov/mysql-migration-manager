@@ -11,6 +11,7 @@ interface IController {
     
     /**
      * Запускает основную операцию контроллера
+     * @return mixed
      */
     public function runStrategy();
     

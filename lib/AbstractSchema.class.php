@@ -10,6 +10,9 @@ namespace lib;
 abstract class AbstractSchema
 {
 
+    const MIGRATED = 'migrated';
+    const ORIGINAL = 'original';
+
     /**
      * Список запросов
      * @var array
