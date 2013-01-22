@@ -27,7 +27,7 @@ class getsqlController extends DatasetsController
             'ops'   => array(
                 "SHOW FULL TABLES WHERE Table_type LIKE '%%%s'",
                 'SHOW %sS',
-                "SHOW %s STATUS WHERE Db='" . Helper::get('db') . "'"
+                "SHOW %s STATUS WHERE Db='" . $this->db->getDatabaseName() . "'"
             ),
             'links' => array(
                 'TABLE'     => 0,
