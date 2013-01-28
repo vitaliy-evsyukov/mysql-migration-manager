@@ -34,6 +34,7 @@ class listController implements IController {
                 )
             ), 1
         );
+        Output::verbose(sprintf("Current revision: %d\n", $current), 1);
     }
 
     /**

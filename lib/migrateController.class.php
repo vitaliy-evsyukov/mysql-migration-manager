@@ -283,6 +283,7 @@ class migrateController extends DatasetsController
             ),
             1
         );
+        $this->removeTmpSchemaDir($tmpDir);
         $chain                   = Helper::getController('getsql', $this->args, $this->db);
         $this->args['revision']  = $revision;
         $this->args['notDeploy'] = true;
@@ -295,25 +296,7 @@ class migrateController extends DatasetsController
             )
         );
         $chain->runStrategy();
-        /**
-         * Удаление вложенных папок и файлов и затем удаление директории
-         */
-        $it = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($tmpDir),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-        foreach ($it as $file) {
-            if (in_array($file->getBasename(), array('.', '..'))) {
-                continue;
-            }
-            elseif ($file->isDir()) {
-                rmdir($file->getPathname());
-            }
-            elseif ($file->isFile() || $file->isLink()) {
-                unlink($file->getPathname());
-            }
-        }
-        rmdir($tmpDir);
+        $this->removeTmpSchemaDir($tmpDir);
         Output::verbose(
             sprintf(
                 'Migrated schema\'s creation with revision %d finished, folder %s removed',
@@ -322,6 +305,35 @@ class migrateController extends DatasetsController
             ),
             1
         );
+    }
+
+    /**
+     * Рекурсивно удаляет папку, куда сложена временная съема
+     * @param string $tmpDir
+     */
+    private function removeTmpSchemaDir($tmpDir)
+    {
+        if (is_dir($tmpDir)) {
+            /**
+             * Удаление вложенных папок и файлов и затем удаление директории
+             */
+            $it = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($tmpDir),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($it as $file) {
+                if (in_array($file->getBasename(), array('.', '..'))) {
+                    continue;
+                }
+                elseif ($file->isDir()) {
+                    rmdir($file->getPathname());
+                }
+                elseif ($file->isFile() || $file->isLink()) {
+                    unlink($file->getPathname());
+                }
+            }
+            rmdir($tmpDir);
+        }
     }
 
 }
