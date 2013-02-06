@@ -318,7 +318,13 @@ class Helper
             Output::verbose(sprintf('Create database %s', $dbName), 2);
             $query = "CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;";
             if (!$connection->query($query)) {
-                throw new \Exception(sprintf('Cannot create database %s', $dbName));
+                throw new \Exception(
+                    sprintf(
+                        'Cannot create database %s. Reason: %s',
+                        $dbName,
+                        $connection->getLastError()
+                    )
+                );
             }
         }
         $connection->select_db($dbName);
