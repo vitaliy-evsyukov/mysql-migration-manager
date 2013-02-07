@@ -13,7 +13,14 @@ use \Mysqli;
 class dbDiff
 {
 
+    /**
+     * @var MysqliHelper
+     */
     private $_currentAdapter;
+    /**
+     * @var MysqliHelper
+     */
+    private $_tempAdapter;
     protected $_currentTable;
     protected $_tempTable;
 
@@ -42,6 +49,7 @@ class dbDiff
         $current && ($this->_currentTable = $current->getDatabaseName());
         $temp && ($this->_tempTable = $temp->getDatabaseName());
         $this->_currentAdapter = $current;
+        $this->_tempAdapter    = $temp;
     }
 
     /**
@@ -140,20 +148,23 @@ class dbDiff
      */
     public function getDiff()
     {
-        $params = array('host', 'user', 'password');
-        $groups = array('', 'tmp_');
-
-        $tables = array($this->_currentTable, $this->_tempTable);
-        $dirs   = array('down', 'up');
+        $params   = array('host', 'user', 'password');
+        $groups   = array(1, 2);
+        $tables   = array($this->_currentTable, $this->_tempTable);
+        $adapters = array($this->_currentAdapter, $this->_tempAdapter);
+        $dirs     = array('down', 'up');
 
         for ($i = 0; $i < 2; $i++) {
             $params_str = array();
-            foreach ($groups as $index => $g) {
+            foreach ($groups as $index => $k) {
+                $adapter = ($adapters[$index] instanceof MysqliHelper) ? $adapters[$index] : null;
                 foreach ($params as $param) {
-                    $value = Helper::get($g . $param);
-                    $k     = $index + 1;
-                    if (!empty($value)) {
-                        $params_str[] = "--{$param}{$k}={$value}";
+                    if ($adapter) {
+                        $methodName = 'get' . ucfirst($param);
+                        $value      = $adapter->{$methodName}();
+                        if (!empty($value)) {
+                            $params_str[] = "--{$param}{$k}={$value}";
+                        }
                     }
                 }
             }
@@ -181,8 +192,11 @@ class dbDiff
                     3
                 );
             }
-            $groups = array_reverse($groups);
+            $adapters = array_reverse($adapters);
         }
+
+//        var_dump($this->_diff);
+//        die();
 
         return $this->_diff;
     }

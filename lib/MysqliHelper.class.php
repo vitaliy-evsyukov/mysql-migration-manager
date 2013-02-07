@@ -59,6 +59,57 @@ class MysqliHelper
     private $_lastError = '';
 
     /**
+     * Выполняет набор обязательных команд при (пере)подключении
+     */
+    private function executeCommands()
+    {
+        if (!empty($this->_commands)) {
+            foreach ($this->_commands as $command) {
+                $this->query($command);
+            }
+        }
+    }
+
+    /**
+     * Устанавливает соединение с сервером БД
+     * @throws \Exception
+     */
+    private function connect()
+    {
+        $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
+        if ($this->_db->connect_errno) {
+            throw new \Exception(
+                sprintf(
+                    'Database connect error occured: %s (%d)',
+                    $this->_db->connect_error,
+                    $this->_db->connect_errno
+                )
+            );
+        }
+        $this->_db->select_db($this->_databaseName);
+        if (!$this->_db->set_charset("utf8")) {
+            throw new \Exception(
+                sprintf(
+                    'SET CHARACTER SET utf8 error: %s',
+                    $this->db->error
+                )
+            );
+        }
+        ;
+        $this->executeCommands();
+    }
+
+    /**
+     * Сохраняет последнюю ошибку
+     * @param string $message
+     * @param int    $code
+     */
+    private function setError($message, $code)
+    {
+        $this->_lastError = sprintf('%s (%d)', $message, $code);
+    }
+
+    /**
      * @param string $host     Адрес сервера БД
      * @param string $user     Имя пользователя
      * @param string $password Пароль
@@ -85,6 +136,8 @@ class MysqliHelper
         else {
             $this->_commands = $command;
         }
+        // почистим список от дубликатов
+        $this->_commands = array_unique($this->_commands);
         $this->executeCommands();
     }
 
@@ -95,15 +148,6 @@ class MysqliHelper
     public function setRetriesCount($count)
     {
         $this->_retriesCount = (int)$count;
-    }
-
-    /**
-     * Получить имя текущей базы данных
-     * @return string
-     */
-    public function getDatabaseName()
-    {
-        return $this->_databaseName;
     }
 
     /**
@@ -182,57 +226,57 @@ class MysqliHelper
     }
 
     /**
-     * Выполняет набор обязательных команд при (пере)подключении
-     */
-    private function executeCommands()
-    {
-        if (!empty($this->_commands)) {
-            foreach ($this->_commands as $command) {
-                $this->query($command);
-            }
-        }
-    }
-
-    /**
-     * Устанавливает соединение с сервером БД
-     * @throws \Exception
-     */
-    private function connect()
-    {
-        $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
-        if ($this->_db->connect_errno) {
-            throw new \Exception(sprintf(
-                                     'Database connect error occured: %s (%d)',
-                                     $this->_db->connect_error,
-                                     $this->_db->connect_errno
-                                 ));
-        }
-        $this->_db->select_db($this->_databaseName);
-        if (!$this->_db->set_charset("utf8")) {
-            throw new \Exception(sprintf(
-                                     'SET CHARACTER SET utf8 error: %s',
-                                     $this->db->error
-                                 ));
-        }
-        ;
-        $this->executeCommands();
-    }
-
-    /**
-     * Сохраняет последнюю ошибку
-     * @param string $message
-     * @param int $code
-     */
-    private function setError($message, $code) {
-        $this->_lastError = sprintf('%s (%d)', $message, $code);
-    }
-
-    /**
      * Возвращает последнюю ошибку
      * @return string
      */
-    public function getLastError() {
+    public function getLastError()
+    {
         return $this->_lastError;
+    }
+
+    /**
+     * Возвращает адаптер Mysqli
+     * @return \Mysqli
+     */
+    public function getDb()
+    {
+        return $this->_db;
+    }
+
+    /**
+     * Возвращает имя текущей базы данных
+     * @return string
+     */
+    public function getDatabaseName()
+    {
+        return $this->_databaseName;
+    }
+
+    /**
+     * Возвращает имя хоста БД
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->_host;
+    }
+
+    /**
+     * Возвращает пароль пользователя БД
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->_password;
+    }
+
+    /**
+     * Возвращает имя пользователя БД
+     * @return string
+     */
+    public function getUser()
+    {
+        return $this->_user;
     }
 
 }
