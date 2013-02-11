@@ -195,9 +195,6 @@ class dbDiff
             $adapters = array_reverse($adapters);
         }
 
-//        var_dump($this->_diff);
-//        die();
-
         return $this->_diff;
     }
 

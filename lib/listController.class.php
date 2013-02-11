@@ -8,14 +8,16 @@ namespace lib;
  * @author guyfawkes
  */
 
-class listController implements IController {
+class listController implements IController
+{
 
     /**
      * @var array
      */
     protected $queries = array();
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         $migrations = Helper::getAllMigrations();
         if (empty($migrations['migrations'])) {
             throw new \Exception('There are no revisions');
@@ -27,12 +29,13 @@ class listController implements IController {
                 $this->drawTextTable(
                     $migrations['data'],
                     array(
-                         'revn'  => '#',
-                         'date'  => 'Date&Time',
-                         'time'  => 'Timestamp'
+                         'revn' => '#',
+                         'date' => 'Date&Time',
+                         'time' => 'Timestamp'
                     )
                 )
-            ), 1
+            ),
+            1
         );
         Output::verbose(sprintf("Current revision: %d\n", $current), 1);
     }
@@ -43,7 +46,8 @@ class listController implements IController {
      * @param array $headers Заголовки колонок
      * @return string Строка с таблицей
      */
-    private function drawTextTable(array $table, array $headers) {
+    private function drawTextTable(array $table, array $headers)
+    {
         $cell_lengths = array();
         foreach ($table AS $row) {
             $cell_count = 0;
@@ -70,7 +74,10 @@ class listController implements IController {
             }
             $diff = strlen($fieldname) - mb_strlen($fieldname);
             $header .= ' ' . str_pad(
-                $fieldname, $length + $diff, ' ', STR_PAD_RIGHT
+                $fieldname,
+                $length + $diff,
+                ' ',
+                STR_PAD_RIGHT
             ) . " |";
         }
 
@@ -83,7 +90,10 @@ class listController implements IController {
             foreach ($headers AS $key => $value) {
                 $cell = $row[$key];
                 $output .= ' ' . str_pad(
-                    $cell, $cell_lengths[$key], ' ', STR_PAD_RIGHT
+                    $cell,
+                    $cell_lengths[$key],
+                    ' ',
+                    STR_PAD_RIGHT
                 ) . " |";
             }
             $output .= "\n";

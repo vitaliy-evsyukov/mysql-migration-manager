@@ -20,3 +20,6 @@ tmp_add_suffix=0
 tmp_host=localhost
 tmp_user=test
 tmp_password=12345
+
+[replace]
+database.name_which_will_be_replaced=for_what_to_replace_it

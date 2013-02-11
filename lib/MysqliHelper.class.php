@@ -59,6 +59,12 @@ class MysqliHelper
     private $_lastError = '';
 
     /**
+     * Массив паттернов для замены в запросах
+     * @var array
+     */
+    private static $_replacements = null;
+
+    /**
      * Выполняет набор обязательных команд при (пере)подключении
      */
     private function executeCommands()
@@ -108,6 +114,49 @@ class MysqliHelper
     {
         $this->_lastError = sprintf('%s (%d)', $message, $code);
     }
+
+    /**
+     * Преобразует запрос в массиве аргументов
+     * @param string $name
+     * @param array  $arguments
+     * @return array
+     */
+    private function prepareQ($name, $arguments)
+    {
+        if (is_null(self::$_replacements)) {
+            $replace             = Helper::getReplaceVariables();
+            self::$_replacements = array();
+            if (!empty($replace)) {
+                foreach ($replace as $dbName => $replaceName) {
+                    self::$_replacements['p'][] = '/(\b' . $dbName . '\b)/';
+                    self::$_replacements['r'][] = $replaceName;
+                }
+            }
+        }
+
+        if (!empty(self::$_replacements) && (strpos($name, 'query') !== false)) {
+            $count = 0;
+            if (!empty($arguments[0])) {
+                $preArg       = $arguments[0];
+                $arguments[0] = preg_replace(
+                    self::$_replacements['p'],
+                    self::$_replacements['r'],
+                    $arguments[0],
+                    -1,
+                    $count
+                );
+                if (!empty($count)) {
+                    Output::verbose(
+                        sprintf("Original statement: %s\nReplaced statement:%s\n", $preArg, $arguments[0]),
+                        3
+                    );
+                }
+            }
+        }
+
+        return $arguments;
+    }
+
 
     /**
      * @param string $host     Адрес сервера БД
@@ -183,9 +232,10 @@ class MysqliHelper
         }
         $counter = 0;
         while (true) {
-            $result = call_user_func_array($callback, $arguments);
-            $errno  = $this->_db->errno;
-            $error  = $this->_db->error;
+            $arguments = $this->prepareQ($name, $arguments);
+            $result    = call_user_func_array($callback, $arguments);
+            $errno     = $this->_db->errno;
+            $error     = $this->_db->error;
             $this->setError($error, $errno);
             if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
                 if (++$counter > $this->_retriesCount) {

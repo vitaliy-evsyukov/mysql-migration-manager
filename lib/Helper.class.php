@@ -60,6 +60,11 @@ class Helper
      */
     private static $_revisionLines = array();
     /**
+     * Массив переменных замены. В каждом запросе происходит подмена указанной БД на взятую из конфига
+     * @var array
+     */
+    private static $_replaceVariables = null;
+    /**
      * @var int
      */
     private static $_lastRevision = 0;
@@ -1727,6 +1732,48 @@ class Helper
             (string)$hash,
             (bool)$migrated ? 'migrated' : ''
         );
+    }
+
+    /**
+     * Возвращает массив переменных замены
+     * @return array
+     */
+    public static function getReplaceVariables()
+    {
+        if (is_null(self::$_replaceVariables)) {
+            self::$_replaceVariables = array();
+            foreach (self::$config as $key => $value) {
+                if (strpos($key, 'database.') === 0) {
+                    $dbName = trim(str_replace('database.', '', $key));
+                    $value  = trim($value);
+                    if (!empty($dbName)) {
+                        self::$_replaceVariables[$dbName] = $value;
+                        Output::verbose(
+                            sprintf(
+                                'In all queries database %s will be replaced to %s',
+                                $dbName,
+                                $value
+                            ),
+                            3
+                        );
+                    }
+                }
+            }
+            uksort(
+                self::$_replaceVariables,
+                function ($k1, $k2) {
+                    $l1 = strlen($k1);
+                    $l2 = strlen($k2);
+                    if ($l1 === $l2) {
+                        return 0;
+                    }
+
+                    return $l1 > $l2 ? -1 : 1;
+                }
+            );
+        }
+
+        return self::$_replaceVariables;
     }
 
 }
