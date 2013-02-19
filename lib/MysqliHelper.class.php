@@ -42,6 +42,11 @@ class MysqliHelper
      */
     private $_password = '';
     /**
+     * Порт, на котором висит сервер БД
+     * @var int
+     */
+    private $_port = 3306;
+    /**
      * Массив обязательных команд при (пере)подключении
      * @var array
      */
@@ -82,13 +87,17 @@ class MysqliHelper
      */
     private function connect()
     {
-        $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password);
+        $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password, '', $this->_port);
         if ($this->_db->connect_errno) {
             throw new \Exception(
                 sprintf(
-                    'Database connect error occured: %s (%d)',
+                    "Database connect error occured: %s (%d)\nCredentials:\nHost: %s\nUser: %s\nPassword: %s\nPort: %d",
                     $this->_db->connect_error,
-                    $this->_db->connect_errno
+                    $this->_db->connect_errno,
+                    $this->_host,
+                    $this->_user,
+                    $this->_password,
+                    $this->_port
                 )
             );
         }
@@ -163,13 +172,15 @@ class MysqliHelper
      * @param string $user     Имя пользователя
      * @param string $password Пароль
      * @param string $db       Имя базы данных
+     * @param int    $port     Порт сервера БД
      */
-    public function __construct($host, $user, $password, $db = '')
+    public function __construct($host, $user, $password, $db = '', $port = 3306)
     {
         $this->_host         = $host;
         $this->_user         = $user;
         $this->_password     = $password;
         $this->_databaseName = $db;
+        $this->_port         = is_null($port) ? 3306 : (int)$port;
         $this->connect();
     }
 
@@ -327,6 +338,15 @@ class MysqliHelper
     public function getUser()
     {
         return $this->_user;
+    }
+
+    /**
+     * Возвращает порт БД
+     * @return int
+     */
+    public function getPort()
+    {
+        return $this->_port;
     }
 
 }

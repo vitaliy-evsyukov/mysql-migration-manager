@@ -24,6 +24,7 @@ class Helper
         'user'           => array('req_val'),
         'password'       => array('req_val'),
         'db'             => array('req_val'),
+        'port'           => array('req_val'),
         'savedir'        => array('req_val'),
         'verbose'        => array('req_val'),
         'versionfile'    => array('req_val'),
@@ -32,6 +33,7 @@ class Helper
         'tmp_host'       => array('req_val'),
         'tmp_user'       => array('req_val'),
         'tmp_password'   => array('req_val'),
+        'tmp_port'       => array('req_val'),
         'cachedir'       => array('req_val'),
         'schemadir'      => array('req_val'),
         'tmp_db_name'    => array('req_val'),
@@ -46,6 +48,7 @@ class Helper
         'user'           => null,
         'password'       => null,
         'db'             => null,
+        'port'           => null,
         'savedir'        => null,
         'cachedir'       => null,
         'schemadir'      => null,
@@ -53,7 +56,8 @@ class Helper
         'versionfile'    => null,
         'version_marker' => null,
         'tmp_db_name'    => null,
-        'tmp_add_suffix' => null
+        'tmp_add_suffix' => null,
+        'tmp_port'       => null
     );
     /**
      * @var array
@@ -353,12 +357,12 @@ class Helper
             if ($db) {
                 return $db;
             }
-            $db = new MysqliHelper($conf['host'], $conf['user'], $conf['password']);
+            $db = new MysqliHelper($conf['host'], $conf['user'], $conf['password'], '', $conf['port']);
             self::prepareDb($db, $conf['db']);
 
             return $db;
         }
-        $t = new MysqliHelper($conf['host'], $conf['user'], $conf['password']);
+        $t = new MysqliHelper($conf['host'], $conf['user'], $conf['password'], '', $conf['port']);
         self::prepareDb($t, $conf['db']);
 
         return $t;
@@ -445,7 +449,7 @@ class Helper
         }
         $tmpname .= self::getCurrentVersion();
         $c      = array();
-        $params = array('host', 'password', 'user');
+        $params = array('host', 'password', 'user', 'port');
         foreach ($params as $p) {
             $c[$p] = $config['tmp_' . $p];
         }
@@ -705,7 +709,7 @@ class Helper
             $db = self::$_currentTempDb;
         }
 
-        $params     = array('host', 'user', 'password');
+        $params     = array('host', 'user', 'password', 'port');
         $params_str = array();
         foreach ($params as $param) {
             $value = Helper::get('tmp_' . $param);

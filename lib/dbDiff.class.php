@@ -148,7 +148,7 @@ class dbDiff
      */
     public function getDiff()
     {
-        $params   = array('host', 'user', 'password');
+        $params   = array('host', 'user', 'password', 'port');
         $groups   = array(1, 2);
         $tables   = array($this->_currentTable, $this->_tempTable);
         $adapters = array($this->_currentAdapter, $this->_tempAdapter);
