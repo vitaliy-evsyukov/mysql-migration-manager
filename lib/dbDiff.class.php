@@ -182,6 +182,9 @@ class dbDiff
             );
             Output::verbose("Command {$full}", 2);
             exec($full, $output, $return_status);
+            if ($return_status) {
+                throw new \Exception("Cannot get differences:\n" . implode("\n", $output));
+            }
             if (!empty($output)) {
                 $result                 = $this->parseDiff($output);
                 $this->_diff[$dirs[$i]] = $result['desc'];

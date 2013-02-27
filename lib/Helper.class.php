@@ -728,6 +728,9 @@ class Helper
         $output = array();
         $status = -1;
         exec($command, $output, $status);
+        if ($status) {
+            throw new \Exception("Cannot get references:\n" . implode("\n", $output));
+        }
         Output::verbose(
             sprintf(
                 'References search completed in: %f seconds',
