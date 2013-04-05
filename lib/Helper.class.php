@@ -36,6 +36,7 @@ class Helper
         'tmp_port'       => array('req_val'),
         'cachedir'       => array('req_val'),
         'schemadir'      => array('req_val'),
+        'reqtables'      => array('req_val'),
         'tmp_db_name'    => array('req_val'),
         'tmp_add_suffix' => array('req_val')
     );
@@ -51,6 +52,7 @@ class Helper
         'port'           => null,
         'savedir'        => null,
         'cachedir'       => null,
+        'reqtables'      => null,
         'schemadir'      => null,
         'verbose'        => null,
         'versionfile'    => null,
