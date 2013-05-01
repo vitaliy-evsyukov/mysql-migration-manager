@@ -7,14 +7,15 @@ namespace lib;
  * Интерфейс контроллеров
  * @author guyfawkes
  */
-interface IController {
-    
+interface IController
+{
+
     /**
      * Запускает основную операцию контроллера
      * @return mixed
      */
     public function runStrategy();
-    
+
 }
 
 ?>

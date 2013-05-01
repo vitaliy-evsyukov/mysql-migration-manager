@@ -16,12 +16,12 @@ class verifyController extends DatasetsController
     public function runStrategy()
     {
         Output::verbose('Starting verification of database');
-        $currentRevision = Helper::getCurrentRevision();
+        $currentRevision                 = Helper::getCurrentRevision();
         $this->args['createSchema']      = false;
         $this->args['useOriginalSchema'] = true;
         Registry::setSchemaType(AbstractSchema::ORIGINAL);
-        $db                              = Helper::getTmpDbObject();
-        $deployObj                       = Helper::getController('deploy', $this->args, $db);
+        $db        = Helper::getTmpDbObject();
+        $deployObj = Helper::getController('deploy', $this->args, $db);
         $deployObj->runStrategy();
         Registry::setSchemaType(null);
         $diffObj = new dbDiff($db, $this->db);
@@ -67,7 +67,7 @@ class verifyController extends DatasetsController
         // восстановим текущую ревизию
         Helper::writeRevisionFile($currentRevision);
 
-        return (bool)$diffExists;
+        return (bool) $diffExists;
     }
 
 }

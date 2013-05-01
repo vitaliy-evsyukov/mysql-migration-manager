@@ -11,15 +11,34 @@ class Registry
 {
 
     /**
+     * Миграции
      * @var array
      */
-    private static $_migrations = array();
-    /**
-     * @var array
-     */
-    private static $_refsMap = array();
+    private static $migrations = array();
 
-    private static $_schemaType = null;
+    /**
+     * Хеш датасета
+     * @var array
+     */
+    private static $hash = '';
+
+    /**
+     * Карта ссылок
+     * @var array
+     */
+    private static $refsMap = array();
+
+    /**
+     * Тип схемы
+     * @var null|string
+     */
+    private static $schemaType = null;
+
+    /**
+     * Файлы для пересборки схемы при необходимости
+     * @var array
+     */
+    private static $tablesList = array();
 
     private function __construct()
     {
@@ -40,8 +59,22 @@ class Registry
      * Устанавливает тип схемы, которую нужно найти
      * @param $type
      */
-    public static function setSchemaType($type) {
-        self::$_schemaType = $type;
+    public static function setSchemaType($type)
+    {
+        self::$schemaType = $type;
+    }
+
+    /**
+     * Устанавливает хеш датасетов
+     * @param string $hash
+     */
+    public static function setHash($hash)
+    {
+        self::$hash = $hash;
+    }
+
+    public static function setTablesList(array $list) {
+        self::$tablesList = $list;
     }
 
     /**
@@ -76,8 +109,8 @@ class Registry
              */
             Output::verbose('Starting to search initial revisions', 1);
             $path           = Helper::get('cachedir');
-            $fname          = Helper::getSchemaFile('', self::$_schemaType);
-            $refs_fname     = "{$path}References.class.php";
+            $fname          = Helper::getSchemaFile(self::$hash, self::$schemaType);
+            $refs_fname     = sprintf('%sReferences%s.class.php', $path, self::$hash);
             $ns             = Helper::get('cachedir_ns');
             $message        = sprintf(
                 'Parse schema directory %s or get schema from file %s? [y/n] ',
@@ -90,12 +123,11 @@ class Registry
             if (Helper::askToRewrite($fname, $message, array('\lib\AbstractSchema', 'loadInstance'), $params)) {
                 // здесь мы можем перезаписывать только не "мигрированную" схему
                 $schemaRewrited = true;
-                $queries        = Helper::parseSchemaFiles();
-                Helper::writeInFile($fname, '', $queries);
+                $queries        = Helper::parseSchemaFiles(self::$tablesList);
+                Helper::writeInFile($fname, self::$hash, $queries);
                 $queries = $queries['queries'];
-            }
-            else {
-                $classname   = Helper::getSchemaClassName('', $schemaMigrated);
+            } else {
+                $classname   = Helper::getSchemaClassName(self::$hash, $schemaMigrated);
                 $schemaObj   = new $classname;
                 $queries     = $schemaObj->getQueries();
                 $minRevision = $schemaObj->getRevision();
@@ -103,7 +135,7 @@ class Registry
             }
             if (!empty($queries)) {
                 foreach ($queries as $tablename => &$q) {
-                    self::$_migrations[$tablename][0] = $q;
+                    self::$migrations[$tablename][0] = $q;
                 }
                 if ($getRefs) {
                     Output::verbose('Starting to search initial references', 1);
@@ -120,21 +152,20 @@ class Registry
                         }
                     )
                     ) {
-                        self::$_refsMap = Helper::getInitialRefs($queries);
+                        self::$refsMap = Helper::getInitialRefs($queries);
                         Helper::createReferencesCache(
                             $refs_fname,
-                            self::$_refsMap
+                            self::$refsMap,
+                            self::$hash
                         );
-                    }
-                    else {
-                        $classname      = sprintf('%s\References', $ns);
-                        $refsObj        = new $classname;
-                        self::$_refsMap = $refsObj->getRefs();
+                    } else {
+                        $classname     = sprintf('%s\References%s', $ns, self::$hash);
+                        $refsObj       = new $classname;
+                        self::$refsMap = $refsObj->getRefs();
                         unset($refsObj);
                     }
                 }
-            }
-            else {
+            } else {
                 Output::verbose(
                     'No initial revisions and references found',
                     1
@@ -148,7 +179,7 @@ class Registry
         }
         self::parseMigrations(true, $minRevision);
 
-        foreach (self::$_migrations as &$data) {
+        foreach (self::$migrations as &$data) {
             ksort($data);
         }
         Output::verbose('Collecting completed', 1);
@@ -164,11 +195,11 @@ class Registry
      */
     public static function getAllMigrations($loadSQL = true, $getRefs = true, $full = false)
     {
-        if (empty(self::$_migrations)) {
+        if (empty(self::$migrations)) {
             self::prepareMap($loadSQL, $getRefs, $full);
         }
 
-        return self::$_migrations;
+        return self::$migrations;
     }
 
     /**
@@ -177,11 +208,11 @@ class Registry
      */
     public static function getAllRefs()
     {
-        if (empty(self::$_refsMap)) {
+        if (empty(self::$refsMap)) {
             self::prepareMap();
         }
 
-        return self::$_refsMap;
+        return self::$refsMap;
     }
 
     /**
@@ -190,8 +221,8 @@ class Registry
      */
     public static function resetAll()
     {
-        self::$_refsMap    = array();
-        self::$_migrations = array();
+        self::$refsMap    = array();
+        self::$migrations = array();
     }
 
     /**
@@ -203,7 +234,7 @@ class Registry
     public static function parseMigrations($check = false, $minRevision = 0)
     {
         $migratedir  = Helper::get('savedir');
-        $minRevision = (int)$minRevision;
+        $minRevision = (int) $minRevision;
         if (is_dir($migratedir) && is_readable($migratedir)) {
             chdir($migratedir);
             if ($check) {
@@ -229,25 +260,24 @@ class Registry
                             continue;
                         }
                     }
-                    if ((int)$metadata['revision'] > $minRevision) {
+                    if ((int) $metadata['revision'] > $minRevision) {
                         Output::verbose(
                             sprintf('Add migration %s to list', $file),
                             2
                         );
                         foreach ($metadata['tables'] as $tablename => $tmp) {
-                            self::$_migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
+                            self::$migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
                         }
                         foreach ($metadata['refs'] as $refTable => $tables) {
-                            if (!isset(self::$_refsMap[$refTable])) {
-                                self::$_refsMap[$refTable] = array();
+                            if (!isset(self::$refsMap[$refTable])) {
+                                self::$refsMap[$refTable] = array();
                             }
-                            self::$_refsMap[$refTable] = array_merge(
-                                self::$_refsMap[$refTable],
+                            self::$refsMap[$refTable] = array_merge(
+                                self::$refsMap[$refTable],
                                 $tables
                             );
                         }
-                    }
-                    else {
+                    } else {
                         Output::verbose(
                             sprintf(
                                 'Migration %s cannot be added to the list, because of its revision is lower or equal to %d',

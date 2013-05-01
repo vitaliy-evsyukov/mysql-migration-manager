@@ -9,7 +9,8 @@ use \Mysqli;
  * Абстрактный класс миграций
  * @author guyfawkes
  */
-abstract class AbstractMigration {
+abstract class AbstractMigration
+{
 
     /**
      * @var MysqliHelper
@@ -21,7 +22,8 @@ abstract class AbstractMigration {
     protected $metadata = array();
     protected $_tables = array();
 
-    public function __construct(MysqliHelper $db = null) {
+    public function __construct(MysqliHelper $db = null)
+    {
         $this->db = $db;
     }
 
@@ -29,11 +31,13 @@ abstract class AbstractMigration {
      * Устанавливает таблицы, операторы для которых необходимо выполнять
      * @param array $tablesList
      */
-    public function setTables(array $tablesList = array()) {
+    public function setTables(array $tablesList = array())
+    {
         $this->_tables = $tablesList;
     }
 
-    private function runDirection($direction) {
+    private function runDirection($direction)
+    {
         if (!empty($this->_tables)) {
             $direction = array_intersect_key($direction, $this->_tables);
         }
@@ -65,20 +69,21 @@ abstract class AbstractMigration {
             if ((int) Helper::get('verbose') === 3) {
                 foreach ($direction as $order => $ddl) {
                     Output::verbose(
-                        sprintf('Run %s order of queries...', $order), 3
+                        sprintf('Run %s order of queries...', $order),
+                        3
                     );
                     Helper::_debug_queryMultipleDDL($this->db, $ddl);
                 }
-            }
-            else {
-                $query   = array();
+            } else {
+                $query = array();
                 foreach ($direction as $statements_group) {
                     foreach ($statements_group as $statements) {
                         $query[] = implode("\n", $statements);
                     }
                 }
                 Helper::queryMultipleDDL(
-                    $this->db, implode("\n", $query)
+                    $this->db,
+                    implode("\n", $query)
                 );
             }
         }
@@ -88,19 +93,23 @@ abstract class AbstractMigration {
         );
     }
 
-    public function runUp() {
+    public function runUp()
+    {
         $this->runDirection($this->up);
     }
 
-    public function runDown() {
+    public function runDown()
+    {
         $this->runDirection($this->down);
     }
 
-    public function getMetadata() {
+    public function getMetadata()
+    {
         return $this->metadata;
     }
 
-    public function getStatements() {
+    public function getStatements()
+    {
         return array(
             'up'   => $this->up,
             'down' => $this->down

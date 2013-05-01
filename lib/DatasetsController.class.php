@@ -25,8 +25,17 @@ abstract class DatasetsController extends AbstractController
      */
     protected $_chain = null;
 
+    /**
+     * Создает новый экземпляр контроллера для работы с БД
+     * @param MysqliHelper $db              Враппер адаптера БД
+     * @param array        $args            Аргументы контроллера
+     */
     public function __construct(MysqliHelper $db, array $args = array())
     {
+        $excludeDatasets = false;
+        if (isset($args['excludeDatasets'])) {
+            $excludeDatasets = $args['excludeDatasets'];
+        }
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
@@ -38,8 +47,7 @@ abstract class DatasetsController extends AbstractController
                 if (sizeof($arg_data) !== 1) {
                     $param_value       = str_replace('"', '', $arg_data[1]);
                     $args[$param_name] = $param_value;
-                }
-                else {
+                } else {
                     if (in_array($param_name, $this->_argKeys, true)) {
                         $args[$param_name] = 1;
                     }
@@ -48,7 +56,7 @@ abstract class DatasetsController extends AbstractController
             }
         }
 
-        if (!empty($args['datasets'])) {
+        if (!empty($args['datasets']) && !$excludeDatasets) {
             if (is_string($args['datasets'])) {
                 $datasets         = explode(',', $args['datasets']);
                 $args['datasets'] = array();
@@ -56,10 +64,24 @@ abstract class DatasetsController extends AbstractController
                     $args['datasets'][trim($dataset)] = 1;
                 }
             }
-        }
-        else {
+        } else {
             $args['datasets'] = array();
         }
+
+        $datasetsList = implode(', ', array_keys($args['datasets']));
+        if (empty($datasetsList)) {
+            $datasetsList = '(empty list)';
+        }
+        $className = explode('\\', get_class($this));
+
+        Output::verbose(
+            sprintf(
+                'Executing %s with datasets: %s',
+                end($className),
+                $datasetsList
+            ),
+            3
+        );
 
         parent::__construct($db, $args);
     }
@@ -82,15 +104,14 @@ abstract class DatasetsController extends AbstractController
      */
     public function toogleFK($state)
     {
-        $state = (int)$state;
+        $state = (int) $state;
         if (!in_array($state, array(0, 1))) {
             throw new \Exception("Invalid foreign keys checks status: {$state}\n");
         }
         $command = "SET foreign_key_checks = {$state};";
         if ($state) {
             $this->db->query($command);
-        }
-        else {
+        } else {
             $this->db->setCommand($command);
         }
     }
@@ -102,7 +123,6 @@ abstract class DatasetsController extends AbstractController
     protected function loadDatasetInfo()
     {
         $load_data = (empty($this->args['loadData']) xor true);
-
         return Helper::getDatasetInfo($this->args['datasets'], $load_data);
     }
 

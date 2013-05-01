@@ -37,7 +37,7 @@ abstract class AbstractSchema
      */
     public function load(MysqliHelper $db)
     {
-        if ((int)Helper::get('verbose') === 3) {
+        if ((int) Helper::get('verbose') === 3) {
             /*
             foreach ($this->queries as $tablename => $query) {
                 Output::verbose(sprintf('Executing schema SQL for %s', $tablename), 1);
@@ -50,8 +50,7 @@ abstract class AbstractSchema
             }
             */
             Helper::_debug_queryMultipleDDL($db, $this->_queries);
-        }
-        else {
+        } else {
             Helper::queryMultipleDDL(
                 $db,
                 implode("\n", $this->_queries)
@@ -92,7 +91,7 @@ abstract class AbstractSchema
      */
     public function getRevision()
     {
-        return (int)$this->_revision;
+        return (int) $this->_revision;
     }
 
     /**
@@ -136,8 +135,7 @@ abstract class AbstractSchema
                         2
                     );
                     $result = true;
-                }
-                else {
+                } else {
                     $result = array_diff($data['queries'], $schemaEntities);
                     if (!empty($result)) {
                         Output::verbose('There is difference from folders list and schema file\'s list: ', 2);
@@ -166,7 +164,7 @@ abstract class AbstractSchema
             return $result;
         } catch (\Exception $e) {
             Output::verbose(
-                sprintf("There are some problems with schema file %s: \n%s", $filename, $e->getMessage()),
+                sprintf("There are some problems with schema file: \n%s", $e->getMessage()),
                 3
             );
 

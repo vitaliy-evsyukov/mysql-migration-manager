@@ -9,7 +9,8 @@ namespace lib;
  * @author guyfawkes
  */
 
-class createController extends DatasetsController {
+class createController extends DatasetsController
+{
 
     /**
      * Массив запросов
@@ -31,7 +32,8 @@ class createController extends DatasetsController {
      * Устанавливает подключение к временной БД
      * @param MysqliHelper $tempDb
      */
-    public function setTempDb(MysqliHelper $tempDb) {
+    public function setTempDb(MysqliHelper $tempDb)
+    {
         $this->_tempDb = $tempDb;
     }
 
@@ -41,12 +43,12 @@ class createController extends DatasetsController {
      * Если файл с номером текущей ревизии уже существует, подбирает номера
      * После создания миграции меняет файлы маркера и списка ревизий
      */
-    public function runStrategy() {
+    public function runStrategy()
+    {
         if (!$this->_tempDb) {
             $tempDb = Helper::getTmpDbObject();
             Helper::loadTmpDb($tempDb);
-        }
-        else {
+        } else {
             $tempDb = $this->_tempDb;
         }
         Output::verbose('Starting to search changes', 1);
@@ -63,45 +65,54 @@ class createController extends DatasetsController {
                     Output::verbose(
                         sprintf(
                             "Revision # %d already exists, file name: %s",
-                            $revision, $this->_migrationFileName
-                        ), 2
+                            $revision,
+                            $this->_migrationFileName
+                        ),
+                        2
                     );
                     $revision++;
-                }
-                else {
+                } else {
                     $file_exists = false;
                 }
             }
             Output::verbose(sprintf('Try to create revision %d', $revision), 2);
             $timestamp = Helper::writeRevisionFile($revision);
             $content   = Helper::createMigrationContent(
-                $revision, $diff, $timestamp
+                $revision,
+                $diff,
+                $timestamp
             );
             file_put_contents($this->_migrationFileName, $content);
             Output::verbose(
                 sprintf(
                     "Revision %d successfully created and saved in file %s",
-                    $revision, $this->_migrationFileName
-                ), 1
+                    $revision,
+                    $this->_migrationFileName
+                ),
+                1
             );
-            /**
-             * Добавилась миграция, нужно пересобрать карты связей и миграций
-             * TODO: передавать миграцию и получать только связанные с ней изменения
-             */
-            Registry::resetAll();
-        }
-        else {
+        } else {
             Output::verbose(
-                'There are no changes in database structure now', 1
+                'There are no changes in database structure now',
+                1
             );
         }
+        /**
+         * Добавилась миграция, нужно пересобрать карты связей и миграций
+         * TODO: передавать миграцию и получать только связанные с ней изменения
+         * Если миграция не была добавлена, то карты связей и миграций должны быть в любом случае обнулены, т.к.
+         * при использовании датасетов последняя связанная с ними миграция может быть не последней в списке, и поэтому
+         * при вызове migrate-контроллера он будет накатывать все оставшиеся миграции
+         */
+        Registry::resetAll();
     }
 
     /**
      * Возвращает имя и путь к файлу миграции
      * @return string
      */
-    public function getMigrationFileName() {
+    public function getMigrationFileName()
+    {
         return $this->_migrationFileName;
     }
 

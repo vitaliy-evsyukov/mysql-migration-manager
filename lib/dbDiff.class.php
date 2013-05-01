@@ -43,7 +43,8 @@ class dbDiff
      * @param MysqliHelper $temp    Соединение с временной БД
      */
     public function __construct(
-        MysqliHelper $current = null, MysqliHelper $temp = null
+        MysqliHelper $current = null,
+        MysqliHelper $temp = null
     )
     {
         $current && ($this->_currentTable = $current->getDatabaseName());
@@ -120,8 +121,7 @@ class dbDiff
                         $tableName = '';
                     }
                 }
-            }
-            else {
+            } else {
                 $tmp[] = $line;
                 if (!empty($tableName)) {
                     /*
@@ -144,6 +144,7 @@ class dbDiff
 
     /**
      * Делегирует работу mysqldiff
+     * @throws \Exception
      * @return array
      */
     public function getDiff()
@@ -153,6 +154,7 @@ class dbDiff
         $tables   = array($this->_currentTable, $this->_tempTable);
         $adapters = array($this->_currentAdapter, $this->_tempAdapter);
         $dirs     = array('down', 'up');
+
 
         for ($i = 0; $i < 2; $i++) {
             $params_str = array();
@@ -188,8 +190,7 @@ class dbDiff
             if (!empty($output)) {
                 $result                 = $this->parseDiff($output);
                 $this->_diff[$dirs[$i]] = $result['desc'];
-            }
-            else {
+            } else {
                 Output::verbose(
                     sprintf('Command %s returned nothing', $full),
                     3

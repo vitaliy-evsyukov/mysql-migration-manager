@@ -2,7 +2,7 @@
 
 namespace %%ns%%;
 
-class References  {
+class References%%hash%%  {
 
     private $_refs = %%refs%%;
 

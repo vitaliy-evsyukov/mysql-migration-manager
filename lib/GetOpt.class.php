@@ -6,7 +6,8 @@ namespace lib;
  * GetOpt
  * Получает и парсит аргументы, переданные пользователем
  */
-class GetOpt {
+class GetOpt
+{
 
     static protected $default_config = array(
         'optVal'
@@ -20,11 +21,12 @@ class GetOpt {
      * @param array $opts Option templates. Defines rules for the options we need to parse
      * @return array Extracted options
      */
-    static function extractLeft(&$args, $opts) {
-        $result = array();
+    static function extractLeft(&$args, $opts)
+    {
+        $result       = array();
         self::$errors = array();
-        $opts = self::normalizeTpl($opts);
-        $short_opts = self::mapShortOpts($opts);
+        $opts         = self::normalizeTpl($opts);
+        $short_opts   = self::mapShortOpts($opts);
 
         while (!empty($args)) {
             $arg = array_shift($args);
@@ -69,7 +71,8 @@ class GetOpt {
      *
      * @return array List of errors
      */
-    static function errors() {
+    static function errors()
+    {
         return self::$errors;
     }
 
@@ -79,14 +82,16 @@ class GetOpt {
      * @param array $opts Array to process
      * @return array Processed array
      */
-    private static function normalizeTpl($opts) {
+    private static function normalizeTpl($opts)
+    {
         foreach ($opts as &$tpl) {
             $ntpl = array();
             foreach ($tpl as $k => $t) {
-                if (is_string($k))
+                if (is_string($k)) {
                     $ntpl[$k] = $t;
-                elseif (is_int($k) && is_string($t))
+                } elseif (is_int($k) && is_string($t)) {
                     $ntpl[$t] = true;
+                }
             }
             $tpl = $ntpl;
         }
@@ -100,12 +105,14 @@ class GetOpt {
      * @param array $opts Options to parse
      * @return array List of mappings between short_options => long_options
      */
-    private static function mapShortOpts($opts) {
+    private static function mapShortOpts($opts)
+    {
         $result = array();
 
         foreach ($opts as $k => $o) {
-            if (!empty($o['short']))
+            if (!empty($o['short'])) {
                 $result[$o['short']] = $k;
+            }
         }
 
         return $result;
@@ -116,31 +123,34 @@ class GetOpt {
      *
      * Note: $args might be modified depending on the given option template
      *
-     * @param array $args List of command-line arguments
-     * @param string $arg Argument being parsed
-     * @param array $tpl Template for the argument being parsed
+     * @param array  $args List of command-line arguments
+     * @param string $arg  Argument being parsed
+     * @param array  $tpl  Template for the argument being parsed
      * @return mixed Parsed option value, null if no value required
      */
-    private static function parseValue(&$args, $arg, $tpl) {
+    private static function parseValue(&$args, $arg, $tpl)
+    {
         foreach ($tpl as $t => $v) {
             switch ($t) {
                 case 'req_val':
                     if (strpos($arg, '=') === false) {
-                        if (!empty($args))
+                        if (!empty($args)) {
                             return array_shift($args);
-                        else
+                        } else {
                             throw new \Exception('Missing option value');
-                    }
-                    else
+                        }
+                    } else {
                         return substr(strstr($arg, '='), 1);
+                    }
                     break;
                 case 'opt_val':
-                    if (strpos($arg, '=') !== false)
+                    if (strpos($arg, '=') !== false) {
                         return substr(strstr($arg, '='), 1);
+                    }
                     break;
-               case 'no_val':
-                   return 1;
-                   break;
+                case 'no_val':
+                    return 1;
+                    break;
             }
         }
 

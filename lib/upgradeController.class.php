@@ -20,7 +20,7 @@ class upgradeController extends AbstractController
         $this->db->setCommand('SET foreign_key_checks = 0');
         // подключение к временной БД
         $dbName = '';
-        if ((int)Helper::get('tmp_add_suffix')) {
+        if ((int) Helper::get('tmp_add_suffix')) {
             $dbName = 'full_temp_db_' . Helper::get('tmp_db_name');
         }
         $db = Helper::getTmpDbObject($dbName);
@@ -43,8 +43,7 @@ class upgradeController extends AbstractController
                             $path
                         )
                     );
-                }
-                else {
+                } else {
                     Output::verbose(
                         sprintf('Temporary directory %s created', $p),
                         1
@@ -56,7 +55,8 @@ class upgradeController extends AbstractController
             implode(PATH_SEPARATOR, array(get_include_path(), $path))
         );
         $this->args['overrideRevision'] = true;
-        $chain = Helper::getController('deploy', $this->args, $db);
+        $this->args['loadData']         = false;
+        $chain                          = Helper::getController('deploy', $this->args, $db);
         /**
          * Для апгрейда мы должны считать временную и развернутую базу эталоном,
          * а переданную пользователем мы делаем "временной" и сравниваем
@@ -64,9 +64,17 @@ class upgradeController extends AbstractController
         $create = Helper::getController('create', $this->args, $db);
         $create->getController()->setTempDb($this->db);
         // мигрировать начать нужно с нуля
-        $this->args['revision'] = 0;
+        $this->args['revision']     = 0;
         $this->args['createSchema'] = false;
-        $migrate                = Helper::getController(
+        /**
+         * Мы должны удалить список датасетов из аргументов, т.к. во временной миграции будут созданы операторы,
+         * затрагивающие все таблицы (например, указав в датасете ограниченный список таблиц, пользователь будет
+         * ожидать, что выполнятся DROP TABLE для таблиц из его базы, не входящих в указанный им перечень, а если
+         * выполнять операторы из временной миграции только для таблиц из датасета, очевидно, такие операторы
+         * выполнены не будут)
+         */
+        $this->args['excludeDatasets'] = true;
+        $migrate = Helper::getController(
             'migrate',
             $this->args,
             $this->db

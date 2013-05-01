@@ -127,8 +127,7 @@ class getsqlController extends DatasetsController
                         $c = null;
                         if (is_null($this->_choice)) {
                             $c = $this->askForRewrite($filename);
-                        }
-                        else {
+                        } else {
                             $c = $this->_choice;
                         }
                         if (!$c) {
@@ -137,7 +136,7 @@ class getsqlController extends DatasetsController
                     }
                     $data[$value] .= str_repeat(
                         ';',
-                        (int)(!in_array($entity, array('TABLE', 'VIEW'))) + 1
+                        (int) (!in_array($entity, array('TABLE', 'VIEW'))) + 1
                     );
                     $data[$value] = Helper::stripTrash(
                         $data[$value],
@@ -174,8 +173,7 @@ class getsqlController extends DatasetsController
                         );
                     }
                     file_put_contents($filename, $data[$value]);
-                }
-                else {
+                } else {
                     Output::verbose(
                         sprintf(
                             'Cannot to get description of %s %s',

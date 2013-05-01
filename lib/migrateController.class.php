@@ -32,8 +32,7 @@ class migrateController extends DatasetsController
 
         if (!isset($this->args['revision'])) {
             $revision = Helper::getCurrentRevision();
-        }
-        else {
+        } else {
             $revision = $this->args['revision'];
         }
 
@@ -43,7 +42,7 @@ class migrateController extends DatasetsController
         }
         $str = $this->args['m'];
         if (is_numeric($str)) {
-            $search_migration = (int)$str;
+            $search_migration = (int) $str;
             if ($search_migration !== 0) {
                 $class            = sprintf(
                     '%s\Migration%d',
@@ -53,12 +52,10 @@ class migrateController extends DatasetsController
                 $o                = new $class;
                 $meta             = $o->getMetadata();
                 $target_migration = $meta['timestamp'];
-            }
-            else {
+            } else {
                 $target_migration = 0;
             }
-        }
-        else {
+        } else {
             $target_migration = strtotime($str);
         }
 
@@ -93,8 +90,7 @@ class migrateController extends DatasetsController
         }
         if ($timestamp > 0) {
             $start_str = date('d.m.Y H:i:s', $timestamp);
-        }
-        else {
+        } else {
             $start_str = 'initial revision';
         }
 
@@ -102,8 +98,7 @@ class migrateController extends DatasetsController
             Output::verbose('There are no newer migrations', 1);
 
             return false;
-        }
-        else {
+        } else {
             Output::verbose(
                 sprintf(
                     "Starting migration from %s (revision %d) to %s\n",
@@ -129,8 +124,7 @@ class migrateController extends DatasetsController
 
         $direction = 'Up';
         if ($revision > 0) {
-            $direction = $mHelper['data'][$revision]['time'] <=
-                $target_migration ? 'Up' : 'Down';
+            $direction = $mHelper['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
         }
 
         $timeline = Helper::getTimeline($tablesList, true, ($direction === 'Down'));
@@ -178,8 +172,7 @@ class migrateController extends DatasetsController
                     );
                     break;
                 }
-            }
-            else {
+            } else {
                 if ($time <= $timestamp) {
                     Output::verbose(
                         sprintf(
@@ -219,7 +212,8 @@ class migrateController extends DatasetsController
                     if (!isset($usedMigrations[$rev])) {
                         Output::verbose(
                             sprintf(
-                                "Execute migration for tables:\n--- %s",
+                                "Execute migration in database %s for tables:\n--- %s",
+                                $this->db->getDatabaseName(),
                                 implode("\n--- ", array_keys($tables))
                             ),
                             2
@@ -233,8 +227,7 @@ class migrateController extends DatasetsController
                         $usedMigrations[$rev] = 1;
                         break;
                     }
-                }
-                else {
+                } else {
                     // это SQL-запрос
                     Output::verbose(
                         sprintf(
@@ -250,14 +243,15 @@ class migrateController extends DatasetsController
 
         if ($target_migration === 0) {
             $revision = 0;
-        }
-        else {
+        } else {
             if (isset($mHelper['timestamps'][$revision])) {
                 $revision = $mHelper['timestamps'][$revision];
             }
         }
 
-        Helper::writeRevisionFile($revision);
+        if ((int) $revision !== 1) {
+            Helper::writeRevisionFile($revision);
+        }
 
         // если принудительно не запретили создавать схему
         if (!isset($this->args['createSchema']) || ($this->args['createSchema'] !== false)) {
@@ -273,38 +267,43 @@ class migrateController extends DatasetsController
      */
     public function createMigratedSchema($revision)
     {
-        $revision = (int)$revision;
-        $tmpDir   = sys_get_temp_dir() . '/tmp_schema/';
-        Output::verbose(
-            sprintf(
-                'Create schema after migration with revision %d, files will be saved in folder %s',
-                $revision,
-                $tmpDir
-            ),
-            1
-        );
-        $this->removeTmpSchemaDir($tmpDir);
-        $chain                   = Helper::getController('getsql', $this->args, $this->db);
-        $this->args['revision']  = $revision;
-        $this->args['notDeploy'] = true;
-        $sandbox                 = array('schemadir' => $tmpDir);
-        $chain->setNext(Helper::getController('schema', $this->args, $this->db));
-        $chain->setSandbox(
-            array(
-                 'getsql' => $sandbox,
-                 'schema' => $sandbox
-            )
-        );
-        $chain->runStrategy();
-        $this->removeTmpSchemaDir($tmpDir);
-        Output::verbose(
-            sprintf(
-                'Migrated schema\'s creation with revision %d finished, folder %s removed',
-                $revision,
-                $tmpDir
-            ),
-            1
-        );
+        $revision = (int) $revision;
+        if ($revision !== 1) {
+            $tmpDir = sys_get_temp_dir() . '/tmp_schema/';
+            Output::verbose(
+                sprintf(
+                    'Create schema after migration with revision %d, files will be saved in folder %s',
+                    $revision,
+                    $tmpDir
+                ),
+                1
+            );
+            $this->removeTmpSchemaDir($tmpDir);
+            $chain                   = Helper::getController('getsql', $this->args, $this->db);
+            $this->args['revision']  = $revision;
+            $this->args['notDeploy'] = true;
+            // получить схему нужно для всех таблиц, которые есть в БД, но записать как мигрированную, если датасеты переданы
+            $this->args['excludeDatasets'] = 0;
+            $sandbox                       = array('schemadir' => $tmpDir);
+            $schemaObj                     = Helper::getController('schema', $this->args, $this->db);
+            $chain->setNext($schemaObj);
+            $chain->setSandbox(
+                array(
+                     'getsql' => $sandbox,
+                     'schema' => $sandbox
+                )
+            );
+            $chain->runStrategy();
+            $this->removeTmpSchemaDir($tmpDir);
+            Output::verbose(
+                sprintf(
+                    'Migrated schema\'s creation with revision %d finished, folder %s removed',
+                    $revision,
+                    $tmpDir
+                ),
+                1
+            );
+        }
     }
 
     /**
@@ -324,11 +323,9 @@ class migrateController extends DatasetsController
             foreach ($it as $file) {
                 if (in_array($file->getBasename(), array('.', '..'))) {
                     continue;
-                }
-                elseif ($file->isDir()) {
+                } elseif ($file->isDir()) {
                     rmdir($file->getPathname());
-                }
-                elseif ($file->isFile() || $file->isLink()) {
+                } elseif ($file->isFile() || $file->isLink()) {
                     unlink($file->getPathname());
                 }
             }

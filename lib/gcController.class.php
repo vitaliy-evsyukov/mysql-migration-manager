@@ -35,8 +35,7 @@ class gcController extends DatasetsController
         $res->free_result();
         if (!empty($queries)) {
             $list = implode("\n", $queries);
-        }
-        else {
+        } else {
             $list = 'No trash databases found';
         }
         Output::verbose($list, 2);

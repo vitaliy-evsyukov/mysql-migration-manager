@@ -7,9 +7,11 @@ namespace lib;
  * Приводит содержимое схемы к начальному
  * @author guyfawkes
  */
-class initController extends DatasetsController {
+class initController extends DatasetsController
+{
 
-    public function runStrategy() {
+    public function runStrategy()
+    {
         if ($this->askForRewriteInformation()) {
             $datasets = $this->args['datasets'];
             $dshash   = '';
@@ -20,25 +22,27 @@ class initController extends DatasetsController {
             try {
                 $this->dropAllDBEntities();
                 $classname = sprintf(
-                    '%s\Schema%s', Helper::get('cachedir_ns'), $dshash
+                    '%s\Schema%s',
+                    Helper::get('cachedir_ns'),
+                    $dshash
                 );
                 $schema    = new $classname;
                 $schema->load($this->db);
                 Output::verbose(
                     sprintf(
-                        "Schema %s was successfully deployed", $classname
-                    ), 1
+                        "Schema %s was successfully deployed",
+                        $classname
+                    ),
+                    1
                 );
                 Helper::writeRevisionFile(0);
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 Output::verbose('Schema not found', 1);
                 Output::verbose($e->getMessage(), 3);
                 $schema = Helper::getController('schema');
                 $schema->runStrategy();
             }
-        }
-        else {
+        } else {
             Output::verbose("Exit without any changes", 1);
         }
     }
@@ -47,7 +51,8 @@ class initController extends DatasetsController {
      * Запрашивает удаление всех таблиц в БД
      * @return bool
      */
-    private function askForRewriteInformation() {
+    private function askForRewriteInformation()
+    {
         if (Helper::get('quiet')) {
             return true;
         }
@@ -67,8 +72,7 @@ class initController extends DatasetsController {
             if ($c === 'N' or $c === 'n') {
                 return false;
             }
-        }
-        while (true);
+        } while (true);
     }
 
 }

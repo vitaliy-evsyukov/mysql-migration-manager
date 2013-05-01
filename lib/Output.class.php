@@ -7,7 +7,8 @@ namespace lib;
  * Распечатывает сообщения
  */
 
-class Output {
+class Output
+{
 
     /**
      * Распечатывает сообщение в STDOUT
@@ -15,7 +16,8 @@ class Output {
      * @param string $msg   Текст сообщения
      * @param int    $level Уровень вывода
      */
-    static function verbose($msg, $level = 1) {
+    static function verbose($msg, $level = 1)
+    {
         if (!Helper::get('quiet') && intval(Helper::get('verbose')) >= $level) {
             echo $msg, PHP_EOL;
         }
@@ -26,7 +28,8 @@ class Output {
      * @static
      * @param string $msg Текст сообщения
      */
-    static function error($msg) {
+    static function error($msg)
+    {
         fwrite(STDERR, $msg . PHP_EOL);
     }
 

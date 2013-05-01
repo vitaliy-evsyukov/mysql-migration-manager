@@ -23,7 +23,7 @@ class deployController extends DatasetsController
         $toWork = array(
             'schema'  => array(
                 'datasets'          => $this->args['datasets'],
-                'loadData'          => true,
+                'loadData'          => isset($this->args['loadData']) ? $this->args['loadData'] : true,
                 'useOriginalSchema' => isset($this->args['useOriginalSchema']) ? $this->args['useOriginalSchema'] : false
             ),
             'migrate' => array(

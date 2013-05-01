@@ -109,8 +109,7 @@ class MysqliHelper
                     $this->db->error
                 )
             );
-        }
-        ;
+        };
         $this->executeCommands();
     }
 
@@ -180,7 +179,7 @@ class MysqliHelper
         $this->_user         = $user;
         $this->_password     = $password;
         $this->_databaseName = $db;
-        $this->_port         = is_null($port) ? 3306 : (int)$port;
+        $this->_port         = is_null($port) ? 3306 : (int) $port;
         $this->connect();
     }
 
@@ -192,8 +191,7 @@ class MysqliHelper
     {
         if (!is_array($command)) {
             $this->_commands[] = $command;
-        }
-        else {
+        } else {
             $this->_commands = $command;
         }
         // почистим список от дубликатов
@@ -207,7 +205,7 @@ class MysqliHelper
      */
     public function setRetriesCount($count)
     {
-        $this->_retriesCount = (int)$count;
+        $this->_retriesCount = (int) $count;
     }
 
     /**
@@ -251,8 +249,7 @@ class MysqliHelper
             if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
                 if (++$counter > $this->_retriesCount) {
                     throw new \Exception(sprintf('%s (%d)', $error, $errno));
-                }
-                else {
+                } else {
                     /*
                     Output::verbose(
                         sprintf(
@@ -269,8 +266,7 @@ class MysqliHelper
                     );
                     $this->connect();
                 }
-            }
-            else {
+            } else {
                 return $result;
             }
         }

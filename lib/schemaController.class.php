@@ -22,7 +22,7 @@ class schemaController extends DatasetsController
         $datasets = $this->args['datasets'];
         $revision = 0;
         if (isset($this->args['revision'])) {
-            $revision = (int)$this->args['revision'];
+            $revision = (int) $this->args['revision'];
         }
 
         $dshash = '';
@@ -31,16 +31,18 @@ class schemaController extends DatasetsController
             ksort($datasets);
             $json   = $this->loadDatasetInfo();
             $dshash = md5(implode('', array_keys($datasets)));
+            Registry::setHash($dshash);
+        }
+        if (isset($this->args['excludeDatasets']) && ($this->args['excludeDatasets'] === 0)) {
+            $datasets = array();
         }
 
         if ($revision) {
             $schemaType = AbstractSchema::MIGRATED;
-        }
-        else {
+        } else {
             if (!empty($this->args['useOriginalSchema'])) {
                 $schemaType = AbstractSchema::ORIGINAL;
-            }
-            else {
+            } else {
                 $schemaType = null;
             }
         }
@@ -58,6 +60,7 @@ class schemaController extends DatasetsController
                         $this->_queries[$tablename] = '1';
                     }
                 }
+                Registry::setTablesList($this->_queries);
             }
             Output::verbose('Parsing schema files...', 1);
             $this->_queries = Helper::parseSchemaFiles($this->_queries);
@@ -68,10 +71,9 @@ class schemaController extends DatasetsController
                     $this->_queries = $this->_queries['queries'];
                     // Создадим структуру базы
                     Output::verbose('Deploying schema...', 1);
-                    if ((int)Helper::get('verbose') === 3) {
+                    if ((int) Helper::get('verbose') === 3) {
                         Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
-                    }
-                    else {
+                    } else {
                         Helper::queryMultipleDDL(
                             $this->db,
                             implode("\n", $this->_queries)
@@ -79,19 +81,17 @@ class schemaController extends DatasetsController
                     }
                     Output::verbose('Schema deploy finished', 1);
                 }
-            }
-            else {
+            } else {
                 Output::verbose('No tables found. File is not created', 1);
             }
-        }
-        else {
+        } else {
             $classname      = Helper::getSchemaClassName($dshash, $isMigratedSchema);
             $class          = new $classname;
             $schemaRevision = $class->getRevision();
             if ($revision && ($revision !== $schemaRevision)) {
                 Helper::changeRevision($fname, $revision);
-            }
-            else {
+            } else {
+                Output::verbose('Set revision number to ' . $schemaRevision, 3);
                 $revision = $schemaRevision;
             }
             if (empty($this->args['notDeploy'])) {
