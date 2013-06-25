@@ -31,6 +31,9 @@ class Output
     static function error($msg)
     {
         fwrite(STDERR, $msg . PHP_EOL);
+        if ((int)Helper::get('stop-on-failure')) {
+            die("Error occured. Stopping MMM\n");
+        }
     }
 
 }

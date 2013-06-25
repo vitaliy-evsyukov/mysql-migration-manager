@@ -19,47 +19,49 @@ class Helper
      * @var array
      */
     static protected $config_tpl = array(
-        'config'         => array('short' => 'c', 'req_val'),
-        'host'           => array('req_val'),
-        'user'           => array('req_val'),
-        'password'       => array('req_val'),
-        'db'             => array('req_val'),
-        'port'           => array('req_val'),
-        'savedir'        => array('req_val'),
-        'verbose'        => array('req_val'),
-        'versionfile'    => array('req_val'),
-        'quiet'          => array('short' => 'q', 'no_val'),
-        'version_marker' => array('req_val'),
-        'tmp_host'       => array('req_val'),
-        'tmp_user'       => array('req_val'),
-        'tmp_password'   => array('req_val'),
-        'tmp_port'       => array('req_val'),
-        'cachedir'       => array('req_val'),
-        'schemadir'      => array('req_val'),
-        'reqtables'      => array('req_val'),
-        'tmp_db_name'    => array('req_val'),
-        'tmp_add_suffix' => array('req_val')
+        'config'          => array('short' => 'c', 'req_val'),
+        'host'            => array('req_val'),
+        'user'            => array('req_val'),
+        'password'        => array('req_val'),
+        'db'              => array('req_val'),
+        'port'            => array('req_val'),
+        'savedir'         => array('req_val'),
+        'verbose'         => array('req_val'),
+        'versionfile'     => array('req_val'),
+        'stop-on-failure' => array('req_val'),
+        'quiet'           => array('short' => 'q', 'no_val'),
+        'version_marker'  => array('req_val'),
+        'tmp_host'        => array('req_val'),
+        'tmp_user'        => array('req_val'),
+        'tmp_password'    => array('req_val'),
+        'tmp_port'        => array('req_val'),
+        'cachedir'        => array('req_val'),
+        'schemadir'       => array('req_val'),
+        'reqtables'       => array('req_val'),
+        'tmp_db_name'     => array('req_val'),
+        'tmp_add_suffix'  => array('req_val')
     );
     /**
      * @var array
      */
     static protected $config = array(
-        'config'         => null, //path to alternate config file
-        'host'           => null,
-        'user'           => null,
-        'password'       => null,
-        'db'             => null,
-        'port'           => null,
-        'savedir'        => null,
-        'cachedir'       => null,
-        'reqtables'      => null,
-        'schemadir'      => null,
-        'verbose'        => null,
-        'versionfile'    => null,
-        'version_marker' => null,
-        'tmp_db_name'    => null,
-        'tmp_add_suffix' => null,
-        'tmp_port'       => null
+        'config'          => null, //path to alternate config file
+        'host'            => null,
+        'user'            => null,
+        'password'        => null,
+        'db'              => null,
+        'port'            => null,
+        'savedir'         => null,
+        'cachedir'        => null,
+        'reqtables'       => null,
+        'schemadir'       => null,
+        'verbose'         => null,
+        'stop-on-failure' => true,
+        'versionfile'     => null,
+        'version_marker'  => null,
+        'tmp_db_name'     => null,
+        'tmp_add_suffix'  => null,
+        'tmp_port'        => null
     );
     /**
      * @var array
@@ -1763,7 +1765,7 @@ class Helper
                     $dbName = trim(str_replace('database.', '', $key));
                     $value  = trim($value);
                     if (!empty($dbName)) {
-                        $tmnp[$dbName] = $value;
+                        $tmp[$dbName] = $value;
                         Output::verbose(
                             sprintf(
                                 'In all queries database %s will be replaced to %s',
