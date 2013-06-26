@@ -45,6 +45,18 @@ class createController extends DatasetsController
      */
     public function runStrategy()
     {
+        $migratedSchema     = Helper::getSchemaClassName('', true);
+        $migratedSchemaFile = Helper::getSchemaFile('', AbstractSchema::MIGRATED);
+        if (is_file($migratedSchemaFile) && is_readable($migratedSchemaFile)) {
+            /**
+             * @var AbstractSchema $migratedSchemaObj
+             */
+            $migratedSchemaObj = new $migratedSchema;
+            $migratedRevision  = $migratedSchemaObj->getRevision();
+            $backupFileName    = sprintf('%s_%d.backup', $migratedSchemaFile, $migratedRevision);
+            Output::verbose(sprintf('Backuped %s as %s', $migratedSchemaFile, $backupFileName), 1);
+            copy($migratedSchemaFile, $backupFileName);
+        }
         if (!$this->_tempDb) {
             $tempDb = Helper::getTmpDbObject();
             Helper::loadTmpDb($tempDb);

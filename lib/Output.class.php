@@ -32,7 +32,8 @@ class Output
     {
         fwrite(STDERR, $msg . PHP_EOL);
         if ((int)Helper::get('stop-on-failure')) {
-            die("Error occured. Stopping MMM\n");
+            echo "Error occured. Stopping MMM\n";
+            exit(1);
         }
     }
 
