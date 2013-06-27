@@ -12,6 +12,7 @@ reqtables=tables.json
 reqdata=data.sql
 versionfile=revisions.txt
 version_marker=marker.txt
+stop-on-failure=0
 verbose=3
 mysqldiff_command="mysqldiff --logs-folder=/var/web/mysql-migration-manager/logs"
 

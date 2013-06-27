@@ -30,7 +30,7 @@ class GetOpt
 
         while (!empty($args)) {
             $arg = array_shift($args);
-            if (preg_match('/^--([a-z][a-z\-]*)/i', $arg, $matches)) { //long options start with "--"
+            if (preg_match('/^--([a-z][a-z\-_]*)/i', $arg, $matches)) { //long options start with "--"
                 $matches[1] = strtolower($matches[1]);
                 if (isset($opts[$matches[1]])) {
                     try {

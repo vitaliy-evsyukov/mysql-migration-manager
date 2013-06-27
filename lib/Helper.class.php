@@ -39,7 +39,8 @@ class Helper
         'schemadir'       => array('req_val'),
         'reqtables'       => array('req_val'),
         'tmp_db_name'     => array('req_val'),
-        'tmp_add_suffix'  => array('req_val')
+        'tmp_add_suffix'  => array('req_val'),
+        'routine_user'    => array('req_val')
     );
     /**
      * @var array
@@ -61,7 +62,8 @@ class Helper
         'version_marker'  => null,
         'tmp_db_name'     => null,
         'tmp_add_suffix'  => null,
-        'tmp_port'        => null
+        'tmp_port'        => null,
+        'routine_user'    => null
     );
     /**
      * @var array
@@ -1158,9 +1160,9 @@ class Helper
         foreach ($a as $direction => $data) {
             foreach ($data as $table => $queries) {
                 $result['tmp'][] = "'$table' => array(\n\"" . implode(
-                    "\",\n\"",
-                    $queries
-                ) . "\"\n)";
+                        "\",\n\"",
+                        $queries
+                    ) . "\"\n)";
             }
             $result[$direction] =
                 "array(\n" . implode(",\n", $result['tmp']) . "\n)";
@@ -1295,10 +1297,10 @@ class Helper
     /**
      * Создать файл кеша связей таблиц
      * @static
-     * @param string  $filename   Имя файла
-     * @param array   $references Массив связей
-     * @param string  $hash       Хеш датасета, если используется
-     * @param string  $tpl        Файл шаблона
+     * @param string $filename   Имя файла
+     * @param array  $references Массив связей
+     * @param string $hash       Хеш датасета, если используется
+     * @param string $tpl        Файл шаблона
      */
     public static function createReferencesCache($filename, array $references, $hash, $tpl = 'tpl/references.tpl')
     {
@@ -1378,24 +1380,25 @@ class Helper
                     break;
                 }
         }
+        $definerReplacement = trim((string) Helper::get('routine_user'));
+        if (empty($definerReplacement)) {
+            $definerReplacement = 'CURRENT_USER';
+        }
         if (isset($extra['definer'])) {
             $search[]  = $extra['definer'];
-            $replace[] = 'CURRENT_USER';
+            $replace[] = $definerReplacement;
         } else {
             if (preg_match('/DEFINER=(.*?)\s+/ims', $content, $m)) {
                 $search[]  = $m[1];
-                $replace[] = 'CURRENT_USER';
-                //print_r($search);print_r($replace);die();
+                $replace[] = $definerReplacement;
             }
         }
 
-        /**
-         * print_r($search);
-         * print_r($replace);
-         * echo "-----------------\n";
-         */
+        if (!empty($search)) {
+            $content = str_replace($search, $replace, $content);
+        }
 
-        return str_replace($search, $replace, $content);
+        return $content;
     }
 
     /**
@@ -1650,7 +1653,7 @@ class Helper
     {
         $content =
             "<?php\n class Migration{$version} extends AbstractMigration\n{\n" .
-                "  protected \$up = array(\n";
+            "  protected \$up = array(\n";
         foreach ($diff['up'] as $sql) {
             $content .= "    '{$sql}',\n";
         }

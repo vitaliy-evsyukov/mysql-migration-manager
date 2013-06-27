@@ -51,15 +51,18 @@ abstract class AbstractMigration
                 foreach ($statements as $statement) {
                     $key = 'start';
                     if (is_array($statement) && isset($statement['type'])) {
-                        if (in_array(
-                            $statement['type'],
-                            array('change_partitions', 'add_fk')
-                        )
-                        ) {
+                        if (in_array($statement['type'], array('add_routine', 'change_routine'), true)) {
+                            $statement['sql'] = Helper::stripTrash($statement['sql'], 'routine');
+                        }
+                        if (in_array($statement['type'], array('change_partitions', 'add_fk'))) {
                             $key = 'finish';
                         }
                         $res[$key][$table][] = $statement['sql'];
                     } else {
+                        $statement           = Helper::stripTrash(
+                            $statement,
+                            'routine'
+                        );
                         $res[$key][$table][] = $statement;
                     }
                 }
