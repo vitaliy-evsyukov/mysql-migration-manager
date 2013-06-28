@@ -13,6 +13,7 @@ reqdata=data.sql
 versionfile=revisions.txt
 version_marker=marker.txt
 stop-on-failure=0
+routine_user=CURRENT_USER
 verbose=3
 mysqldiff_command="mysqldiff --logs-folder=/var/web/mysql-migration-manager/logs"
 
