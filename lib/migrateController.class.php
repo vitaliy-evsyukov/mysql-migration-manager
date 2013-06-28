@@ -36,6 +36,10 @@ class migrateController extends DatasetsController
             $revision = $this->args['revision'];
         }
 
+        if ($revision > $maxMigration) {
+            $revision = $maxMigration;
+        }
+
         Output::verbose(sprintf('You are at revision %d', $revision), 1);
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
