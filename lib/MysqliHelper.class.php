@@ -11,7 +11,6 @@ use \Mysqli;
  */
 class MysqliHelper
 {
-
     /**
      * Номер ошибки "MySQL server has gone away"
      */
@@ -62,7 +61,11 @@ class MysqliHelper
      * @var string
      */
     private $_lastError = '';
-
+    /**
+     * Булевое значение, обозначающее, является ли БД временной
+     * @var bool
+     */
+    private $_temporary = false;
     /**
      * Массив паттернов для замены в запросах
      * @var array
@@ -91,13 +94,10 @@ class MysqliHelper
         if ($this->_db->connect_errno) {
             throw new \Exception(
                 sprintf(
-                    "Database connect error occured: %s (%d)\nCredentials:\nHost: %s\nUser: %s\nPassword: %s\nPort: %d",
+                    "Database connect error occured: %s (%d)\nCredentials:\n%s",
                     $this->_db->connect_error,
                     $this->_db->connect_errno,
-                    $this->_host,
-                    $this->_user,
-                    $this->_password,
-                    $this->_port
+                    $this->getCredentials()
                 )
             );
         }
@@ -165,7 +165,6 @@ class MysqliHelper
         return $arguments;
     }
 
-
     /**
      * @param string $host     Адрес сервера БД
      * @param string $user     Имя пользователя
@@ -181,6 +180,21 @@ class MysqliHelper
         $this->_databaseName = $db;
         $this->_port         = is_null($port) ? 3306 : (int) $port;
         $this->connect();
+    }
+
+    /**
+     * Возвращает строку с параметрами БД
+     * @return string
+     */
+    public function getCredentials() {
+        return sprintf(
+            "Database: %s\nHost: %s\nUser: %s\nPassword: %s\nPort: %d",
+            $this->_databaseName,
+            $this->_host,
+            $this->_user,
+            $this->_password,
+            $this->_port
+        );
     }
 
     /**
@@ -345,6 +359,21 @@ class MysqliHelper
         return $this->_port;
     }
 
+    /**
+     * Устанавливает признак временной БД
+     * @param boolean $value
+     */
+    public function setIsTemporary($value) {
+        $this->_temporary = (bool)$value;
+    }
+
+    /**
+     * Возвращает булевое значение, является ли БД временной
+     * @return bool
+     */
+    public function isTemporary() {
+        return $this->_temporary;
+    }
 }
 
 ?>

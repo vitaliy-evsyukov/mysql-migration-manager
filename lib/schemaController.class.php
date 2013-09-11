@@ -53,6 +53,7 @@ class schemaController extends DatasetsController
         $checkFn          = array('\lib\AbstractSchema', 'loadInstance');
         $params           = array($isMigratedSchema, $dshash, empty($this->args['notDeploy']));
 
+        Helper::setCurrentDb($this->db, 'Schema controller - check for overwrite');
         if (Helper::askToRewrite($fname, $message, $checkFn, $params)) {
             if (!empty($datasets)) {
                 foreach ($json['reqs'] as $dataset) {
@@ -63,6 +64,7 @@ class schemaController extends DatasetsController
                 Registry::setTablesList($this->_queries);
             }
             Output::verbose('Parsing schema files...', 1);
+            Helper::setCurrentDb($this->db, 'Schema controller');
             $this->_queries = Helper::parseSchemaFiles($this->_queries);
             Output::verbose('Parsing finished', 1);
             if (!empty($this->_queries)) {

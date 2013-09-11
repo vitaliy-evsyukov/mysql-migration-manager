@@ -71,6 +71,7 @@ class getsqlController extends DatasetsController
         }
         $path   = Helper::get('schemadir');
         $suffix = md5(time());
+        Helper::setCurrentDb($this->db, 'Get SQL');
         foreach ($entities as $entity) {
             $op      = sprintf(
                 $operations['ops'][$operations['links'][$entity]],

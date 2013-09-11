@@ -131,6 +131,7 @@ class migrateController extends DatasetsController
             $direction = $mHelper['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
         }
 
+        Helper::setCurrentDb($this->db, 'Migrate controller');
         $timeline = Helper::getTimeline($tablesList, true, ($direction === 'Down'));
 
         if ($direction === 'Down') {

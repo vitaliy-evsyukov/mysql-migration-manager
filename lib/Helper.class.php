@@ -88,6 +88,11 @@ class Helper
      */
     private static $_currentTempDb = null;
     /**
+     * Текущая БД
+     * @var \lib\MysqliHelper
+     */
+    private static $currentDb = null;
+    /**
      * Приведены ли стандартные директории к виду полных путей
      * @var bool
      */
@@ -303,8 +308,8 @@ class Helper
 
     /**
      * Выбирает базу данных и создает ее, если не было
-     * @param MysqliHelper $connection
-     * @param string       $dbName
+     * @param \lib\MysqliHelper $connection
+     * @param string            $dbName
      * @throws \Exception
      */
     public static function prepareDb(MysqliHelper $connection, $dbName)
@@ -343,7 +348,7 @@ class Helper
     /**
      * Возвращает объект соединения
      * @param array $config
-     * @return MysqliHelper
+     * @return \lib\MysqliHelper
      */
     public static function getDbObject($config = array())
     {
@@ -455,6 +460,7 @@ class Helper
         $c['db'] = $tmpname;
         unset($config);
         $tmpdb = self::getDbObject($c);
+        $tmpdb->setIsTemporary(true);
         if (!$tmpdb->set_charset("utf8")) {
             throw new \Exception(
                 sprintf(
@@ -1041,6 +1047,7 @@ class Helper
          * то строить связи нет необходимости, равно как и передавать список
          * необходимых таблиц
          */
+        self::setCurrentDb($db, 'loadTmpDb');
         $timeline       = self::getTimeline(array(), false);
         $usedMigrations = array();
         foreach ($timeline as $tables) {
@@ -1323,6 +1330,24 @@ class Helper
     }
 
     /**
+     * Устанавливает текущую БД
+     * @param MysqliHelper $db
+     * @param string       $from Опциональное название места
+     */
+    public static function setCurrentDb(MysqliHelper $db, $from = null)
+    {
+        self::$currentDb = $db;
+        Output::verbose(
+            sprintf(
+                'Set %s as current database from %s',
+                $db->getCredentials(),
+                is_null($from) ? 'undefined place' : $from
+            ),
+            3
+        );
+    }
+
+    /**
      * Удаляет мусор из определений сущностей
      * @static
      * @param string $content Описание сущности
@@ -1380,10 +1405,29 @@ class Helper
                     break;
                 }
         }
-        $definerReplacement = trim((string) Helper::get('routine_user'));
+
+        $db                 = self::$currentDb;
+        $needReplace        = true;
+        $definerReplacement = null;
+        if ($db) {
+            $needReplace = !$db->isTemporary();
+        } else {
+            Output::verbose('NO current database setted', 3);
+        }
+        if ($needReplace) {
+            $definerReplacement = trim((string) Helper::get('routine_user'));
+        }
         if (empty($definerReplacement)) {
             $definerReplacement = 'CURRENT_USER';
         }
+        Output::verbose(
+            sprintf(
+                'Definers in %s will be replaced to %s',
+                $db ? $db->getDatabaseName() : '<not defined>',
+                $definerReplacement
+            ),
+            3
+        );
         if (isset($extra['definer'])) {
             $search[]  = $extra['definer'];
             $replace[] = $definerReplacement;
@@ -1393,6 +1437,7 @@ class Helper
                 $replace[] = $definerReplacement;
             }
         }
+
 
         if (!empty($search)) {
             $content = str_replace($search, $replace, $content);
