@@ -272,6 +272,8 @@ class migrateController extends DatasetsController
      */
     public function createMigratedSchema($revision)
     {
+        $currentReplacement = Helper::get('routine_user');
+        Helper::set('routine_user', '');
         $revision = (int) $revision;
         if ($revision !== 1) {
             $tmpDir = sys_get_temp_dir() . '/tmp_schema/';
@@ -309,6 +311,7 @@ class migrateController extends DatasetsController
                 1
             );
         }
+        Helper::set('routine_user', $currentReplacement);
     }
 
     /**

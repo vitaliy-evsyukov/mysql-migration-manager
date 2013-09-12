@@ -747,6 +747,8 @@ class Helper
      */
     public static function getTimeline(array $tablesList = array(), $getRefs = true, $full = false)
     {
+        $currentReplacement = self::get('routine_user');
+        self::set('routine_user', '');
         $migrations  = Registry::getAllMigrations(true, $getRefs, $full);
         $tablesToAdd = array();
         if (!empty($tablesList)) {
@@ -821,6 +823,7 @@ class Helper
                 3
             );
         }
+        self::set('routine_user', $currentReplacement);
 
         return $timeline;
     }
