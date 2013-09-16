@@ -58,6 +58,11 @@ abstract class AbstractMigration
                         if (in_array($statement['type'], array('change_partitions', 'add_fk'))) {
                             $key = 'finish';
                         }
+                        if ($statement['type'] === 'add_table') {
+                            $res[$key][$table][] = sprintf(
+                                'DROP TABLE IF EXISTS `%s`;', $table
+                            );
+                        }
                         $res[$key][$table][] = $statement['sql'];
                     } else {
                         Helper::setCurrentDb($this->db, 'Migration ' . $this->metadata['revision']);
