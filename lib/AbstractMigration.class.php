@@ -43,24 +43,28 @@ abstract class AbstractMigration
         }
         $start = microtime(1);
         if (!empty($direction)) {
-            $res = array(
+            $res            = array(
                 'start'  => array(),
                 'finish' => array()
             );
+            $definersChange = array('add_routine', 'change_routine', 'add_view', 'change_view');
+            $changePrefix   = array('add_', 'change_');
             foreach ($direction as $table => $statements) {
                 foreach ($statements as $statement) {
                     $key = 'start';
                     if (is_array($statement) && isset($statement['type'])) {
-                        if (in_array($statement['type'], array('add_routine', 'change_routine'), true)) {
+                        if (in_array($statement['type'], $definersChange, true)) {
                             Helper::setCurrentDb($this->db, 'Migration ' . $this->metadata['revision']);
-                            $statement['sql'] = Helper::stripTrash($statement['sql'], 'routine');
+                            $changeType       = strtoupper(str_replace($changePrefix, '', $statement['type']));
+                            $statement['sql'] = Helper::stripTrash($statement['sql'], $changeType);
                         }
                         if (in_array($statement['type'], array('change_partitions', 'add_fk'))) {
                             $key = 'finish';
                         }
                         if ($statement['type'] === 'add_table') {
                             $res[$key][$table][] = sprintf(
-                                'DROP TABLE IF EXISTS `%s`;', $table
+                                'DROP TABLE IF EXISTS `%s`;',
+                                $table
                             );
                         }
                         $res[$key][$table][] = $statement['sql'];
