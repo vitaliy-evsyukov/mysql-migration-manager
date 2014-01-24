@@ -56,7 +56,11 @@ abstract class AbstractMigration
                         if (in_array($statement['type'], $definersChange, true)) {
                             Helper::setCurrentDb($this->db, 'Migration ' . $this->metadata['revision']);
                             $changeType       = strtoupper(str_replace($changePrefix, '', $statement['type']));
-                            $statement['sql'] = Helper::stripTrash($statement['sql'], $changeType);
+                            $statement['sql'] = Helper::stripTrash(
+                                $statement['sql'],
+                                $changeType,
+                                array('entity' => $table)
+                            );
                         }
                         if (in_array($statement['type'], array('change_partitions', 'add_fk'))) {
                             $key = 'finish';
@@ -72,7 +76,8 @@ abstract class AbstractMigration
                         Helper::setCurrentDb($this->db, 'Migration ' . $this->metadata['revision']);
                         $statement           = Helper::stripTrash(
                             $statement,
-                            'routine'
+                            'routine',
+                            array('entity' => $table)
                         );
                         $res[$key][$table][] = $statement;
                     }

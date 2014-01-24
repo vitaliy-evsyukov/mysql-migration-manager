@@ -471,7 +471,7 @@ class Helper
         }
         register_shutdown_function(
             function () use ($c, $tmpdb) {
-                $tmpdb->query("DROP DATABASE `{$c['db']}`");
+                //$tmpdb->query("DROP DATABASE `{$c['db']}`");
                 Output::verbose(
                     "Temporary database {$c['db']} was deleted",
                     2
@@ -1368,10 +1368,10 @@ class Helper
                 if (preg_match('/\s*ENGINE=InnoDB\s*/ims', $content)) {
                     $search = array_merge(
                         array(
-                             'CHECKSUM',
-                             'AVG_ROW_LENGTH',
-                             'DELAY_KEY_WRITE',
-                             'ROW_FORMAT'
+                            'CHECKSUM',
+                            'AVG_ROW_LENGTH',
+                            'DELAY_KEY_WRITE',
+                            'ROW_FORMAT'
                         ),
                         $search
                     );
@@ -1397,16 +1397,28 @@ class Helper
                 }
                 break;
             default:
-                if (!preg_match('/DELIMITER ;;/ims', $content)) {
-                    $search[]  = $content;
-                    $replace[] = sprintf(
-                        "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n",
-                        $type,
-                        $extra['entity'],
-                        $content
-                    );
-                    break;
+                if (!in_array($type, array('TRIGGER', 'FUNCTION', 'PROCEDURE'))) {
+                    $type = static::getStatementType($content);
                 }
+                if (!is_null($type)) {
+                    $replaceString = null;
+                    if (!preg_match('/DROP.*?IF\s+NOT\s+EXISTS\s+/ims', $content)) {
+                        $replaceString = "DROP %s IF EXISTS %s;\n%s\n";
+                    }
+                    if (!preg_match('/DELIMITER ;;/ims', $content)) {
+                        $replaceString = "DROP %s IF EXISTS %s;\nDELIMITER ;;\n%s\nDELIMITER ;\n";
+                    }
+                    if (!is_null($replaceString)) {
+                        $search[]  = $content;
+                        $replace[] = sprintf(
+                            $replaceString,
+                            $type,
+                            $extra['entity'],
+                            $content
+                        );
+                    }
+                }
+                break;
         }
 
         $db                 = self::$currentDb;
@@ -1450,6 +1462,34 @@ class Helper
     }
 
     /**
+     * Возвращает тип оператора
+     * @param string $statement
+     * @param string $default
+     * @return string
+     */
+    private static function getStatementType($statement, $default = null)
+    {
+        $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
+        $patternView    = '/^CREATE(?:(?:.*?)\s+ALGORITHM=(?:.*?))?(?:\s+DEFINER=(.*?))?' .
+            '(?:\s+SQL\s+SECURITY\s+(?:DEFINER|INVOKER))?\s+VIEW\s+(?:.*?)\s+' .
+            '(?:\(.*?\)\s+)?AS\s+\(?(.*?)\)?\s*(?:WITH\s+(?:.*?))?;$/';
+        $patternRoutine = '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
+        $patterns       = array($patternTable => 'TABLE', $patternView => 'VIEW', $patternRoutine => 2);
+        $statementType  = $default;
+        foreach ($patterns as $pattern => $value) {
+            if (preg_match($pattern, $statement, $matches)) {
+                if (is_int($value)) {
+                    $statementType = $matches[$value];
+                } else {
+                    $statementType = $value;
+                }
+                break;
+            }
+        }
+        return $statementType;
+    }
+
+    /**
      * Вспомогательные действия с файлами схемы
      * @static
      * @param array  $queries       Ссылка на массив запросов
@@ -1469,10 +1509,8 @@ class Helper
         $listOnly
     )
     {
-        $exclude      = !empty($includeTables);
-        $patternTable = '/^\s*CREATE\s+TABLE\s+/ims';
-        /*$patternView    =
-            '/^\s*CREATE\s+.*?\s+(?:DEFINER=(.*?))?\s+.*?\s+VIEW\s+(?:.*)\s+AS\s+\(?(.*?)\)?\s+(?:WITH\s+(.*?))?;$/ims';*/
+        $exclude        = !empty($includeTables);
+        $patternTable   = '/^\s*CREATE\s+TABLE\s+/ims';
         $patternView    = '/^CREATE(?:(?:.*?)\s+ALGORITHM=(?:.*?))?(?:\s+DEFINER=(.*?))?(?:\s+SQL\s+SECURITY\s+(?:DEFINER|INVOKER))?\s+VIEW\s+(?:.*?)\s+(?:\(.*?\)\s+)?AS\s+\(?(.*?)\)?\s*(?:WITH\s+(?:.*?))?;$/';
         $patternRoutine =
             '/^\s*CREATE\s+(?:.*\s+)?(?:DEFINER=(.*?))?\s+(?:.*\s+)?(TRIGGER|FUNCTION|PROCEDURE)/im';
@@ -1535,8 +1573,8 @@ class Helper
                                 $q,
                                 $matches[2],
                                 array(
-                                     'definer' => $matches[1],
-                                     'entity'  => $entityname
+                                    'definer' => $matches[1],
+                                    'entity'  => $entityname
                                 )
                             );
                             // и дописываем такие сущности в конец массива запросов
