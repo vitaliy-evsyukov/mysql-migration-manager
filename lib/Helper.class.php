@@ -1402,7 +1402,7 @@ class Helper
                 }
                 if (!is_null($type)) {
                     $replaceString = null;
-                    if (!preg_match('/DROP.*?IF\s+NOT\s+EXISTS\s+/ims', $content)) {
+                    if (!preg_match('/DROP\s+(?:TRIGGER|FUNCTION|PROCEDURE)\s+/ims', $content)) {
                         $replaceString = "DROP %s IF EXISTS %s;\n%s\n";
                     }
                     if (!preg_match('/DELIMITER ;;/ims', $content)) {
