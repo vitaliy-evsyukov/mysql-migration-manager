@@ -471,7 +471,7 @@ class Helper
         }
         register_shutdown_function(
             function () use ($c, $tmpdb) {
-                //$tmpdb->query("DROP DATABASE `{$c['db']}`");
+                $tmpdb->query("DROP DATABASE `{$c['db']}`");
                 Output::verbose(
                     "Temporary database {$c['db']} was deleted",
                     2
