@@ -158,20 +158,21 @@ class getsqlController extends DatasetsController
                                     $this->db->getLastError()
                                 )
                             );
+                        } else {
+                            $fields = array();
+                            while ($fieldsRow = $fieldsRes->fetch_array(MYSQLI_BOTH)) {
+                                $fields[] = sprintf('%s %s', $fieldsRow['Field'], $fieldsRow['Type']);
+                            }
+                            $tempTable = sprintf('CREATE TABLE %s (%s);', $col, implode(', ', $fields));
+                            file_put_contents(sprintf('%stables/%s.sql', $path, $col), $tempTable);
+                            Output::verbose(
+                                sprintf(
+                                    'Temporary table structure for view %s created',
+                                    $col
+                                ),
+                                1
+                            );
                         }
-                        $fields = array();
-                        while ($fieldsRow = $fieldsRes->fetch_array(MYSQLI_BOTH)) {
-                            $fields[] = sprintf('%s %s', $fieldsRow['Field'], $fieldsRow['Type']);
-                        }
-                        $tempTable = sprintf('CREATE TABLE %s (%s);', $col, implode(', ', $fields));
-                        file_put_contents(sprintf('%stables/%s.sql', $path, $col), $tempTable);
-                        Output::verbose(
-                            sprintf(
-                                'Temporary table structure for view %s created',
-                                $col
-                            ),
-                            1
-                        );
                     }
                     file_put_contents($filename, $data[$value]);
                 } else {
