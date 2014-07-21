@@ -71,6 +71,16 @@ abstract class AbstractMigration
                                 $table
                             );
                         }
+                        if (!isset($statement['sql'])) {
+                            throw new \Exception(
+                                sprintf(
+                                    'For table %s in key "%s" there is not valid statement definition: %s',
+                                    $table,
+                                    $key,
+                                    var_export($statement, true)
+                                )
+                            );
+                        }
                         $res[$key][$table][] = $statement['sql'];
                     } else {
                         Helper::setCurrentDb($this->db, 'Migration ' . $this->metadata['revision']);
@@ -85,7 +95,7 @@ abstract class AbstractMigration
             }
             $direction = $res;
             unset($res);
-            if ((int) Helper::get('verbose') === 3) {
+            if ((int) Helper::get('verbose') >= 3) {
                 foreach ($direction as $order => $ddl) {
                     Output::verbose(
                         sprintf('Run %s order of queries...', $order),

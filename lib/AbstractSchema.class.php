@@ -37,7 +37,7 @@ abstract class AbstractSchema
      */
     public function load(MysqliHelper $db)
     {
-        if ((int) Helper::get('verbose') === 3) {
+        if ((int) Helper::get('verbose') >= 3) {
             /*
             foreach ($this->queries as $tablename => $query) {
                 Output::verbose(sprintf('Executing schema SQL for %s', $tablename), 1);

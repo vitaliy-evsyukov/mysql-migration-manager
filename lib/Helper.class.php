@@ -608,7 +608,17 @@ class Helper
                             )
                         );
                     }
-                    $summa_time += (microtime(1) - $start);
+                    $delta = microtime(1) - $start;
+                    $summa_time += $delta;
+                    Output::verbose(
+                        sprintf(
+                            "\n--- %s\nQuery time: %.2f seconds\nSummary time: %.2f seconds\n",
+                            $query,
+                            $delta,
+                            $summa_time
+                        ),
+                        4
+                    );
                 }
             }
             Output::verbose(
@@ -688,7 +698,7 @@ class Helper
         if (!self::$_currentTempDb) {
             $db = self::getTmpDbObject();
             $db->setCommand("SET foreign_key_checks = 0;");
-            if ((int) self::get('verbose') === 3) {
+            if ((int) self::get('verbose') >= 3) {
                 self::_debug_queryMultipleDDL($db, $data);
             } else {
                 self::queryMultipleDDL($db, implode("\n", $data));

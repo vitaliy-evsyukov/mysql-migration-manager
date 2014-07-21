@@ -1,19 +1,16 @@
 <?php
 
-require_once 'PHPUnit/Autoload.php';
-require_once '../init.php';
-
-use lib\Helper;
-
-class MigrationsTest extends PHPUnit_Framework_TestCase {
+class MigrationsTest extends Base
+{
 
     private $_timeline = null;
     private $_dict = null;
     private static $_messages = array();
 
-    public function setUp() {
+    public function setUp()
+    {
         $this->_timeline = array(
-            0 => array(
+            0          => array(
                 'table1' => array(
                     'stmt11',
                     'stmt12'
@@ -51,12 +48,12 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
                 )
             ),
             1323345447 => array(
-                'table8' => array(
+                'table8'  => array(
                     'stmt81',
                     'stmt82',
                     'stmt83'
                 ),
-                'table9' => array(
+                'table9'  => array(
                     'stmt91',
                     'stmt92'
                 ),
@@ -65,14 +62,15 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
                 ),
             )
         );
-        $this->_dict = array(
+        $this->_dict     = array(
             1 => 1322727273,
             2 => 1323345416,
             3 => 1323345447
         );
     }
 
-    private function migrate($start, $stop = '') {
+    private function migrate($start, $stop = '')
+    {
         if (empty($stop)) {
             $stop = 'now';
         }
@@ -80,12 +78,10 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
             $search_migration = (int) $stop;
             if ($search_migration !== 0) {
                 $target_migration = $this->_dict[$search_migration];
-            }
-            else {
+            } else {
                 $target_migration = 0;
             }
-        }
-        else {
+        } else {
             $target_migration = strtotime($stop, 1323351278);
         }
 
@@ -104,8 +100,8 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
             $timestamp = $this->_dict[$start];
         }
 
-        $revision = 0;
-        $i = $start > 0 ? $this->_dict[$start] : 0;
+        $revision          = 0;
+        $i                 = $start > 0 ? $this->_dict[$start] : 0;
         self::$_messages[] = "Initial migration: {$i}; Target migration: $target_migration";
         foreach ($timeline as $time => $tables) {
             self::$_messages[] = "Start: $start; Stop: $stop; Time: $time";
@@ -126,8 +122,7 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
                     self::$_messages[] = ' breaked';
                     break;
                 }
-            }
-            else {
+            } else {
                 if ($time <= $timestamp) {
                     self::$_messages[] = ' skipped';
                     continue;
@@ -149,7 +144,8 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
         return 0;
     }
 
-    public function testMigrateNum() {
+    public function testMigrateNum()
+    {
         $res = $this->migrate(0, 2);
         $this->assertEquals(2, $res);
         $res = $this->migrate(3, 1);
@@ -158,7 +154,8 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(3, $res);
     }
 
-    public function testMigrateDate() {
+    public function testMigrateDate()
+    {
         $res = $this->migrate(0, '+10 days');
         $this->assertEquals(3, $res);
         $res = $this->migrate(3, '-5 days');
@@ -169,7 +166,8 @@ class MigrationsTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $res);
     }
 
-    public static function tearDownAfterClass() {
+    public static function tearDownAfterClass()
+    {
         echo implode("\n", self::$_messages);
     }
 

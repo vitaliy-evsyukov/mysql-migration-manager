@@ -1,5 +1,6 @@
 <?php
 
+
 define('DIR_SEP', DIRECTORY_SEPARATOR);
 define('DIR', __DIR__ . DIR_SEP);
 define('NO_COMMAND', -1);
@@ -11,14 +12,15 @@ spl_autoload_register('mmpAutoload');
 mb_internal_encoding('UTF-8');
 set_include_path(DIR);
 
-function mmpAutoload($class) {
+function mmpAutoload($class)
+{
     $include_parts = explode(PATH_SEPARATOR, get_include_path());
-    $notStandard = false;
+    $notStandard   = false;
     foreach (array('savedir' => SAVEDIR_NS, 'cachedir' => CACHEDIR_NS) as $nsDir => $ns) {
         $notStandard = strpos($class, $ns);
         if (false !== $notStandard) {
             $notStandard = $nsDir;
-            $class = substr($class, strlen($ns) + 1);
+            $class       = substr($class, strlen($ns) + 1);
             break;
         }
     }

@@ -73,7 +73,7 @@ class schemaController extends DatasetsController
                     $this->_queries = $this->_queries['queries'];
                     // Создадим структуру базы
                     Output::verbose('Deploying schema...', 1);
-                    if ((int) Helper::get('verbose') === 3) {
+                    if ((int) Helper::get('verbose') >= 3) {
                         Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
                     } else {
                         Helper::queryMultipleDDL(

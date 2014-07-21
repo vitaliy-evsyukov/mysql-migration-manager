@@ -9,7 +9,6 @@ use \Mysqli;
  * Получает и парсит выдачу mysqldiff
  * @author guyfawkes
  */
-
 class dbDiff
 {
 
@@ -79,13 +78,17 @@ class dbDiff
      */
     public function parseDiff(array $output = array())
     {
-        $comment    = '';
-        $tableName  = '';
-        $tmp        = array();
-        $result     = array();
-        $index      = 0;
-        $endMarker  = '-- }';
-        $actionType = '';
+        $comment     = '';
+        $tableName   = '';
+        $refTable    = '';
+        $refPosition = '';
+        $tmp         = array();
+        $result      = array();
+        $referenced  = array();
+        $index       = 0;
+        $rIndex      = 0;
+        $endMarker   = '-- }';
+        $actionType  = '';
         foreach ($output as $line) {
             // если строка состоит только из whitespace'ов
             if (ctype_space($line)) {
@@ -100,21 +103,31 @@ class dbDiff
                         $data    = json_decode($comment);
                         $comment = '';
                         if ($data) {
-                            $tableName  = $data->name;
-                            $actionType = $data->action_type;
-                            if (isset($data->referenced_tables) &&
-                                is_array($data->referenced_tables)
-                            ) {
+                            $refPosition = '';
+                            $refTable    = '';
+                            $tableName   = $data->name;
+                            $actionType  = $data->action_type;
+                            if (isset($data->referenced_tables) && is_array($data->referenced_tables)) {
                                 // множество зависимых таблиц
                                 foreach ($data->referenced_tables as $table) {
                                     $this->addReferenced($tableName, $table);
                                 }
                             }
+                            if (preg_match('/^change_fk_(after|before)_(.*?)$/', $actionType, $matched)) {
+                                $refPosition = $matched[1];
+                                $refTable    = $matched[2];
+                                $this->markUsed($refTable);
+                            }
                             $this->markUsed($tableName);
-                            $tmp   = array();
-                            $index = 0;
-                            isset($result['desc'][$tableName]) &&
-                                ($index = sizeof($result['desc'][$tableName]));
+                            $tmp    = array();
+                            $index  = 0;
+                            $rIndex = 0;
+                            if (isset($result['desc'][$tableName])) {
+                                $index = sizeof($result['desc'][$tableName]);
+                            }
+                            if (isset($referenced[$tableName][$refTable][$refPosition])) {
+                                $rIndex = sizeof($referenced[$tableName][$refTable][$refPosition]);
+                            }
                         }
                     } catch (\Exception $e) {
                         Output::error($e->getMessage());
@@ -124,17 +137,51 @@ class dbDiff
             } else {
                 $tmp[] = $line;
                 if (!empty($tableName)) {
-                    /*
-                    * добавим предыдущие собранные данные в результирующий массив
-                    * делать это необходимо здесь, поскольку иначе нужна
-                    * дополнительная проверка, достигнут ли конец массива,
-                    * и "неиспользованный" остаток все равно придется добавить
-                    * к последнему обнаруженному комментарию с именем таблицы
-                    */
-                    $result['desc'][$tableName][$index] = array(
-                        'type' => $actionType,
-                        'sql'  => trim(implode("\n", $tmp))
+                    $statements = trim(implode("\n", $tmp));
+                    if (!empty($refTable)) {
+                        $referenced[$tableName][$refTable][$refPosition][$rIndex] = $statements;
+                    } else {
+                        /*
+                         * добавим предыдущие собранные данные в результирующий массив
+                         * делать это необходимо здесь, поскольку иначе нужна
+                         * дополнительная проверка, достигнут ли конец массива,
+                         * и "неиспользованный" остаток все равно придется добавить
+                         * к последнему обнаруженному комментарию с именем таблицы
+                         */
+                        $result['desc'][$tableName][$index] = array(
+                            'type' => $actionType,
+                            'sql'  => $statements
+                        );
+                    }
+                }
+            }
+        }
+
+        if (!empty($referenced)) {
+            foreach ($referenced as $tableName => $references) {
+                foreach ($references as $refTable => $statements) {
+                    Output::verbose(
+                        sprintf('Append referenced statements to %s from %s', $refTable, $tableName),
+                        3
                     );
+                    if (isset($statements['after'])) {
+                        $result['desc'][$refTable][] = array(
+                            'type' => 'change_fk',
+                            'sql' => implode("\n", $statements['after'])
+                        );
+                    }
+                    if (isset($statements['before'])) {
+                        if (!isset($result['desc'][$refTable])) {
+                            $result['desc'][$refTable] = array();
+                        }
+                        array_unshift(
+                            $result['desc'][$refTable],
+                            array(
+                                'type' => 'change_fk',
+                                'sql' => implode("\n", $statements['before'])
+                            )
+                        );
+                    }
                 }
             }
         }
