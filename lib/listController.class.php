@@ -19,24 +19,25 @@ class listController implements IController
     public function runStrategy()
     {
         $migrations = Helper::getAllMigrations();
+        $current    = Helper::getCurrentRevision();
         if (empty($migrations['migrations'])) {
-            throw new \Exception('There are no revisions');
-        }
-        $current = Helper::getCurrentRevision();
-        Output::verbose(sprintf("Current revision: %d\n", $current), 1);
-        Output::verbose(
-            sprintf(
-                $this->drawTextTable(
-                    $migrations['data'],
-                    array(
-                         'revn' => '#',
-                         'date' => 'Date&Time',
-                         'time' => 'Timestamp'
+            Output::verbose('There aren\'t revisons', 1);
+        } else {
+            Output::verbose(sprintf("Current revision: %d\n", $current), 1);
+            Output::verbose(
+                sprintf(
+                    $this->drawTextTable(
+                        $migrations['data'],
+                        array(
+                            'revn' => '#',
+                            'date' => 'Date&Time',
+                            'time' => 'Timestamp'
+                        )
                     )
-                )
-            ),
-            1
-        );
+                ),
+                1
+            );
+        }
         Output::verbose(sprintf("Current revision: %d\n", $current), 1);
     }
 
@@ -74,11 +75,11 @@ class listController implements IController
             }
             $diff = strlen($fieldname) - mb_strlen($fieldname);
             $header .= ' ' . str_pad(
-                $fieldname,
-                $length + $diff,
-                ' ',
-                STR_PAD_RIGHT
-            ) . " |";
+                    $fieldname,
+                    $length + $diff,
+                    ' ',
+                    STR_PAD_RIGHT
+                ) . " |";
         }
 
         // шапка
@@ -90,11 +91,11 @@ class listController implements IController
             foreach ($headers AS $key => $value) {
                 $cell = $row[$key];
                 $output .= ' ' . str_pad(
-                    $cell,
-                    $cell_lengths[$key],
-                    ' ',
-                    STR_PAD_RIGHT
-                ) . " |";
+                        $cell,
+                        $cell_lengths[$key],
+                        ' ',
+                        STR_PAD_RIGHT
+                    ) . " |";
             }
             $output .= "\n";
         }
