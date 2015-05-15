@@ -1,0 +1,18 @@
+<?php
+
+namespace lib;
+
+/**
+ * IController
+ * Интерфейс контроллеров
+ * @author Виталий Евсюков
+ */
+interface IController
+{
+    /**
+     * Запускает основную операцию контроллера
+     * @return mixed
+     */
+    public function runStrategy();
+}
+

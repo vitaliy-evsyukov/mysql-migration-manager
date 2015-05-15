@@ -1,0 +1,381 @@
+<?php
+
+namespace lib;
+
+use lib\Helper\Output;
+use \Mysqli;
+
+/**
+ * MysqliHelper
+ * Обертка над Mysqli
+ * @author Виталий Евсюков
+ * @method query
+ */
+class MysqliHelper
+{
+    /**
+     * Номер ошибки "MySQL server has gone away"
+     */
+    const MYSQL_SERVER_HAS_GONE_AWAY = 2006;
+    /**
+     * Экземпляр Mysqli-адаптера
+     * @var Mysqli
+     */
+    private $db = null;
+    /**
+     * Имя базы данных
+     * @var string
+     */
+    private $databaseName = '';
+    /**
+     * Адрес сервера БД
+     * @var string
+     */
+    private $host = '';
+    /**
+     * Имя пользователя
+     * @var string
+     */
+    private $user = '';
+    /**
+     * Пароль пользователя
+     * @var string
+     */
+    private $password = '';
+    /**
+     * Порт, на котором висит сервер БД
+     * @var int
+     */
+    private $port = 3306;
+    /**
+     * Массив обязательных команд при (пере)подключении
+     * @var array
+     */
+    private $commands = array();
+    /**
+     * Количество попыток переустановить соединение с сервером БД
+     * @var int
+     */
+    private $retriesCount = 3;
+
+    /**
+     * Последняя произошедшая ошибка
+     * @var string
+     */
+    private $lastError = '';
+    /**
+     * Булевое значение, обозначающее, является ли БД временной
+     * @var bool
+     */
+    private $temporary = false;
+    /**
+     * Массив паттернов для замены в запросах
+     * @var array
+     */
+    private $replacements = null;
+    /**
+     * @var Output
+     */
+    private $output;
+
+    /**
+     * Выполняет набор обязательных команд при (пере)подключении
+     */
+    private function executeCommands()
+    {
+        if (!empty($this->commands)) {
+            foreach ($this->commands as $command) {
+                $this->query($command);
+            }
+        }
+    }
+
+    /**
+     * Устанавливает соединение с сервером БД
+     * @throws \Exception
+     */
+    public function connect()
+    {
+        $this->db = @new Mysqli($this->host, $this->user, $this->password, '', $this->port);
+        if ($this->db->connect_errno) {
+            throw new \Exception(
+                sprintf(
+                    "Database connect error occured: %s (%d)\nCredentials:\n%s",
+                    $this->db->connect_error,
+                    $this->db->connect_errno,
+                    $this->getCredentials()
+                )
+            );
+        }
+        $this->db->select_db($this->databaseName);
+        if (!$this->db->set_charset("utf8")) {
+            throw new \Exception(
+                sprintf(
+                    'SET CHARACTER SET utf8 error: %s',
+                    $this->db->error
+                )
+            );
+        };
+        $this->executeCommands();
+    }
+
+    /**
+     * Сохраняет последнюю ошибку
+     * @param string $message
+     * @param int    $code
+     */
+    private function setError($message, $code)
+    {
+        $this->lastError = sprintf('%s (%d)', $message, $code);
+    }
+
+    /**
+     * Преобразует запрос в массиве аргументов
+     * @param string $name
+     * @param array  $arguments
+     * @return array
+     */
+    private function prepareQ($name, $arguments)
+    {
+        if (!empty($this->replacements) && (strpos($name, 'query') !== false)) {
+            $count = 0;
+            if (!empty($arguments[0])) {
+                $preArg       = $arguments[0];
+                $arguments[0] = preg_replace(
+                    $this->replacements['p'],
+                    $this->replacements['r'],
+                    $arguments[0],
+                    -1,
+                    $count
+                );
+                if (!empty($count)) {
+                    $this->output->verbose(
+                        sprintf("Original statement: %s\nReplaced statement:%s\n", $preArg, $arguments[0]),
+                        3
+                    );
+                }
+            }
+        }
+
+        return $arguments;
+    }
+
+    /**
+     * @param string $host     Адрес сервера БД
+     * @param string $user     Имя пользователя
+     * @param string $password Пароль
+     * @param string $db       Имя базы данных
+     * @param int    $port     Порт сервера БД
+     */
+    public function __construct($host, $user, $password, $db = '', $port = 3306)
+    {
+        $this->host         = $host;
+        $this->user         = $user;
+        $this->password     = $password;
+        $this->databaseName = $db;
+        $this->port         = is_null($port) ? 3306 : (int) $port;
+        $this->connect();
+    }
+
+    public function setReplacements(array $replacements)
+    {
+        $this->replacements = $replacements;
+    }
+
+    /**
+     * @param Output $output
+     */
+    public function setOutput(Output $output)
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * Возвращает строку с параметрами БД
+     * @return string
+     */
+    public function getCredentials()
+    {
+        return sprintf(
+            "Database: %s\nHost: %s\nUser: %s\nPassword: %s\nPort: %d",
+            $this->databaseName,
+            $this->host,
+            $this->user,
+            $this->password,
+            $this->port
+        );
+    }
+
+    /**
+     * Добавляет команду или замещает список команд, которые нужно выполнять при реконнекте
+     * @param array|string $command
+     */
+    public function setCommand($command)
+    {
+        if (!is_array($command)) {
+            $this->commands[] = $command;
+        } else {
+            $this->commands = $command;
+        }
+        // почистим список от дубликатов
+        $this->commands = array_unique($this->commands);
+        $this->executeCommands();
+    }
+
+    /**
+     * Устанавливает количество попыток для реконнекта
+     * @param int $count
+     */
+    public function setRetriesCount($count)
+    {
+        $this->retriesCount = (int) $count;
+    }
+
+    /**
+     * Устанавливает используемую базу данных
+     * @param string $dbname
+     * @return bool
+     */
+    public function select_db($dbname)
+    {
+        $r = $this->db->select_db($dbname);
+        if ($r) {
+            $this->databaseName = $dbname;
+        }
+
+        return $r;
+    }
+
+    /**
+     * Вызывает метод Mysqli
+     * @param string $name      Имя метода
+     * @param array  $arguments Массив аргументов
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __call($name, $arguments)
+    {
+        if (!method_exists($this->db, $name)) {
+            throw new \Exception(sprintf('Method %s does not exists', $name));
+        }
+        $callback = array(&$this->db, $name);
+        if (!is_callable($callback)) {
+            throw new \Exception(sprintf('Method %s is not callable', $name));
+        }
+        $counter = 0;
+        while (true) {
+            $arguments = $this->prepareQ($name, $arguments);
+            $result    = @call_user_func_array($callback, $arguments);
+            $errno     = $this->db->errno;
+            $error     = $this->db->error;
+            $this->setError($error, $errno);
+            if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
+                if (++$counter > $this->retriesCount) {
+                    throw new \Exception(sprintf('%s (%d)', $error, $errno));
+                } else {
+                    $this->output->verbose(
+                        sprintf(
+                            '#%d: Trying to reconnect...',
+                            $counter
+                        ),
+                        1
+                    );
+                    $this->connect();
+                }
+            } else {
+                return $result;
+            }
+        }
+    }
+
+    /**
+     * Возвращает значение параметра из класса-обертки или из Mysqli
+     * @param string $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        return $this->db->$name;
+    }
+
+    /**
+     * Возвращает последнюю ошибку
+     * @return string
+     */
+    public function getLastError()
+    {
+        return $this->lastError;
+    }
+
+    /**
+     * Возвращает адаптер Mysqli
+     * @return \Mysqli
+     */
+    public function getDb()
+    {
+        return $this->db;
+    }
+
+    /**
+     * Возвращает имя текущей базы данных
+     * @return string
+     */
+    public function getDatabaseName()
+    {
+        return $this->databaseName;
+    }
+
+    /**
+     * Возвращает имя хоста БД
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    /**
+     * Возвращает пароль пользователя БД
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * Возвращает имя пользователя БД
+     * @return string
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Возвращает порт БД
+     * @return int
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * Устанавливает признак временной БД
+     * @param boolean $value
+     */
+    public function setIsTemporary($value)
+    {
+        $this->temporary = (bool) $value;
+    }
+
+    /**
+     * Возвращает булевое значение, является ли БД временной
+     * @return bool
+     */
+    public function isTemporary()
+    {
+        return $this->temporary;
+    }
+}

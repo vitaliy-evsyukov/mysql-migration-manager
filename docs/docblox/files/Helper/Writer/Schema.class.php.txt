@@ -1,0 +1,66 @@
+<?php
+
+namespace lib\Helper\Writer;
+
+use lib\Helper\Init;
+
+/**
+ * Schema
+ * Запись данных о схеме БД
+ * @author  Виталий Евсюков
+ * @package lib\Helper\Writer
+ */
+class Schema extends AbstractWriter
+{
+    protected $tplName = 'tpl/schema.tpl';
+
+    protected $placeholders = array('queries', 'tables', 'name', 'ns', 'revision');
+
+    /**
+     * Название схемы (мигрированная, обычная)
+     * @var string
+     */
+    private $name;
+
+    /**
+     * Ревизия схемы
+     * @var int
+     */
+    private $revision;
+
+    /**
+     * Набор запросов, описывающих схему
+     * @var array
+     */
+    private $queries;
+
+    /**
+     * @param string $name     Название класса схемы
+     * @param array  $queries  Набор данных запросов
+     * @param int    $revision Ревизия схемы
+     */
+    public function __construct($name, array $queries, $revision = 0)
+    {
+        $this->queries  = $queries;
+        $this->name     = $name;
+        $this->revision = $revision;
+    }
+
+    public function getReplacements(Init $configuration)
+    {
+        $hashes    = $this->queries['md5'];
+        $hashesTmp = array();
+        $separator = ",\n" . str_repeat(' ', 8);
+        foreach ($hashes as $entityName => $hash) {
+            $hashesTmp[] = sprintf('"%s" => "%s"', $entityName, $hash);
+        }
+        $queries = $this->queries['queries'];
+        return array(
+            $this->recursiveImplode($queries, 1, true),
+            implode($separator, $hashesTmp),
+            $this->revision ? $this->name . 'migrated' : $this->name,
+            $configuration->get('cachedir_ns'),
+            $this->revision
+        );
+    }
+}

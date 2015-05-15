@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta charset="utf-8"/>
+    <title>Mysql Migration Manager</title>
+    <meta name="author" content=""/>
+    <meta name="description" content=""/>
+
+    <link href="../css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/prism.css" rel="stylesheet" media="all"/>
+    <link href="../css/template.css" rel="stylesheet" media="all"/>
+    
+    <!--[if lt IE 9]>
+    <script src="../js/html5.js"></script>
+    <![endif]-->
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ui/1.10.4/jquery-ui.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/jquery.smooth-scroll.js"></script>
+    <script src="../js/prism.min.js"></script>
+    <!-- TODO: Add http://jscrollpane.kelvinluck.com/ to style the scrollbars for browsers not using webkit-->
+    <script type="text/javascript">
+    function loadExternalCodeSnippets() {
+        Array.prototype.slice.call(document.querySelectorAll('pre[data-src]')).forEach(function (pre) {
+            var src = pre.getAttribute('data-src');
+            var extension = (src.match(/\.(\w+)$/) || [, ''])[1];
+            var language = 'php';
+
+            var code = document.createElement('code');
+            code.className = 'language-' + language;
+
+            pre.textContent = '';
+
+            code.textContent = 'Loading…';
+
+            pre.appendChild(code);
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', src, true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+
+                    if (xhr.status < 400 && xhr.responseText) {
+                        code.textContent = xhr.responseText;
+
+                        Prism.highlightElement(code);
+                    }
+                    else if (xhr.status >= 400) {
+                        code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
+                    }
+                    else {
+                        code.textContent = '✖ Error: File does not exist or is empty';
+                    }
+                }
+            };
+
+            xhr.send(null);
+        });
+    }
+
+    $(document).ready(function(){
+        loadExternalCodeSnippets();
+    });
+    $('#source-view').on('shown', function () {
+        loadExternalCodeSnippets();
+    })
+</script>
+
+    <link rel="shortcut icon" href="../images/favicon.ico"/>
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="../images/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="../images/apple-touch-icon-114x114.png"/>
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <i class="icon-ellipsis-vertical"></i>
+            </a>
+            <a class="brand" href="../index.html">Mysql Migration Manager</a>
+
+            <div class="nav-collapse">
+                <ul class="nav pull-right">
+                                        <li class="dropdown">
+                        <a href="../index.html" class="dropdown-toggle" data-toggle="dropdown">
+                            API Documentation <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                                                        <li><a href="../namespaces/lib.html">\lib</a></li>
+                                                    </ul>
+                    </li>
+                                        <li class="dropdown" id="charts-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Charts <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../graphs/class.html">
+                                    <i class="icon-list-alt"></i>&#160;Class hierarchy diagram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown" id="reports-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Reports <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../reports/errors.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="icon-list-alt"></i>&#160;Errors <span class="label label-info pull-right">93</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/markers.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="icon-list-alt"></i>&#160;Markers <span class="label label-info pull-right">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/deprecated.html">
+                                                                                                            <i class="icon-list-alt"></i>&#160;Deprecated <span class="label label-info pull-right">0</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--<div class="go_to_top">-->
+    <!--<a href="#___" style="color: inherit">Back to top&#160;&#160;<i class="icon-upload icon-white"></i></a>-->
+    <!--</div>-->
+</div>
+
+<div id="___" class="container-fluid">
+        <section class="row-fluid">
+        <div class="span2 sidebar">
+                                <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle " data-toggle="collapse" data-target="#namespace-138201710"></a>
+                                <a href="../namespaces/default.html" style="margin-left: 30px; padding-left: 0">\</a>
+            </div>
+            <div id="namespace-138201710" class="accordion-body collapse in">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-100284667"></a>
+                                <a href="../namespaces/lib.html" style="margin-left: 30px; padding-left: 0">lib</a>
+            </div>
+            <div id="namespace-100284667" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-1633098652"></a>
+                                <a href="../namespaces/lib.Helper.html" style="margin-left: 30px; padding-left: 0">Helper</a>
+            </div>
+            <div id="namespace-1633098652" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-172911798"></a>
+                                <a href="../namespaces/lib.Helper.Writer.html" style="margin-left: 30px; padding-left: 0">Writer</a>
+            </div>
+            <div id="namespace-172911798" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                                                                    <li class="class"><a href="../classes/lib.Helper.Writer.AbstractWriter.html">AbstractWriter</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Writer.Migration.html">Migration</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Writer.References.html">References</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Writer.Schema.html">Schema</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/lib.Helper.IWritable.html">IWritable</a></li>
+                                                                                                    <li class="class"><a href="../classes/lib.Helper.Container.html">Container</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Db.html">Db</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Filesystem.html">Filesystem</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Helper.html">Helper</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Init.html">Init</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Migrations.html">Migrations</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Output.html">Output</a></li>
+                                                    <li class="class"><a href="../classes/lib.Helper.Schema.html">Schema</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/lib.IController.html">IController</a></li>
+                                                                                                    <li class="class"><a href="../classes/lib.AbstractController.html">AbstractController</a></li>
+                                                    <li class="class"><a href="../classes/lib.AbstractMigration.html">AbstractMigration</a></li>
+                                                    <li class="class"><a href="../classes/lib.AbstractSchema.html">AbstractSchema</a></li>
+                                                    <li class="class"><a href="../classes/lib.applydsController.html">applydsController</a></li>
+                                                    <li class="class"><a href="../classes/lib.ControllersChain.html">ControllersChain</a></li>
+                                                    <li class="class"><a href="../classes/lib.createController.html">createController</a></li>
+                                                    <li class="class"><a href="../classes/lib.DatasetsController.html">DatasetsController</a></li>
+                                                    <li class="class"><a href="../classes/lib.DbDiff.html">DbDiff</a></li>
+                                                    <li class="class"><a href="../classes/lib.deployController.html">deployController</a></li>
+                                                    <li class="class"><a href="../classes/lib.gcController.html">gcController</a></li>
+                                                    <li class="class"><a href="../classes/lib.GetOpt.html">GetOpt</a></li>
+                                                    <li class="class"><a href="../classes/lib.getsqlController.html">getsqlController</a></li>
+                                                    <li class="class"><a href="../classes/lib.helpController.html">helpController</a></li>
+                                                    <li class="class"><a href="../classes/lib.initController.html">initController</a></li>
+                                                    <li class="class"><a href="../classes/lib.listController.html">listController</a></li>
+                                                    <li class="class"><a href="../classes/lib.migrateController.html">migrateController</a></li>
+                                                    <li class="class"><a href="../classes/lib.MysqliHelper.html">MysqliHelper</a></li>
+                                                    <li class="class"><a href="../classes/lib.recoverController.html">recoverController</a></li>
+                                                    <li class="class"><a href="../classes/lib.schemaController.html">schemaController</a></li>
+                                                    <li class="class"><a href="../classes/lib.upgradeController.html">upgradeController</a></li>
+                                                    <li class="class"><a href="../classes/lib.verifyController.html">verifyController</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </section>
+    <section class="row-fluid">
+        <div class="span10 offset2">
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <nav>
+                                                <a href="../namespaces/lib.Helper.html">\lib\Helper</a> <i class="icon-level-up"></i>
+                                            </nav>
+                    <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal"><i class="icon-code"></i></a>
+
+                    <h1><small>\lib\Helper</small>Filesystem</h1>
+                    <p><em>Filesystem
+Хелпер для работы с ФС</em></p>
+                    
+                    
+                                        
+                    <section id="summary">
+                        <h2>Summary</h2>
+                        <section class="row-fluid heading">
+                            <section class="span4">
+                                <a href="#methods">Methods</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#properties">Properties</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#constants">Constants</a>
+                            </section>
+                        </section>
+                        <section class="row-fluid public">
+                            <section class="span4">
+                                                                    <a href="../classes/lib.Helper.Helper.html#method___construct" class="">__construct()</a><br />
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_get" class="">get()</a><br />
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_set" class="">set()</a><br />
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_exists" class="">exists()</a><br />
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_setConfig" class="">setConfig()</a><br />
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_getConfig" class="">getConfig()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_initDirs" class="">initDirs()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getLastRevision" class="">getLastRevision()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getCurrentRevision" class="">getCurrentRevision()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getRevisionsLines" class="">getRevisionsLines()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_writeRevisionFile" class="">writeRevisionFile()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_writeInFile" class="">writeInFile()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_askToRewrite" class="">askToRewrite()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getSchemaFile" class="">getSchemaFile()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getReferencesFile" class="">getReferencesFile()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getAllMigrations" class="">getAllMigrations()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_iterateDirectories" class="">iterateDirectories()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getDatasetsInfo" class="">getDatasetsInfo()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getTempDir" class="">getTempDir()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No public properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No constants found</em>
+                                                            </section>
+                        </section>
+                        <section class="row-fluid protected">
+                            <section class="span4">
+                                                                    <a href="../classes/lib.Helper.Helper.html#method_output" class="">output()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <a href="../classes/lib.Helper.Helper.html#property_container" class="">$container</a><br />
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                        <section class="row-fluid private">
+                            <section class="span4">
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_createContent" class="">createContent()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_saveAnswer" class="">saveAnswer()</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#method_getAnswer" class="">getAnswer()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_prepareStandardDirectories" class="">$prepareStandardDirectories</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_iteratingDirectories" class="">$iteratingDirectories</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_executedRequests" class="">$executedRequests</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_revisionsLines" class="">$revisionsLines</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_currentRevision" class="">$currentRevision</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_lastRevision" class="">$lastRevision</a><br />
+                                                                    <a href="../classes/lib.Helper.Filesystem.html#property_datasets" class="">$datasets</a><br />
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                    </section>
+                </div>
+                <aside class="span4 detailsbar">
+                                        
+                    
+                    <dl>
+                        <dt>File</dt>
+                            <dd><a href="../files/Helper.Filesystem.class.html"><div class="path-wrapper">Helper/Filesystem.class.php</div></a></dd>
+                                                <dt>Package</dt>
+                            <dd><div class="namespace-wrapper">lib\Helper</div></dd>
+                                                <dt>Class hierarchy</dt>
+                            <dd class="hierarchy">
+                                                                                                                                                                                                                                                                                                
+                                        <div class="namespace-wrapper"><a href="../classes/lib.Helper.Helper.html">\lib\Helper\Helper</a></div>
+                                                                                                    <div class="namespace-wrapper">\lib\Helper\Filesystem</div>
+                            </dd>
+
+                        
+                        
+                        
+                        
+                                                                        </dl>
+                    <h2>Tags</h2>
+                    <table class="table table-condensed">
+                                            <tr>
+                            <th>
+                                author
+                            </th>
+                            <td>
+                                                                    <p>Виталий Евсюков</p>
+                                                            </td>
+                        </tr>
+                                        </table>
+                </aside>
+            </div>
+
+                        
+                                    <a id="properties" name="properties"></a>
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <h2>Properties</h2>
+                </div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_container" name="property_container" class="anchor"></a>
+            <article class="property">
+                <h3 class="protected ">$container</h3>
+                <pre class="signature">$container : \lib\Helper\Container</pre>
+                <p><em></em></p>
+                
+
+                                <h4>Type</h4>
+                <a href="../classes/lib.Helper.Container.html">\lib\Helper\Container</a>
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_prepareStandardDirectories" name="property_prepareStandardDirectories" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$prepareStandardDirectories</h3>
+                <pre class="signature">$prepareStandardDirectories : boolean</pre>
+                <p><em></em></p>
+                
+
+                                <h4>Type</h4>
+                boolean
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_iteratingDirectories" name="property_iteratingDirectories" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$iteratingDirectories</h3>
+                <pre class="signature">$iteratingDirectories : array</pre>
+                <p><em>Список директорий для итерации</em></p>
+                
+
+                                <h4>Type</h4>
+                array
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_executedRequests" name="property_executedRequests" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$executedRequests</h3>
+                <pre class="signature">$executedRequests : array</pre>
+                <p><em>Массив с действиями, которые уже запросили ввода пользователя
+Необходим для того, чтобы в цепочках не повторять вопросы</em></p>
+                
+
+                                <h4>Type</h4>
+                array
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_revisionsLines" name="property_revisionsLines" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$revisionsLines</h3>
+                <pre class="signature">$revisionsLines : array</pre>
+                <p><em>Набор строк, описывающих ревизии</em></p>
+                
+
+                                <h4>Type</h4>
+                array
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_currentRevision" name="property_currentRevision" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$currentRevision</h3>
+                <pre class="signature">$currentRevision : integer</pre>
+                <p><em>Счетчик ревизий, отображает текущую</em></p>
+                
+
+                                <h4>Type</h4>
+                integer
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_lastRevision" name="property_lastRevision" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$lastRevision</h3>
+                <pre class="signature">$lastRevision : integer</pre>
+                <p><em>Последняя найденная в списке ревизия</em></p>
+                
+
+                                <h4>Type</h4>
+                integer
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_datasets" name="property_datasets" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$datasets</h3>
+                <pre class="signature">$datasets : array</pre>
+                <p><em>Содержимое файлов датасетов</em></p>
+                
+
+                                <h4>Type</h4>
+                array
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                            
+                                    <a id="methods" name="methods"></a>
+            <div class="row-fluid">
+                <div class="span8 content class"><h2>Methods</h2></div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method___construct" name="method___construct" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">__construct()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">__construct(\lib\Helper\Container  <span class="argument">$container</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td><a href="../classes/lib.Helper.Container.html">\lib\Helper\Container</a></td>
+                                <td>$container </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_get" name="method_get" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">get()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">get(string  <span class="argument">$key</span>) : mixed|boolean</pre>
+                <p><em>Возвращает значение параметра из конфигурации</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$key </td>
+                                <td><p>Название параметра</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    mixed|boolean
+                                            &mdash; <p>Значение или false в случае неудачи</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            static
+                        </th>
+                        <td>
+                                                                                            
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_set" name="method_set" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">set()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">set(string  <span class="argument">$key</span>, mixed  <span class="argument">$value</span>) </pre>
+                <p><em>Устанавливает значение параметра</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$key </td>
+                                <td><p>Название параметра</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$value </td>
+                                <td><p>Значение</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            static
+                        </th>
+                        <td>
+                                                                                            
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_exists" name="method_exists" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">exists()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">exists(string  <span class="argument">$key</span>) : boolean</pre>
+                <p><em>Возвращает присутствие элемента в текущей конфигурации</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$key </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    boolean
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_setConfig" name="method_setConfig" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">setConfig()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">setConfig(  <span class="argument">$cnf</span>) </pre>
+                <p><em>Устанавливает конфигурацию</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$cnf </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getConfig" name="method_getConfig" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getConfig()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getConfig() : array</pre>
+                <p><em>Возвращает конфигурацию</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    array
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_initDirs" name="method_initDirs" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">initDirs()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">initDirs(array|string  <span class="argument">$dirs = array()</span>) : void</pre>
+                <p><em>Создает, если не было, директорию для миграций</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>array|string</td>
+                                <td>$dirs </td>
+                                <td><p>Список директорий. Если не указан, создаются и проверяются стандартные</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getLastRevision" name="method_getLastRevision" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getLastRevision()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getLastRevision() : integer</pre>
+                <p><em>Получить номер ожидаемой ревизии</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    integer
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getCurrentRevision" name="method_getCurrentRevision" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getCurrentRevision()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getCurrentRevision() : integer</pre>
+                <p><em>Получает номер текущей ревизии</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    integer
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getRevisionsLines" name="method_getRevisionsLines" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getRevisionsLines()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getRevisionsLines() : array</pre>
+                <p><em>Получает список строк ревизий</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    array
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_writeRevisionFile" name="method_writeRevisionFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">writeRevisionFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">writeRevisionFile(integer  <span class="argument">$revision</span>) : integer</pre>
+                <p><em>Записывает информацию о ревизии</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$revision </td>
+                                <td><p>Номер ревизии</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    integer
+                                            &mdash; <p>Таймстаймп для ревизии</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_writeInFile" name="method_writeInFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">writeInFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">writeInFile(string  <span class="argument">$filename</span>, \lib\Helper\IWritable  <span class="argument">$writable</span>) </pre>
+                <p><em>Записывает данные в указанный файл</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$filename </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td><a href="../classes/lib.Helper.IWritable.html">\lib\Helper\IWritable</a></td>
+                                <td>$writable </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_askToRewrite" name="method_askToRewrite" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">askToRewrite()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">askToRewrite(string  <span class="argument">$filename</span>, string  <span class="argument">$message = &#039;&#039;</span>, callable  <span class="argument">$fn = null</span>, array  <span class="argument">$fnArgs = array()</span>) : boolean</pre>
+                <p><em>Спрашивает у пользователя, необходимо ли перезаписывать файл</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$filename </td>
+                                <td><p>Имя файла</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$message </td>
+                                <td><p>Сообщение</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>callable</td>
+                                <td>$fn </td>
+                                <td><p>Функция, использумая для дополнительной проверки</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$fnArgs </td>
+                                <td><p>Аргументы функции проверки</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    boolean
+                                            &mdash; <p>Результат ввода пользователя</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getSchemaFile" name="method_getSchemaFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getSchemaFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getSchemaFile(string  <span class="argument">$hash = &#039;&#039;</span>, string  <span class="argument">$schemaType = null</span>) : string</pre>
+                <p><em>Возвращает имя файла схемы (или имя &quot;по умолчанию&quot;, даже если файла не существует)</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$hash </td>
+                                <td><p>Хеш от датасетов</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$schemaType </td>
+                                <td><p>По умолчанию должна возвращаться &quot;мигрированная&quot; схема или &quot;обычная&quot;</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    string
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getReferencesFile" name="method_getReferencesFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getReferencesFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getReferencesFile(string  <span class="argument">$hash</span>, string  <span class="argument">$path</span>) : string</pre>
+                <p><em>Возвращает имя файла с описанием связей таблиц</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$hash </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$path </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    string
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAllMigrations" name="method_getAllMigrations" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAllMigrations()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAllMigrations() : array</pre>
+                <p><em>Возвращает список всех миграций и связанных с ними данных</em></p>
+                
+
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    array
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_iterateDirectories" name="method_iterateDirectories" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">iterateDirectories()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">iterateDirectories(array  <span class="argument">$dirs</span>) : array|boolean</pre>
+                <p><em>Возвращает массив файлов в текущей итерируемой папке, или false, если больше нет папок для итераций</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>array</td>
+                                <td>$dirs </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    array|boolean
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getDatasetsInfo" name="method_getDatasetsInfo" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getDatasetsInfo()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getDatasetsInfo(array  <span class="argument">$datasets</span>, boolean  <span class="argument">$loadDatasetContent = false</span>) : array</pre>
+                <p><em>Возвращает массив с данными по датасетам
+Массив состоит из ключей:
+&lt;pre&gt;
+reqs -------
+           |- dataset1 -&gt; JSON1
+           |- dataset2 -&gt; JSON2
+sqlContent -
+           |- dataset1 -&gt; SQL1
+           |- dataset2 -&gt; SQL2
+&lt;/pre&gt;</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>array</td>
+                                <td>$datasets </td>
+                                <td><p>Массив имен датасетов</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>boolean</td>
+                                <td>$loadDatasetContent </td>
+                                <td><p>Загружать ли содержимое SQL датасетов</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    array
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getTempDir" name="method_getTempDir" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getTempDir()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getTempDir(string  <span class="argument">$tmpDir</span>) : string</pre>
+                <p><em>Возвращает название временной папки, очищает ее, если она существует</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$tmpDir </td>
+                                <td><p>Завершающая часть пути к временной папке</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    string
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_output" name="method_output" class="anchor"></a>
+            <article class="method">
+                <h3 class="protected ">output()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">output(string  <span class="argument">$message</span>, integer  <span class="argument">$level = 1</span>) </pre>
+                <p><em>Выводит сообщение на экран</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$message </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$level </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/lib.Helper.Helper.html"><div class="path-wrapper">\lib\Helper\Helper</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_createContent" name="method_createContent" class="anchor"></a>
+            <article class="method">
+                <h3 class="private ">createContent()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">createContent(array  <span class="argument">$search</span>, array  <span class="argument">$replace</span>, string  <span class="argument">$tpl</span>) : string</pre>
+                <p><em>Утилитарная работа с получением содержимого шаблона и заменой</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>array</td>
+                                <td>$search </td>
+                                <td><p>Массив местозаменителей</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$replace </td>
+                                <td><p>Массив соответствующих им замен</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$tpl </td>
+                                <td><p>Имя файла шаблона</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Exception</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    string
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            static
+                        </th>
+                        <td>
+                                                                                            
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_saveAnswer" name="method_saveAnswer" class="anchor"></a>
+            <article class="method">
+                <h3 class="private ">saveAnswer()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">saveAnswer(string  <span class="argument">$answer</span>, string  <span class="argument">$value = &#039;1&#039;</span>) </pre>
+                <p><em>Сохраняет ответ в списке</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$answer </td>
+                                <td><p>Название вопроса (ключ)</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$value </td>
+                                <td><p>Ответ пользователя (по умолчанию &quot;1&quot;)</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAnswer" name="method_getAnswer" class="anchor"></a>
+            <article class="method">
+                <h3 class="private ">getAnswer()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAnswer(string  <span class="argument">$answer</span>) : mixed|boolean</pre>
+                <p><em>Получить сохраненный ответ пользователя</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$answer </td>
+                                <td><p>Название вопроса (ключ)</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    mixed|boolean
+                                            &mdash; <p>Ответ пользователя, по умолчанию false</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    </div>
+    </section>
+
+    <div id="source-view" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="source-view-label" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="source-view-label">Filesystem.class.php</h3>
+        </div>
+        <div class="modal-body">
+            <pre data-src="../files/Helper/Filesystem.class.php.txt" class="language-php line-numbers"></pre>
+        </div>
+    </div>
+
+    <footer class="row-fluid">
+        <section class="span10 offset2">
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <section class="row-fluid footer-sections">
+                        <section class="span4">
+                                                        <h1><i class="icon-code"></i></h1>
+                            <div>
+                                <ul>
+                                                                            <li><a href="../namespaces/lib.html">\lib</a></li>
+                                                                    </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-bar-chart"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../graphs/class.html">Class Hierarchy Diagram</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-pushpin"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../reports/errors.html">Errors</a></li>
+                                    <li><a href="../reports/markers.html">Markers</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <hr />
+                    Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor </a> and authored
+                    on May 15th, 2015 at 12:40.
+                </section>
+            </section>
+        </section>
+    </footer>
+</div>
+
+</body>
+</html>
