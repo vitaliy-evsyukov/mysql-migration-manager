@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(0);
+error_reporting(32767);
 define('DIR_SEP', DIRECTORY_SEPARATOR);
 define('DIR', __DIR__ . DIR_SEP);
 define('NO_COMMAND', -1);

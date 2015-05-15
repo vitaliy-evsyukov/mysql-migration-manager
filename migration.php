@@ -3,9 +3,9 @@
 
 require_once __DIR__ . '/init.php';
 
-$initHelper = $container->getInit();
+$initHelper  = $container->getInit();
 $printHelper = $container->getOutput();
-$cliParams = $initHelper->parseCommandLineArgs($argv);
+$cliParams   = $initHelper->parseCommandLineArgs($argv);
 
 if (empty($cliParams['options']['config'])) {
     $cliParams['options']['config'] = __DIR__ . DIR_SEP . 'config.ini';
@@ -19,20 +19,29 @@ if (file_exists($cliParams['options']['config'])) {
     exit(1);
 }
 
+set_error_handler(
+    function ($code, $message, $file, $line) use ($printHelper) {
+        $level = error_reporting();
+        if (($level & $code) === $code) {
+            $printHelper->error(
+                sprintf('%s (%s:%d)', $message, $file, $line)
+            );
+        }
+    }
+);
+
 register_shutdown_function(
     function () use ($printHelper) {
         $lastError = error_get_last();
         if ($lastError) {
             $printHelper->error(
-                sprintf('Error occured: %s (%s:%d)', $lastError['message'], $lastError['file'], $lastError['line'])
+                sprintf('%s (%s:%d)', $lastError['message'], $lastError['file'], $lastError['line'])
             );
-            exit(3);
         }
     }
 );
 
 $initHelper->setConfig($config);
-
 
 try {
     $controller = $initHelper->getController($cliParams['command']['name'], $cliParams['command']['args']);
