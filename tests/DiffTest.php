@@ -33,7 +33,7 @@ class DiffTest extends Base
      */
     public function testParse($filename, $expected)
     {
-        $service  = new \lib\dbDiff();
+        $service  = new \lib\DbDiff('');
         $filename = __DIR__ . DIR_SEP . 'files' . DIR_SEP . $filename;
         $result   = $service->parseDiff(explode("\n", file_get_contents($filename)));
         $expected = __DIR__ . DIR_SEP . 'files' . DIR_SEP . $expected;

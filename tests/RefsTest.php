@@ -4,10 +4,8 @@ use lib\Helper;
 
 class RefsTest extends Base
 {
-
     public function testRefsList()
     {
-
         $r = array(
             'managers'        => array(
                 'new' => 1
@@ -33,7 +31,7 @@ class RefsTest extends Base
             'managers_groups' => 1
         );
 
-        $res = Helper::getRefs($r, $t);
+        $res = static::getContainer()->getMigrations()->getTablesReferences($r, $t);
 
         $e = array(
             'managers'        => 1,
@@ -47,7 +45,4 @@ class RefsTest extends Base
 
         $this->assertEquals($e, $res);
     }
-
 }
-
-?>

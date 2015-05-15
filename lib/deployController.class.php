@@ -7,7 +7,7 @@ namespace lib;
  * Разворачивает данные с нужными датасетами и накатывает нужные миграции
  * Если миграции не указаны, то накатываются все
  * Если датасеты не указаны, то выводится соответствующее сообщение
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 class deployController extends DatasetsController
@@ -38,13 +38,11 @@ class deployController extends DatasetsController
         $toWork = array_reverse($toWork);
         $start  = $this->getChain()->getNext();
         foreach ($toWork as $controller => $arguments) {
-            $start          = new ControllersChain($start);
+            $start          = new ControllersChain($start, $this->container);
             $controllerName = 'lib\\' . $controller . 'Controller';
-            $start->setController(new $controllerName($this->db, $arguments));
+            $start->setController(new $controllerName($this->db, $arguments, $this->container));
         }
         $this->getChain()->setNext($start);
     }
 
 }
-
-?>

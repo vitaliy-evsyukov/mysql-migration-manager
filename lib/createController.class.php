@@ -2,13 +2,14 @@
 
 namespace lib;
 
+use lib\Helper\Writer\Migration;
+
 
 /**
  * createController
  * Создает ревизию и сохраняет ее
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
-
 class createController extends DatasetsController
 {
 
@@ -21,12 +22,12 @@ class createController extends DatasetsController
      * Объект подключения к временной БД
      * @var \lib\MysqliHelper
      */
-    private $_tempDb = null;
+    private $tempDb = null;
     /**
      * Имя и путь к файлу миграции
      * @var string
      */
-    private $_migrationFileName = '';
+    private $migrationFileName = '';
 
     /**
      * Устанавливает подключение к временной БД
@@ -34,7 +35,7 @@ class createController extends DatasetsController
      */
     public function setTempDb(MysqliHelper $tempDb)
     {
-        $this->_tempDb = $tempDb;
+        $this->tempDb = $tempDb;
     }
 
     /**
@@ -45,8 +46,9 @@ class createController extends DatasetsController
      */
     public function runStrategy()
     {
-        $migratedSchema     = Helper::getSchemaClassName('', true);
-        $migratedSchemaFile = Helper::getSchemaFile('', AbstractSchema::MIGRATED);
+        $filesystemHelper   = $this->container->getFileSystem();
+        $migratedSchema     = $this->container->getSchema()->getSchemaClassName('', true);
+        $migratedSchemaFile = $this->container->getFileSystem()->getSchemaFile('', AbstractSchema::MIGRATED);
         if (is_file($migratedSchemaFile) && is_readable($migratedSchemaFile)) {
             /**
              * @var AbstractSchema $migratedSchemaObj
@@ -54,69 +56,66 @@ class createController extends DatasetsController
             $migratedSchemaObj = new $migratedSchema;
             $migratedRevision  = $migratedSchemaObj->getRevision();
             $backupFileName    = sprintf('%s_%d.backup', $migratedSchemaFile, $migratedRevision);
-            Output::verbose(sprintf('Backuped %s as %s', $migratedSchemaFile, $backupFileName), 1);
+            $this->verbose(sprintf('Backuped %s as %s', $migratedSchemaFile, $backupFileName), 1);
             copy($migratedSchemaFile, $backupFileName);
         }
-        if (!$this->_tempDb) {
-            $tempDb = Helper::getTmpDbObject();
-            Helper::loadTmpDb($tempDb);
+        if (!$this->tempDb) {
+            $dbHelper = $this->container->getDb();
+            $tempDb   = $dbHelper->getTmpDbObject();
+            $dbHelper->loadTmpDb($tempDb);
         } else {
-            $tempDb = $this->_tempDb;
+            $tempDb = $this->tempDb;
         }
-        Output::verbose('Starting to search changes', 1);
-        $diffObj = new dbDiff($this->db, $tempDb);
-        $diff    = $diffObj->getDiff();
-        Output::verbose('Search of changes completed', 1);
+        $this->verbose('Starting to search changes', 1);
+        $diffObj = new DbDiff($this->container->getInit()->get('mysqldiff_command'), $this->db, $tempDb);
+        $diffObj->setOutput($this->container->getOutput());
+        $diff = $diffObj->getDiff();
+        $this->verbose('Search of changes completed', 1);
         if (!empty($diff['up']) || !empty($diff['down'])) {
-            $revision    = Helper::getLastRevision();
-            $file_exists = true;
-            while ($file_exists) {
-                $this->_migrationFileName =
-                    Helper::get('savedir') . "Migration{$revision}.class.php";
-                if (is_file($this->_migrationFileName)) {
-                    Output::verbose(
+            $revision   = $filesystemHelper->getLastRevision();
+            $fileExists = true;
+            $initHelper = $this->container->getInit();
+            while ($fileExists) {
+                $this->migrationFileName = $initHelper->get('savedir') . "Migration{$revision}.class.php";
+                if (is_file($this->migrationFileName)) {
+                    $this->verbose(
                         sprintf(
                             "Revision # %d already exists, file name: %s",
                             $revision,
-                            $this->_migrationFileName
+                            $this->migrationFileName
                         ),
                         2
                     );
                     $revision++;
                 } else {
-                    $file_exists = false;
+                    $fileExists = false;
                 }
             }
-            Output::verbose(sprintf('Try to create revision %d', $revision), 2);
-            $timestamp = Helper::writeRevisionFile($revision);
-            $content   = Helper::createMigrationContent(
-                $revision,
-                $diff,
-                $timestamp
-            );
-            file_put_contents($this->_migrationFileName, $content);
-            Output::verbose(
+            $this->verbose(sprintf('Try to create revision %d', $revision), 2);
+            $timestamp = $filesystemHelper->writeRevisionFile($revision);
+            $migration = new Migration($diff, $revision, $timestamp);
+            $filesystemHelper->writeInFile($this->migrationFileName, $migration);
+            $this->verbose(
                 sprintf(
                     "Revision %d successfully created and saved in file %s",
                     $revision,
-                    $this->_migrationFileName
+                    $this->migrationFileName
                 ),
                 1
             );
         } else {
-            Output::verbose(
+            $this->verbose(
                 'There are no changes in database structure now',
                 1
             );
         }
         /**
          * Добавилась миграция, нужно пересобрать карты связей и миграций
-         * TODO: передавать миграцию и получать только связанные с ней изменения
          * Если миграция не была добавлена, то карты связей и миграций должны быть в любом случае обнулены, т.к.
          * при использовании датасетов последняя связанная с ними миграция может быть не последней в списке, и поэтому
          * при вызове migrate-контроллера он будет накатывать все оставшиеся миграции
          */
-        Registry::resetAll();
+        $this->container->getMigrations()->resetAll();
     }
 
     /**
@@ -125,7 +124,6 @@ class createController extends DatasetsController
      */
     public function getMigrationFileName()
     {
-        return $this->_migrationFileName;
+        return $this->migrationFileName;
     }
-
 }

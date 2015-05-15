@@ -3,10 +3,12 @@
 /**
  * schemaController
  * Создает и/или разворачивает схему данных
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 namespace lib;
+
+use lib\Helper\Writer\Schema;
 
 class schemaController extends DatasetsController
 {
@@ -15,12 +17,16 @@ class schemaController extends DatasetsController
      * Массив запросов
      * @var array
      */
-    protected $_queries = array();
+    protected $queries = array();
 
     public function runStrategy()
     {
-        $datasets = $this->args['datasets'];
-        $revision = 0;
+        $datasets   = $this->args['datasets'];
+        $revision   = 0;
+        $migrations = $this->container->getMigrations();
+        $filesystem = $this->container->getFileSystem();
+        $schema     = $this->container->getSchema();
+        $database   = $this->container->getDb();
         if (isset($this->args['revision'])) {
             $revision = (int) $this->args['revision'];
         }
@@ -31,7 +37,7 @@ class schemaController extends DatasetsController
             ksort($datasets);
             $json   = $this->loadDatasetInfo();
             $dshash = md5(implode('', array_keys($datasets)));
-            Registry::setHash($dshash);
+            $migrations->setHash($dshash);
         }
         if (isset($this->args['excludeDatasets']) && ($this->args['excludeDatasets'] === 0)) {
             $datasets = array();
@@ -47,63 +53,69 @@ class schemaController extends DatasetsController
             }
         }
 
-        $fname            = Helper::getSchemaFile($dshash, $schemaType);
+        $fname            = $filesystem->getSchemaFile($dshash, $schemaType);
         $isMigratedSchema = (strpos($fname, 'migrated') !== false);
-        $message          = "Schema's file %s already exists. Do you want to override it? [y/n] ";
-        $checkFn          = array('\lib\AbstractSchema', 'loadInstance');
+        $message          = "Schema's file %s already exists. Do you want to override it? [%s] ";
+        $checkFn          = array($schema, 'loadInstance');
         $params           = array($isMigratedSchema, $dshash, empty($this->args['notDeploy']));
 
-        Helper::setCurrentDb($this->db, 'Schema controller - check for overwrite');
-        if (Helper::askToRewrite($fname, $message, $checkFn, $params)) {
+        $database->setCurrentDb($this->db, 'Schema controller - check for overwrite');
+        if ($filesystem->askToRewrite($fname, $message, $checkFn, $params)) {
             if (!empty($datasets)) {
                 foreach ($json['reqs'] as $dataset) {
                     foreach ($dataset['tables'] as $tablename) {
-                        $this->_queries[$tablename] = '1';
+                        $this->queries[$tablename] = '1';
                     }
                 }
-                Registry::setTablesList($this->_queries);
+                $migrations->setTablesList($this->queries);
             }
-            Output::verbose('Parsing schema files...', 1);
-            Helper::setCurrentDb($this->db, 'Schema controller');
-            $this->_queries = Helper::parseSchemaFiles($this->_queries);
-            Output::verbose('Parsing finished', 1);
-            if (!empty($this->_queries)) {
-                Helper::writeInFile($fname, $dshash, $this->_queries, 'tpl/schema.tpl', $revision);
+            $this->verbose('Parsing schema files...', 1);
+            $database->setCurrentDb($this->db, 'Schema controller');
+            $this->queries = $schema->parseSchemaFiles($this->queries);
+            $this->verbose('Parsing finished', 1);
+            if (!empty($this->queries)) {
+                $schemaWriter = new Schema($dshash, $this->queries, $revision);
+                $filesystem->writeInFile($fname, $schemaWriter);
                 if (empty($this->args['notDeploy'])) {
-                    $this->_queries = $this->_queries['queries'];
+                    $this->queries = $this->queries['queries'];
                     // Создадим структуру базы
-                    Output::verbose('Deploying schema...', 1);
-                    if ((int) Helper::get('verbose') >= 3) {
-                        Helper::_debug_queryMultipleDDL($this->db, $this->_queries);
+                    $this->verbose('Deploying schema...', 1);
+                    if ((int) $this->container->getInit()->get('verbose') >= 3) {
+                        $database->debugQueryMultipleDDL($this->db, $this->queries);
                     } else {
-                        Helper::queryMultipleDDL(
+                        $database->queryMultipleDDL(
                             $this->db,
-                            implode("\n", $this->_queries)
+                            implode("\n", $this->queries)
                         );
                     }
-                    Output::verbose('Schema deploy finished', 1);
+                    $this->verbose('Schema deploy finished', 1);
                 }
             } else {
-                Output::verbose('No tables found. File is not created', 1);
+                $this->verbose('No tables found. File is not created', 1);
             }
         } else {
-            $classname      = Helper::getSchemaClassName($dshash, $isMigratedSchema);
+            $classname = $schema->getSchemaClassName($dshash, $isMigratedSchema);
+            /**
+             * @var AbstractSchema $class
+             */
             $class          = new $classname;
             $schemaRevision = $class->getRevision();
             if ($revision && ($revision !== $schemaRevision)) {
-                Helper::changeRevision($fname, $revision);
+                $schema->changeRevision($fname, $revision);
             } else {
-                Output::verbose('Set revision number to ' . $schemaRevision, 3);
+                $this->verbose('Set revision number to ' . $schemaRevision, 3);
                 $revision = $schemaRevision;
             }
             if (empty($this->args['notDeploy'])) {
-                Output::verbose('Deploying schema', 1);
-                $class->load($this->db);
-                Output::verbose('Schema deploy finished', 1);
+                $this->verbose('Deploying schema', 1);
+                $class->load($this->db, $this->container);
+                $this->verbose('Schema deploy finished', 1);
             }
         }
-        Helper::setCurrentTempDb($this->db);
-        Helper::writeRevisionFile($revision);
+        /**
+         * Так как мы развернули схему, можем воспользоваться ей как базой для получения начальных данных о связях таблиц
+         */
+        $database->setCurrentTempDb($this->db);
+        $filesystem->writeRevisionFile($revision);
     }
-
 }

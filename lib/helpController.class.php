@@ -5,11 +5,10 @@ namespace lib;
 /**
  * helpController
  * Выводит справку
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 class helpController implements IController
 {
-
     public function runStrategy()
     {
         $content = file_get_contents(DIR . 'tpl/help.tpl') . "\n";
@@ -18,5 +17,4 @@ class helpController implements IController
         }
         printf($content);
     }
-
 }

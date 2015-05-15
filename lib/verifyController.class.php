@@ -5,7 +5,7 @@ namespace lib;
 /**
  * verifyController
  * Контроллер, занимающийся проверкой локальных (незарегистрированных в миграциях и схеме) изменениях БД пользователя
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 class verifyController extends DatasetsController
@@ -15,16 +15,20 @@ class verifyController extends DatasetsController
      */
     public function runStrategy()
     {
-        Output::verbose('Starting verification of database');
-        $currentRevision                 = Helper::getCurrentRevision();
+        $filesystem = $this->container->getFileSystem();
+        $migrations = $this->container->getMigrations();
+        $database   = $this->container->getDb();
+        $this->verbose('Starting verification of database');
+        $currentRevision                 = $filesystem->getCurrentRevision();
         $this->args['createSchema']      = false;
         $this->args['useOriginalSchema'] = true;
-        Registry::setSchemaType(AbstractSchema::ORIGINAL);
-        $db        = Helper::getTmpDbObject();
-        $deployObj = Helper::getController('deploy', $this->args, $db);
+        $migrations->setSchemaType(AbstractSchema::ORIGINAL);
+        $db        = $database->getTmpDbObject();
+        $deployObj = $this->container->getInit()->getController('deploy', $this->args, $db);
         $deployObj->runStrategy();
-        Registry::setSchemaType(null);
-        $diffObj = new dbDiff($db, $this->db);
+        $migrations->setSchemaType(null);
+        $diffObj = new DbDiff($this->container->getInit()->get('mysqldiff_command'), $db, $this->db);
+        $diffObj->setOutput($this->container->getOutput());
         $diff    = $diffObj->getDiff();
 
         $info = array(
@@ -42,7 +46,7 @@ class verifyController extends DatasetsController
         foreach ($info as $direction => $data) {
             if (!empty($diff[$direction])) {
                 $diffExists++;
-                Output::verbose(
+                $this->verbose(
                     sprintf(
                         'Statements which must be executed on %s database to make it similar to %s database:',
                         $data['first'],
@@ -55,17 +59,17 @@ class verifyController extends DatasetsController
                     foreach ($statements as $statement) {
                         $statementsText[] = '------ ' . $statement['sql'];
                     }
-                    Output::verbose(
+                    $this->verbose(
                         sprintf("--- For table %s:\n%s", $tableName, implode("\n", $statementsText))
                     );
                 }
             }
         }
         if (!$diffExists) {
-            Output::verbose('Your database is actual and equal to original!');
+            $this->verbose('Your database is actual and equal to original!');
         }
         // восстановим текущую ревизию
-        Helper::writeRevisionFile($currentRevision);
+        $filesystem->writeRevisionFile($currentRevision);
 
         return (bool) $diffExists;
     }

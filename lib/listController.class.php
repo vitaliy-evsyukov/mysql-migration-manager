@@ -5,10 +5,10 @@ namespace lib;
 /**
  * listController
  * Показывает список доступных миграций
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
-class listController implements IController
+class listController extends AbstractController
 {
 
     /**
@@ -18,13 +18,14 @@ class listController implements IController
 
     public function runStrategy()
     {
-        $migrations = Helper::getAllMigrations();
-        $current    = Helper::getCurrentRevision();
+        $filesystem = $this->container->getFileSystem();
+        $migrations = $filesystem->getAllMigrations();
+        $current    = $filesystem->getCurrentRevision();
         if (empty($migrations['migrations'])) {
-            Output::verbose('There aren\'t revisons', 1);
+            $this->verbose('There aren\'t revisons', 1);
         } else {
-            Output::verbose(sprintf("Current revision: %d\n", $current), 1);
-            Output::verbose(
+            $this->verbose(sprintf("Current revision: %d\n", $current), 1);
+            $this->verbose(
                 sprintf(
                     $this->drawTextTable(
                         $migrations['data'],
@@ -38,7 +39,7 @@ class listController implements IController
                 1
             );
         }
-        Output::verbose(sprintf("Current revision: %d\n", $current), 1);
+        $this->verbose(sprintf("Current revision: %d\n", $current), 1);
     }
 
     /**

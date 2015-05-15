@@ -2,15 +2,15 @@
 
 namespace lib;
 
+use lib\Helper\Container;
+
 /**
  * ControllersChain
  * Цепочка обязанностей
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
-
 class ControllersChain implements IController
 {
-
     /**
      * Константа для выключения проверки внешних ключей
      */
@@ -24,28 +24,40 @@ class ControllersChain implements IController
      * Контроллер, который будет вызван
      * @var DatasetsController
      */
-    protected $_controller = null;
+    private $controller = null;
 
     /**
      * Следующий элемент цепочки
      * @var ControllersChain
      */
-    protected $_next = null;
+    private $next = null;
+
     /**
      * Песочница окружения
      * @var array
      */
-    private $_sandbox = array();
+    private $sandbox = array();
+
     /**
      * Массив количества выполнений каждого контроллера
      * @var array
      */
-    private $_controllerIndexes = array();
+    private $controllerIndexes = array();
 
+    /**
+     * Контейнер зависимостей
+     * @var Container
+     */
+    private $container;
 
-    public function __construct(ControllersChain $handler = null)
+    /**
+     * @param ControllersChain $handler   Следующий обработчик в цепочке
+     * @param Container        $container Контейнер зависимостей
+     */
+    public function __construct(ControllersChain $handler = null, Container $container)
     {
-        $this->_next = $handler;
+        $this->next      = $handler;
+        $this->container = $container;
     }
 
     /**
@@ -54,16 +66,16 @@ class ControllersChain implements IController
      */
     public function setController(DatasetsController $controller)
     {
-        $this->_controller = $controller;
+        $this->controller = $controller;
     }
 
     /**
-     * Вернуть контроллер
+     * Возвращает контроллер
      * @return \lib\DatasetsController|null
      */
     public function getController()
     {
-        return $this->_controller;
+        return $this->controller;
     }
 
     /**
@@ -75,26 +87,26 @@ class ControllersChain implements IController
     {
         $state  = (int) $state;
         $result = null;
-        if ($this->_controller) {
+        if ($this->controller) {
             if ($state === self::FK_OFF) {
-                $this->_controller->toogleFK($state);
+                $this->controller->toogleFK($state);
             }
-            $action = Helper::getActionName($this->_controller);
-            Output::verbose(
+            $action = $this->container->getInit()->getActionName($this->controller);
+            $this->container->getOutput()->verbose(
                 sprintf('Run %s', $action),
                 3
             );
             $this->runSandbox($action);
-            $result = $this->_controller->runStrategy();
+            $result = $this->controller->runStrategy();
             $this->resetSandbox();
             $state++;
-            if ($this->_next) {
-                $this->_next->setSandbox($this->_sandbox);
-                $this->_next->setIndexesCounter($this->_controllerIndexes);
-                $this->_next->runStrategy($state);
+            if ($this->next) {
+                $this->next->setSandbox($this->sandbox);
+                $this->next->setIndexesCounter($this->controllerIndexes);
+                $this->next->runStrategy($state);
             }
             if ($state == self::FK_ON) {
-                $this->_controller->toogleFK($state);
+                $this->controller->toogleFK($state);
             }
         }
         return $result;
@@ -106,7 +118,7 @@ class ControllersChain implements IController
      */
     public function setNext(ControllersChain $next)
     {
-        $this->_next = $next;
+        $this->next = $next;
     }
 
     /**
@@ -115,7 +127,7 @@ class ControllersChain implements IController
      */
     public function getNext()
     {
-        return $this->_next;
+        return $this->next;
     }
 
     /**
@@ -125,15 +137,15 @@ class ControllersChain implements IController
     public function setSandbox(array $sandbox = array())
     {
         if (!isset($sandbox['original'])) {
-            $sandbox['original'] = array(Helper::getConfig());
+            $sandbox['original'] = array($this->container->getInit()->getConfig());
         }
-        $this->_sandbox           = $sandbox;
-        $this->_controllerIndexes = array();
-        $keys                     = array_keys($sandbox);
+        $this->sandbox           = $sandbox;
+        $this->controllerIndexes = array();
+        $keys                    = array_keys($sandbox);
         foreach ($keys as $key) {
-            $this->_controllerIndexes[$key] = -1;
+            $this->controllerIndexes[$key] = -1;
             if (!is_int(key($sandbox[$key]))) {
-                $this->_sandbox[$key] = array($this->_sandbox[$key]);
+                $this->sandbox[$key] = array($this->sandbox[$key]);
             }
         }
     }
@@ -144,7 +156,7 @@ class ControllersChain implements IController
      */
     public function setIndexesCounter(array $counter)
     {
-        $this->_controllerIndexes = $counter;
+        $this->controllerIndexes = $counter;
     }
 
     /**
@@ -153,21 +165,21 @@ class ControllersChain implements IController
      */
     private function runSandbox($action)
     {
-        if (isset($this->_sandbox[$action])) {
+        if (isset($this->sandbox[$action])) {
             $currentIndex = 0;
             /**
              * Если запускаем не приведение к оригинальному состоянию, то для текущего действия увеличим счетчик, т.к.
              * при вложенных друг в друга цепочках ответственностей может понадобиться иметь разное окружение
              */
             if ($action !== 'original') {
-                $this->_controllerIndexes[$action]++;
-                $currentIndex = $this->_controllerIndexes[$action];
+                $this->controllerIndexes[$action]++;
+                $currentIndex = $this->controllerIndexes[$action];
             }
             /**
              * Если для текущего уровня задано окружение, применим его
              */
-            if (isset($this->_sandbox[$action][$currentIndex])) {
-                Output::verbose(
+            if (isset($this->sandbox[$action][$currentIndex])) {
+                $this->container->getOutput()->verbose(
                     sprintf(
                         'Run sandboxing for %s at index %d',
                         $action,
@@ -175,9 +187,9 @@ class ControllersChain implements IController
                     ),
                     3
                 );
-                foreach ($this->_sandbox[$action][$currentIndex] as $key =>
-                         $value) {
-                    Helper::set($key, $value);
+                $initHelper = $this->container->getInit();
+                foreach ($this->sandbox[$action][$currentIndex] as $key => $value) {
+                    $initHelper->set($key, $value);
                 }
             }
         }
@@ -190,7 +202,4 @@ class ControllersChain implements IController
     {
         $this->runSandbox('original');
     }
-
 }
-
-?>

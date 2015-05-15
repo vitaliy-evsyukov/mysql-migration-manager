@@ -5,33 +5,32 @@ namespace lib;
 /**
  * migrateController
  * Выполняет миграции
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 class migrateController extends DatasetsController
 {
-
     protected $queries = array();
 
-    protected $_argKeys = array('verify');
+    protected $argKeys = array('verify');
 
     public function runStrategy()
     {
-        $mHelper = Helper::getAllMigrations();
+        $filesystem = $this->container->getFileSystem();
+        $mHelper    = $filesystem->getAllMigrations();
 
         if (empty($mHelper['migrations'])) {
-            Output::verbose("No revisions have been created", 1);
-
+            $this->verbose("No revisions have been created", 1);
             return false;
         }
         $minMigration = current($mHelper['migrations']);
-        Output::verbose(
+        $this->verbose(
             sprintf('Minimal migration number is %d', $minMigration),
             1
         );
         $maxMigration = end($mHelper['migrations']);
 
         if (!isset($this->args['revision'])) {
-            $revision = Helper::getCurrentRevision();
+            $revision = $filesystem->getCurrentRevision();
         } else {
             $revision = $this->args['revision'];
         }
@@ -40,30 +39,30 @@ class migrateController extends DatasetsController
             $revision = $maxMigration;
         }
 
-        Output::verbose(sprintf('You are at revision %d', $revision), 1);
+        $this->verbose(sprintf('You are at revision %d', $revision), 1);
         if (!isset($this->args['m'])) {
             $this->args['m'] = 'now';
         }
-        $str = $this->args['m'];
+        $str        = $this->args['m'];
+        $migrations = $this->container->getMigrations();
         if (is_numeric($str)) {
-            $search_migration = (int) $str;
-            if ($search_migration !== 0) {
-                $class            = sprintf(
-                    '%s\Migration%d',
-                    Helper::get('savedir_ns'),
-                    $search_migration
-                );
-                $o                = new $class;
-                $meta             = $o->getMetadata();
-                $target_migration = $meta['timestamp'];
+            $searchMigration = (int) $str;
+            if ($searchMigration !== 0) {
+                $class = $migrations->getMigrationClassName($searchMigration);
+                /**
+                 * @var AbstractMigration $migrationObj
+                 */
+                $migrationObj    = new $class;
+                $meta            = $migrationObj->getMetadata();
+                $targetMigration = $meta['timestamp'];
             } else {
-                $target_migration = 0;
+                $targetMigration = 0;
             }
         } else {
-            $target_migration = strtotime($str);
+            $targetMigration = strtotime($str);
         }
 
-        if (false === $target_migration) {
+        if (false === $targetMigration) {
             throw new \Exception(
                 sprintf("Incorrect migration value %s", $str)
             );
@@ -89,8 +88,8 @@ class migrateController extends DatasetsController
         }
 
         $target_str = 'initial revision (SQL)';
-        if ($target_migration > 0) {
-            $target_str = date('d.m.Y H:i:s', $target_migration);
+        if ($targetMigration > 0) {
+            $target_str = date('d.m.Y H:i:s', $targetMigration);
         }
         if ($timestamp > 0) {
             $start_str = date('d.m.Y H:i:s', $timestamp);
@@ -98,12 +97,11 @@ class migrateController extends DatasetsController
             $start_str = 'initial revision';
         }
 
-        if ($revision === $maxMigration && $target_migration >= $timestamp) {
-            Output::verbose('There are no newer migrations', 1);
-
+        if ($revision === $maxMigration && $targetMigration >= $timestamp) {
+            $this->verbose('There are no newer migrations', 1);
             return false;
         } else {
-            Output::verbose(
+            $this->verbose(
                 sprintf(
                     "Starting migration from %s (revision %d) to %s\n",
                     $start_str,
@@ -116,23 +114,22 @@ class migrateController extends DatasetsController
 
         $isModified = false;
         if (isset($this->args['verify'])) {
-            $verifyObj  = Helper::getController('verify', $this->args, $this->db);
+            $verifyObj  = $this->container->getInit()->getController('verify', $this->args, $this->db);
             $isModified = $verifyObj->runStrategy();
         }
 
         if ($isModified) {
-            Output::verbose('Migration canceled');
-
+            $this->verbose('Migration canceled, verification failed', 1);
             return false;
         }
 
         $direction = 'Up';
         if ($revision > 0) {
-            $direction = $mHelper['data'][$revision]['time'] <= $target_migration ? 'Up' : 'Down';
+            $direction = $mHelper['data'][$revision]['time'] <= $targetMigration ? 'Up' : 'Down';
         }
 
-        Helper::setCurrentDb($this->db, 'Migrate controller');
-        $timeline = Helper::getTimeline($tablesList, true, ($direction === 'Down'));
+        $this->container->getDb()->setCurrentDb($this->db, 'Migrate controller');
+        $timeline = $migrations->getTimeline($tablesList, true, ($direction === 'Down'));
 
         if ($direction === 'Down') {
             $timeline = array_reverse($timeline, true);
@@ -149,7 +146,7 @@ class migrateController extends DatasetsController
                  * спускаемся вниз, пропускаем
                  */
                 if ($time > $timestamp) {
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             "%s skipped, because is is lesser %s",
                             $time_str,
@@ -163,11 +160,11 @@ class migrateController extends DatasetsController
                  * Если прошли минимально подходящую ревизию, остановимся
                  */
                 $revision = $time;
-                if ($time <= $target_migration) {
+                if ($time <= $targetMigration) {
                     if ($time === 0) {
                         $revision = 0;
                     }
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             "%s skipped, because is less or equal %s",
                             $time_str,
@@ -179,7 +176,7 @@ class migrateController extends DatasetsController
                 }
             } else {
                 if ($time <= $timestamp) {
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             "%s skipped, because is less or equal %s\n",
                             $time_str,
@@ -189,8 +186,8 @@ class migrateController extends DatasetsController
                     );
                     continue;
                 }
-                if ($time > $target_migration) {
-                    Output::verbose(
+                if ($time > $targetMigration) {
+                    $this->verbose(
                         sprintf(
                             "%s skipped, because is greater %s\n",
                             $time_str,
@@ -205,7 +202,7 @@ class migrateController extends DatasetsController
 
             foreach ($tables as $tablename => $rev) {
                 if (is_int($rev)) {
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             "Executing migration for %s (# %d)\n",
                             $time_str,
@@ -215,7 +212,7 @@ class migrateController extends DatasetsController
                     );
                     // обратимся к нужному классу
                     if (!isset($usedMigrations[$rev])) {
-                        Output::verbose(
+                        $this->verbose(
                             sprintf(
                                 "Execute migration in database %s for tables:\n--- %s",
                                 $this->db->getDatabaseName(),
@@ -223,7 +220,7 @@ class migrateController extends DatasetsController
                             ),
                             2
                         );
-                        Helper::applyMigration(
+                        $migrations->applyMigration(
                             $rev,
                             $this->db,
                             $direction,
@@ -234,7 +231,7 @@ class migrateController extends DatasetsController
                     }
                 } else {
                     // это SQL-запрос
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             "Executing SQL for table: %s",
                             $tablename
@@ -246,7 +243,7 @@ class migrateController extends DatasetsController
             }
         }
 
-        if ($target_migration === 0) {
+        if ($targetMigration === 0) {
             $revision = 0;
         } else {
             if (isset($mHelper['timestamps'][$revision])) {
@@ -255,7 +252,7 @@ class migrateController extends DatasetsController
         }
 
         if ((int) $revision !== 1) {
-            Helper::writeRevisionFile($revision);
+            $filesystem->writeRevisionFile($revision);
         }
 
         // если принудительно не запретили создавать схему
@@ -272,12 +269,14 @@ class migrateController extends DatasetsController
      */
     public function createMigratedSchema($revision)
     {
-        $currentReplacement = Helper::get('routine_user');
-        Helper::set('routine_user', '');
+        $initHelper         = $this->container->getInit();
+        $fsHelper           = $this->container->getFileSystem();
+        $currentReplacement = $initHelper->get('routine_user');
+        $initHelper->set('routine_user', '');
         $revision = (int) $revision;
         if ($revision !== 1) {
-            $tmpDir = sys_get_temp_dir() . '/tmp_schema/';
-            Output::verbose(
+            $tmpDir = $fsHelper->getTempDir('tmp_schema');
+            $this->verbose(
                 sprintf(
                     'Create schema after migration with revision %d, files will be saved in folder %s',
                     $revision,
@@ -285,24 +284,23 @@ class migrateController extends DatasetsController
                 ),
                 1
             );
-            $this->removeTmpSchemaDir($tmpDir);
-            $chain                   = Helper::getController('getsql', $this->args, $this->db);
+            $chain                   = $initHelper->getController('getsql', $this->args, $this->db);
             $this->args['revision']  = $revision;
             $this->args['notDeploy'] = true;
             // получить схему нужно для всех таблиц, которые есть в БД, но записать как мигрированную, если датасеты переданы
             $this->args['excludeDatasets'] = 0;
             $sandbox                       = array('schemadir' => $tmpDir);
-            $schemaObj                     = Helper::getController('schema', $this->args, $this->db);
+            $schemaObj                     = $initHelper->getController('schema', $this->args, $this->db);
             $chain->setNext($schemaObj);
             $chain->setSandbox(
                 array(
-                     'getsql' => $sandbox,
-                     'schema' => $sandbox
+                    'getsql' => $sandbox,
+                    'schema' => $sandbox
                 )
             );
             $chain->runStrategy();
-            $this->removeTmpSchemaDir($tmpDir);
-            Output::verbose(
+            $fsHelper->getTempDir('tmp_schema');
+            $this->verbose(
                 sprintf(
                     'Migrated schema\'s creation with revision %d finished, folder %s removed',
                     $revision,
@@ -311,34 +309,6 @@ class migrateController extends DatasetsController
                 1
             );
         }
-        Helper::set('routine_user', $currentReplacement);
+        $initHelper->set('routine_user', $currentReplacement);
     }
-
-    /**
-     * Рекурсивно удаляет папку, куда сложена временная съема
-     * @param string $tmpDir
-     */
-    private function removeTmpSchemaDir($tmpDir)
-    {
-        if (is_dir($tmpDir)) {
-            /**
-             * Удаление вложенных папок и файлов и затем удаление директории
-             */
-            $it = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($tmpDir),
-                \RecursiveIteratorIterator::CHILD_FIRST
-            );
-            foreach ($it as $file) {
-                if (in_array($file->getBasename(), array('.', '..'))) {
-                    continue;
-                } elseif ($file->isDir()) {
-                    rmdir($file->getPathname());
-                } elseif ($file->isFile() || $file->isLink()) {
-                    unlink($file->getPathname());
-                }
-            }
-            rmdir($tmpDir);
-        }
-    }
-
 }

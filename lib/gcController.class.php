@@ -3,7 +3,7 @@
 /**
  * gcController
  * Удаляет базы данных, оставшиеся после некорректного завершения работы
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 namespace lib;
@@ -15,14 +15,15 @@ class gcController extends DatasetsController
     {
         $ignored  = array();
         $continue = true;
+        $hInit    = $this->container->getInit();
         while ($continue) {
             $tables   = array();
             $res      = $this->db->query('SHOW DATABASES;');
             $queries  = array();
             $patterns = array(
                 '/db_\S{32}/',
-                '/' . Helper::get('db') . '_\S{10}/',
-                '/^' . Helper::get('tmp_db_name') . '(_\S{10})?/',
+                '/' . $hInit->get('db') . '_\S{10}/',
+                '/^' . $hInit->get('tmp_db_name') . '(_\S{10})?/',
                 '/test_mysqldiff-temp-[\d_]*/',
                 '/full_temp_db_\S{10}/'
             );
@@ -47,14 +48,14 @@ class gcController extends DatasetsController
                 $list     = 'No trash databases found';
                 $continue = false;
             }
-            Output::verbose($list . "\n ", 2);
+            $this->verbose($list . "\n ", 2);
             if (!empty($queries)) {
                 try {
                     $this->multiQuery($list);
                     $continue = false;
-                    Output::verbose("Completed\n", 2);
+                    $this->verbose("Completed\n", 2);
                 } catch (\Exception $e) {
-                    Output::verbose("Error occured\n", 2);
+                    $this->verbose("Error occured\n", 2);
                     foreach ($tables as $name) {
                         if (!isset($ignored[$name])) {
                             $ignored[$name] = '1';
@@ -64,9 +65,7 @@ class gcController extends DatasetsController
                 }
             }
         }
-        Output::verbose("Ignored:\n", 2);
-        Output::verbose(implode("\n", array_keys($ignored)), 2);
+        $this->verbose("Ignored:\n", 2);
+        $this->verbose(implode("\n", array_keys($ignored)), 2);
     }
 }
-
-?>

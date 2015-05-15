@@ -5,7 +5,7 @@ namespace lib;
 /**
  * upgradeController
  * Обновляет базу данных до нужной ревизии
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 class upgradeController extends AbstractController
@@ -16,52 +16,40 @@ class upgradeController extends AbstractController
      */
     public function runStrategy()
     {
+        $initHelper = $this->container->getInit();
+        $dbHelper   = $this->container->getDb();
+        $fsHelper   = $this->container->getFileSystem();
         // повторение команды для базы, которую нужно проапгрейдить
         $this->db->setCommand('SET foreign_key_checks = 0');
         // подключение к временной БД
         $dbName = '';
-        if ((int) Helper::get('tmp_add_suffix')) {
-            $dbName = 'full_temp_db_' . Helper::get('tmp_db_name');
+        if ((int) $initHelper->get('tmp_add_suffix')) {
+            $dbName = 'full_temp_db_' . $initHelper->get('tmp_db_name');
         }
-        $db = Helper::getTmpDbObject($dbName);
+        $db = $dbHelper->getTmpDbObject($dbName);
         // путь для сохранения временной миграции
-        $path    = sprintf(
-            '%s/%s_temp_migration_%d/',
-            sys_get_temp_dir(),
-            $dbName,
-            time()
+        $path    = $fsHelper->getTempDir(
+            sprintf(
+                '%s_temp_migration_%d',
+                $dbName,
+                time()
+            )
         );
-        $saveDir = str_replace('\\', '/', Helper::get('savedir_ns'));
+        $saveDir = str_replace('\\', '/', $initHelper->get('savedir_ns'));
         $saveDir = sprintf('%s%s/', $path, $saveDir);
         $pathes  = array($path, $saveDir);
-        foreach ($pathes as $p) {
-            if (!is_dir($p)) {
-                if (!mkdir($p, 0777, true)) {
-                    throw new \Exception(
-                        sprintf(
-                            'Cannot to create directory %s',
-                            $path
-                        )
-                    );
-                } else {
-                    Output::verbose(
-                        sprintf('Temporary directory %s created', $p),
-                        1
-                    );
-                }
-            }
-        }
+        $fsHelper->initDirs($pathes);
         set_include_path(
             implode(PATH_SEPARATOR, array(get_include_path(), $path))
         );
         $this->args['overrideRevision'] = true;
         $this->args['loadData']         = false;
-        $chain                          = Helper::getController('deploy', $this->args, $db);
+        $chain                          = $initHelper->getController('deploy', $this->args, $db);
         /**
          * Для апгрейда мы должны считать временную и развернутую базу эталоном,
          * а переданную пользователем мы делаем "временной" и сравниваем
          */
-        $create = Helper::getController('create', $this->args, $db);
+        $create = $initHelper->getController('create', $this->args, $db);
         $create->getController()->setTempDb($this->db);
         // мигрировать начать нужно с нуля
         $this->args['revision']     = 0;
@@ -74,7 +62,7 @@ class upgradeController extends AbstractController
          * выполнены не будут)
          */
         $this->args['excludeDatasets'] = true;
-        $migrate = Helper::getController(
+        $migrate                       = $initHelper->getController(
             'migrate',
             $this->args,
             $this->db
@@ -85,10 +73,10 @@ class upgradeController extends AbstractController
         $tempSave = array('savedir' => $saveDir);
         $chain->setSandbox(
             array(
-                 'schema'  => $tempSave,
-                 'create'  => $tempSave,
-                 // для migrate задаем окружение для индекса 1, т.к. индекс 0 у migrate происходит в пределах deploy
-                 'migrate' => array(1 => $tempSave)
+                'schema'  => $tempSave,
+                'create'  => $tempSave,
+                // для migrate задаем окружение для индекса 1, т.к. индекс 0 у migrate происходит в пределах deploy
+                'migrate' => array(1 => $tempSave)
             )
         );
         $chain->runStrategy();
