@@ -180,6 +180,7 @@ class Filesystem extends Helper
         $timestamp = time();
         $lines     = $this->getRevisionsLines();
         $exists    = ($revision === 0);
+        $revision  = (int) $revision;
         foreach ($lines as $line) {
             $data = explode('|', $line);
             if ((int) $data[0] === $revision) {

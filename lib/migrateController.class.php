@@ -98,7 +98,7 @@ class migrateController extends DatasetsController
         }
 
         if ($revision === $maxMigration && $targetMigration >= $timestamp) {
-            $this->verbose('There are no newer migrations', 1);
+            $this->verbose('There are not newer migrations', 1);
             return false;
         } else {
             $this->verbose(
