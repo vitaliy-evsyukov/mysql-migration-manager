@@ -1,0 +1,477 @@
+<?php
+
+namespace lib\Helper;
+
+use lib\DbDiff;
+use lib\migrateController;
+use lib\MysqliHelper;
+
+/**
+ * Db
+ * Хелпер работы с БД
+ * @author  Виталий Евсюков
+ * @package lib\Helper
+ */
+class Db extends Helper
+{
+    /**
+     * База при запросе получения базы с конфигом по умолчанию
+     * @var MysqliHelper
+     */
+    private $db = null;
+
+    /**
+     * Массив переменных замены. В каждом запросе происходит подмена указанной БД на взятую из конфига
+     * @var array
+     */
+    private $replaceVariables = null;
+
+    /**
+     * Текущая БД, используется как общее для хелперов состояние, с чем происходит работа
+     * @var MysqliHelper
+     */
+    private $currentDb;
+
+    /**
+     * БД, которую можно рассматривать как временную в текущий момент
+     * @var MysqliHelper
+     */
+    private $currentTempDb;
+
+    /**
+     * Выбирает базу данных и создает ее, если не было
+     * @param \lib\MysqliHelper $connection
+     * @param string            $dbName
+     * @throws \Exception
+     */
+    public function prepareDb(MysqliHelper $connection, $dbName)
+    {
+        $res  = $connection->query('SHOW DATABASES;');
+        $flag = false;
+        while ($row = $res->fetch_array(MYSQLI_NUM)) {
+            if ($row[0] === $dbName) {
+                $this->output(
+                    sprintf(
+                        'Found database %s in current databases',
+                        $dbName
+                    ),
+                    2
+                );
+                $flag = true;
+                break;
+            }
+        }
+        if (!$flag) {
+            $this->output(sprintf('Create database %s', $dbName), 2);
+            $query = "CREATE DATABASE `{$dbName}` DEFAULT CHARACTER SET cp1251 COLLATE cp1251_general_ci;";
+            if (!$connection->query($query)) {
+                throw new \Exception(
+                    sprintf(
+                        'Cannot create database %s. Reason: %s',
+                        $dbName,
+                        $connection->getLastError()
+                    )
+                );
+            }
+        }
+        $connection->select_db($dbName);
+    }
+
+    /**
+     * Возвращает объект соединения
+     * @param array $config
+     * @return \lib\MysqliHelper
+     */
+    public function getDbObject($config = array())
+    {
+        $conf  = $this->getConfig();
+        $store = false;
+        $db    = null;
+        if (count($config)) {
+            foreach ($config as $option => $value) {
+                $conf[$option] = $value;
+            }
+        } else {
+            $store = true;
+            $db    = $this->db;
+        }
+        if (!$db) {
+            $db = new MysqliHelper($conf['host'], $conf['user'], $conf['password'], '', $conf['port']);
+            $db->setOutput($this->container->getOutput());
+            $db->setReplacements($this->getReplaceVariables());
+            $db->connect();
+            $this->prepareDb($db, $conf['db']);
+            if ($store) {
+                $this->db = $db;
+            }
+        }
+
+        return $db;
+    }
+
+    /**
+     * Создает объект соединения для временной БД
+     * @param string $tmpname Имя временной базы данных
+     * @throws \Exception
+     * @return \lib\MysqliHelper
+     */
+    public function getTmpDbObject($tmpname = '')
+    {
+        $config = $this->getConfig();
+        if (empty($tmpname)) {
+            $tmpname = $config['tmp_db_name'];
+        }
+        $tmpname .= $this->getTempDbSuffix();
+        $tConfig = array();
+        $params  = array('host', 'password', 'user', 'port');
+        foreach ($params as $p) {
+            $tConfig[$p] = $config['tmp_' . $p];
+        }
+        $tConfig['db'] = $tmpname;
+        unset($config);
+        $tmpdb = $this->getDbObject($tConfig);
+        $tmpdb->setIsTemporary(true);
+        register_shutdown_function(
+            function () use ($tConfig, $tmpdb) {
+                $tmpdb->query("DROP DATABASE `{$tConfig['db']}`");
+                $this->output(
+                    "Temporary database {$tConfig['db']} was deleted",
+                    2
+                );
+            }
+        );
+
+        return $tmpdb;
+    }
+
+    /**
+     * Устанавливает текущую БД
+     * @param MysqliHelper $db
+     * @param string       $from Опциональное название места
+     */
+    public function setCurrentDb(MysqliHelper $db, $from = null)
+    {
+        $this->currentDb = $db;
+        $this->output(
+            sprintf(
+                'Set %s as current database from %s',
+                $db->getCredentials(),
+                is_null($from) ? 'undefined place' : $from
+            ),
+            3
+        );
+    }
+
+    /**
+     * @return MysqliHelper
+     */
+    public function getCurrentDb()
+    {
+        return $this->currentDb;
+    }
+
+    /**
+     * Установить временную БД
+     * @static
+     * @param \lib\MysqliHelper $db
+     */
+    public function setCurrentTempDb(MysqliHelper $db)
+    {
+        $this->currentTempDb = $db;
+        $this->output(
+            sprintf(
+                'Set %s as current temporary database',
+                $db->getCredentials()
+            ),
+            3
+        );
+    }
+
+    /**
+     * Возвращает суффикс для временной базы данных
+     * @return int
+     */
+    private function getTempDbSuffix()
+    {
+        return (int) $this->get('tmp_add_suffix') ? '_' . time() : '';
+    }
+
+    /**
+     * Возвращает массив переменных замены
+     * @return array
+     */
+    public function getReplaceVariables()
+    {
+        if (is_null($this->replaceVariables)) {
+            $tmp    = array();
+            $config = $this->getConfig();
+            foreach ($config as $key => $value) {
+                if (strpos($key, 'database.') === 0) {
+                    $dbName = trim(str_replace('database.', '', $key));
+                    $value  = trim($value);
+                    if (!empty($dbName)) {
+                        $tmp[$dbName] = $value;
+                        $this->output(
+                            sprintf(
+                                'In all queries database %s will be replaced to %s',
+                                $dbName,
+                                $value
+                            ),
+                            3
+                        );
+                    }
+                }
+            }
+            uksort(
+                $tmp,
+                function ($k1, $k2) {
+                    $l1 = strlen($k1);
+                    $l2 = strlen($k2);
+                    if ($l1 === $l2) {
+                        return 0;
+                    }
+
+                    return $l1 > $l2 ? -1 : 1;
+                }
+            );
+            $result = [];
+            if (!empty($tmp)) {
+                foreach ($tmp as $dbName => $replaceName) {
+                    $result['p'][] = '/(\b' . $dbName . '\b)/';
+                    $result['r'][] = $replaceName;
+                }
+            }
+            $this->replaceVariables = $result;
+        }
+
+        return $this->replaceVariables;
+    }
+
+    /**
+     * Выполняет множественные запросы DDL
+     * @param \lib\MysqliHelper $db
+     * @param string            $queries
+     */
+    public function queryMultipleDDL(MysqliHelper $db, $queries)
+    {
+        $queries = str_ireplace(
+            "DELIMITER ;\n",
+            '',
+            str_ireplace(
+                "DELIMITER ;;\n",
+                '',
+                $queries
+            )
+        );
+        $queries = str_replace(';;', ';', $queries);
+        $start   = microtime(1);
+        $ret     = $db->multi_query($queries);
+        $this->output(
+            sprintf(
+                'Started multiple DDL execution: multi_query time: %f',
+                (microtime(1) - $start)
+            ),
+            2
+        );
+        $text = $db->error;
+        $code = $db->errno;
+        if (!$ret) {
+            $this->container->getOutput()->error(
+                sprintf('%s (%d)', $text, $code)
+            );
+        }
+        do {
+            $result = $db->use_result();
+            if ($result) {
+                $result->free();
+            }
+        } while ($db->more_results() && $db->next_result());
+        $this->output(
+            sprintf(
+                'Multiple DDL execution finished: result set looping time: %f',
+                (microtime(1) - $start)
+            ),
+            2
+        );
+        $text = $db->error;
+        $code = $db->errno;
+        if ($code) {
+            $this->container->getOutput()->error(
+                sprintf('%s (%d)', $text, $code)
+            );
+        }
+    }
+
+    /**
+     * Выполняет запросы с отладкой.
+     * @param \lib\MysqliHelper $db
+     * @param array             $queries
+     */
+    public function debugQueryMultipleDDL(MysqliHelper $db, array $queries)
+    {
+        foreach ($queries as $table => $stmts) {
+            $this->output(sprintf('Executing queries for %s', $table), 2);
+            /*
+             * Для одной сущности может быть как одна, так и несколько
+             * групп запросов, содержащих строки с SQL-операторами
+             */
+            if (!is_array($stmts)) {
+                $stmts = array($stmts);
+            }
+            $summa_time = 0;
+            foreach ($stmts as $queries) {
+                /*
+                 * Из строки множества операторов необходимо вычленить
+                 * эти операторы, при этом возможны пустые строки
+                 */
+                $ds = mb_stripos($queries, 'DELIMITER ;;');
+                $l  = mb_strlen('DELIMITER ;;');
+                if ($ds !== false) {
+                    $offset = $ds + $l;
+                    $df     = mb_stripos($queries, 'DELIMITER ;', $offset);
+                    if ($df !== false) {
+                        $tmp     = array(
+                            mb_substr($queries, $offset, $df - $offset)
+                        );
+                        $before  = mb_substr($queries, 0, $offset - $l);
+                        $after   = mb_substr($queries, $df + $l - 1);
+                        $queries = array_merge(
+                            explode(";\n", $before),
+                            $tmp,
+                            explode(";\n", $after)
+                        );
+                    }
+                }
+                if (!is_array($queries)) {
+                    $queries = explode(";\n", $queries);
+                }
+                // каждый запрос может состоять из нескольких запросов
+                foreach ($queries as $query) {
+                    $query = trim($query);
+                    if (empty($query)) {
+                        continue;
+                    }
+                    $start = microtime(1);
+                    if (!$db->query($query)) {
+                        $this->container->getOutput()->error(
+                            sprintf(
+                                '   %s: %s (%d)',
+                                $query,
+                                $db->error,
+                                $db->errno
+                            )
+                        );
+                    }
+                    $delta = microtime(1) - $start;
+                    $summa_time += $delta;
+                    $this->output(
+                        sprintf(
+                            "\n--- %s\nQuery time: %.2f seconds\nSummary time: %.2f seconds\n",
+                            $query,
+                            $delta,
+                            $summa_time
+                        ),
+                        4
+                    );
+                }
+            }
+            $this->output(
+                sprintf(
+                    'Summary queries executing time for %s is %f secs.',
+                    $table,
+                    $summa_time
+                ),
+                3
+            );
+        }
+    }
+
+    /**
+     * Получить список начальных связей таблиц в БД
+     * @param array $data Массив запросов
+     * @throws \Exception
+     * @return array
+     */
+    public function getInitialReferences($data)
+    {
+        if (!$this->currentTempDb) {
+            $db = $this->getTmpDbObject();
+            $db->setCommand("SET foreign_key_checks = 0;");
+            if ((int) $this->get('verbose') >= 3) {
+                $this->debugQueryMultipleDDL($db, $data);
+            } else {
+                $this->queryMultipleDDL($db, implode("\n", $data));
+            }
+            $db->query("SET foreign_key_checks = 1;");
+        } else {
+            $db = $this->currentTempDb;
+        }
+
+        $diffObj = new DbDiff($this->get('mysqldiff_command'));
+        $diffObj->setOutput($this->container->getOutput());
+        return $diffObj->fetchReferences($db);
+    }
+
+    /**
+     * Загружает начальную схему в базу и накатывает все миграции
+     * @param \lib\MysqliHelper $db Соединение с сервером БД
+     */
+    public function loadTmpDb(MysqliHelper $db)
+    {
+        $this->output(
+            sprintf("Deploy temporary database %s", $db->getDatabaseName()),
+            1
+        );
+        $db->setCommand("SET foreign_key_checks = 0;");
+        /**
+         * Так как при разворачивании временной БД выполняются все операторы,
+         * то строить связи нет необходимости, равно как и передавать список
+         * необходимых таблиц
+         */
+        $this->setCurrentDb($db, 'loading temporary database');
+        $migationsObj   = $this->container->getMigrations();
+        $timeline       = $migationsObj->getTimeline(array(), false);
+        $usedMigrations = array();
+        foreach ($timeline as $tables) {
+            foreach ($tables as $tablename => $revision) {
+                if (is_int($revision)) {
+                    $what = sprintf(
+                        "migration %d for table %s",
+                        $revision,
+                        $tablename
+                    );
+                    // обратимся к нужному классу
+                    if (!isset($usedMigrations[$revision])) {
+                        $migationsObj->applyMigration($revision, $db);
+                        $usedMigrations[$revision] = 1;
+                    }
+                } else {
+                    $what = sprintf("sql for %s", $tablename);
+                    // это SQL-запрос
+                    $this->debugQueryMultipleDDL(
+                        $db,
+                        array($tablename => $revision)
+                    );
+                }
+                $this->output(sprintf('--- Execution of %s finished', $what), 3);
+            }
+        }
+        $db->query("SET foreign_key_checks = 1;");
+        $this->output("Deploy temporary database was finished", 1);
+        /**
+         * Отсортируем массив использованных миграций по ключам по возрастанию, переставим внутренний указатель
+         * массива на его последний элемент и получим ключ этого элемента
+         */
+        ksort($usedMigrations);
+        end($usedMigrations);
+        $revision = key($usedMigrations);
+
+        if (!is_null($revision)) {
+            /**
+             * @var migrateController $migrationController
+             */
+            $migrationController = $this->container->getInit()->getController('migrate', array(), $db)->getController();
+            $migrationController->createMigratedSchema($revision);
+        }
+    }
+}

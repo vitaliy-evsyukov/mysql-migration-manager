@@ -3,15 +3,13 @@
 /**
  * getsqlController
  * Получить описания всех таблиц
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 namespace lib;
 
 class getsqlController extends DatasetsController
 {
-
-    private $_choice = null;
 
     public function runStrategy()
     {
@@ -69,23 +67,26 @@ class getsqlController extends DatasetsController
                 $opts[strtoupper(trim($parts[0], '-'))] = $parts[1];
             }
         }
-        $path   = Helper::get('schemadir');
-        $suffix = md5(time());
-        Helper::setCurrentDb($this->db, 'Get SQL');
+        $hFS     = $this->container->getFileSystem();
+        $hDB     = $this->container->getDb();
+        $hSchema = $this->container->getSchema();
+        $path    = $hFS->get('schemadir');
+        $suffix  = md5(time());
+        $hDB->setCurrentDb($this->db, 'Get SQL');
         foreach ($entities as $entity) {
-            $op      = sprintf(
+            $op     = sprintf(
                 $operations['ops'][$operations['links'][$entity]],
                 $entity
             );
-            $e_lower = strtolower($entity);
-            Helper::initDirs(sprintf('%s%ss', $path, $e_lower));
-            Output::verbose(sprintf('Receiving list of %ss', $e_lower), 1);
+            $eLower = strtolower($entity);
+            $hFS->initDirs(sprintf('%s%ss', $path, $eLower));
+            $this->verbose(sprintf('Receiving list of %ss', $eLower), 1);
             $res = $this->db->query($op);
             if (empty($res)) {
                 throw new \Exception(
                     sprintf(
                         'Cannot fetch list of %ss. Try to change your privileges. Error is %s',
-                        $e_lower,
+                        $eLower,
                         $this->db->getLastError()
                     )
                 );
@@ -101,10 +102,10 @@ class getsqlController extends DatasetsController
                         continue;
                     }
                 }
-                Output::verbose(
+                $this->verbose(
                     sprintf(
                         'Get %s %s description',
-                        $e_lower,
+                        $eLower,
                         $col
                     ),
                     1
@@ -123,23 +124,15 @@ class getsqlController extends DatasetsController
                 }
                 $data = $desc->fetch_array(MYSQLI_BOTH);
                 if (isset($data[$value])) {
-                    $filename = sprintf('%s%ss/%s.sql', $path, $e_lower, $col);
-                    if (file_exists($filename)) {
-                        $c = null;
-                        if (is_null($this->_choice)) {
-                            $c = $this->askForRewrite($filename);
-                        } else {
-                            $c = $this->_choice;
-                        }
-                        if (!$c) {
-                            $filename .= $suffix;
-                        }
+                    $filename = sprintf('%s%ss/%s.sql', $path, $eLower, $col);
+                    if (!$hFS->askToRewrite(['file' => $filename, 'tag' => $suffix])) {
+                        $filename .= $suffix;
                     }
                     $data[$value] .= str_repeat(
                         ';',
                         (int) (!in_array($entity, array('TABLE', 'VIEW'))) + 1
                     );
-                    $data[$value] = Helper::stripTrash(
+                    $data[$value] = $hSchema->stripTrash(
                         $data[$value],
                         $entity,
                         array('entity' => $col)
@@ -165,7 +158,7 @@ class getsqlController extends DatasetsController
                             }
                             $tempTable = sprintf('CREATE TABLE %s (%s);', $col, implode(', ', $fields));
                             file_put_contents(sprintf('%stables/%s.sql', $path, $col), $tempTable);
-                            Output::verbose(
+                            $this->verbose(
                                 sprintf(
                                     'Temporary table structure for view %s created',
                                     $col
@@ -176,10 +169,10 @@ class getsqlController extends DatasetsController
                     }
                     file_put_contents($filename, $data[$value]);
                 } else {
-                    Output::verbose(
+                    $this->verbose(
                         sprintf(
                             'Cannot to get description of %s %s',
-                            $e_lower,
+                            $eLower,
                             $col
                         ),
                         1
@@ -187,41 +180,6 @@ class getsqlController extends DatasetsController
                 }
             }
         }
-        Output::verbose('Files successfully created', 1);
+        $this->verbose('Files successfully created', 1);
     }
-
-    // TODO: рефакторинг
-    protected function askForRewrite($fname)
-    {
-        if (Helper::get('quiet')) {
-            return true;
-        }
-        $c = '';
-        do {
-            if ($c != "\n") {
-                printf(
-                    "File %s already exists. Do you want to override it? [y/n/Yes to all/No to all] ",
-                    $fname
-                );
-            }
-            $c = trim(fgets(STDIN));
-            if ($c === 'Y' or $c === 'y') {
-                if ($c === 'Y') {
-                    $this->_choice = true;
-                }
-
-                return true;
-            }
-            if ($c === 'N' or $c === 'n') {
-                if ($c === 'N') {
-                    $this->_choice = false;
-                }
-
-                return false;
-            }
-        } while (true);
-    }
-
 }
-
-?>

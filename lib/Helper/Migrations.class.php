@@ -1,0 +1,434 @@
+<?php
+
+namespace lib\Helper;
+
+use lib\AbstractMigration;
+use lib\AbstractSchema;
+use lib\Helper\Writer\References;
+use lib\Helper\Writer\Schema as sWriter;
+use lib\MysqliHelper;
+
+/**
+ * Migrations
+ *
+ * @author  Виталий Евсюков
+ * @package lib\Helper
+ */
+class Migrations extends Helper
+{
+    private $migrations = [];
+
+    private $references = [];
+
+    private $tablesList = [];
+
+    private $schemaType = null;
+
+    private $hash = '';
+
+    /**
+     * Устанавливает тип схемы, которую нужно найти
+     * @param $type
+     */
+    public function setSchemaType($type)
+    {
+        $this->schemaType = $type;
+    }
+
+    /**
+     * Устанавливает хеш датасетов
+     * @param string $hash
+     */
+    public function setHash($hash)
+    {
+        $this->hash = $hash;
+    }
+
+    /**
+     * Устанавливает список таблиц
+     * @param array $list
+     */
+    public function setTablesList(array $list)
+    {
+        $this->tablesList = $list;
+    }
+
+    /**
+     * Находит файлы миграций и сохраняет необходимые данные из них
+     * @static
+     * @param bool $check       Проверять, есть ли данный файл в списке миграций
+     * @param int  $minRevision Собирать только те ревизии, которые больше переданной
+     */
+    public function parseMigrations($check = false, $minRevision = 0)
+    {
+        $migratedir  = $this->get('savedir');
+        $minRevision = (int) $minRevision;
+        if (is_dir($migratedir) && is_readable($migratedir)) {
+            chdir($migratedir);
+            if ($check) {
+                $mHelper = $this->container->getFileSystem()->getAllMigrations();
+            }
+            $files = glob('Migration*.php');
+            foreach ($files as $file) {
+                // Наименование имеет вид типа Migration2.class.php
+                $className =
+                    $this->get('savedir_ns') . '\\' .
+                    pathinfo(
+                        pathinfo(
+                            $file,
+                            PATHINFO_FILENAME
+                        ),
+                        PATHINFO_FILENAME
+                    );
+                $class     = new $className;
+                if ($class instanceof AbstractMigration) {
+                    $metadata = $class->getMetadata();
+                    if ($check) {
+                        if (!isset($mHelper['timestamps'][$metadata['timestamp']])) {
+                            continue;
+                        }
+                    }
+                    if ((int) $metadata['revision'] > $minRevision) {
+                        $this->output(
+                            sprintf('Add migration %s to list', $file),
+                            2
+                        );
+                        foreach ($metadata['tables'] as $tablename => $tmp) {
+                            $this->migrations[$tablename][$metadata['timestamp']] = $metadata['revision'];
+                        }
+                        foreach ($metadata['refs'] as $refTable => $tables) {
+                            if (!isset($this->references[$refTable])) {
+                                $this->references[$refTable] = array();
+                            }
+                            $this->references[$refTable] = array_merge(
+                                $this->references[$refTable],
+                                $tables
+                            );
+                        }
+                    } else {
+                        $this->output(
+                            sprintf(
+                                'Migration %s cannot be added to the list, because of its revision is lower or equal to %d',
+                                $file,
+                                $minRevision
+                            ),
+                            2
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Собирает данные в виде
+     * <code>
+     * self::$_migrations = array(
+     *      'table1' => array(
+     *              111111 => 1,
+     *              111112 => 2
+     *      )
+     * );
+     * self::$_refsMap = array(
+     *      'table1' => array(
+     *              'table2' => 1,
+     *              'table3' => 1
+     *      )
+     * );
+     * </code>
+     * Здесь для массива миграций указывается таблица, для нее - таймстампы, для них - ревизии
+     * Для массива ссылок указывается таблица, а для нее - связанные таблицы.
+     * @param bool $loadSQL Загружать ли содержимое SQL-файлов
+     * @param bool $getRefs Искать ли начальные связи
+     * @param bool $full    Нужно ли начинать с первой ревизии
+     */
+    private function prepareMap($loadSQL = true, $getRefs = true, $full = false)
+    {
+        $minRevision = 0;
+        $filesystem  = $this->container->getFileSystem();
+        $schema      = $this->container->getSchema();
+        if ($loadSQL) {
+            /*
+             * Вначале соберем все данные из папки схемы
+             * SQL считается первой ревизией
+             */
+            $this->output('Starting to search initial revisions', 1);
+            $path           = $this->get('cachedir');
+            $schemaFile     = $filesystem->getSchemaFile($this->hash, $this->schemaType);
+            $refsFile       = $filesystem->getReferencesFile($this->hash, $path);
+            $ns             = $this->get('cachedir_ns');
+            $message        = sprintf(
+                'Parse schema directory %s or get schema from file %s? [y/n] ',
+                $this->get('schemadir'),
+                $schemaFile
+            );
+            $schemaRewrited = false;
+            $schemaMigrated = (strpos($schemaFile, 'migrated') !== false);
+            $params         = array($schemaMigrated, '', true);
+            if ($filesystem->askToRewrite($schemaFile, $message, array($schema, 'loadInstance'), $params)) {
+                // здесь мы можем перезаписывать только не "мигрированную" схему
+                $schemaRewrited = true;
+                $queries        = $schema->parseSchemaFiles($this->tablesList);
+                $schemaWriter   = new sWriter($this->hash, $queries);
+                $filesystem->writeInFile($schemaFile, $schemaWriter);
+                $queries = $queries['queries'];
+            } else {
+                $classname = $schema->getSchemaClassName($this->hash, $schemaMigrated);
+                /**
+                 * @var AbstractSchema $schemaObj
+                 */
+                $schemaObj   = new $classname;
+                $queries     = $schemaObj->getQueries();
+                $minRevision = $schemaObj->getRevision();
+                unset($schemaObj);
+            }
+            if (!empty($queries)) {
+                foreach ($queries as $tablename => &$q) {
+                    $this->migrations[$tablename][0] = $q;
+                }
+                if ($getRefs) {
+                    $this->output('Starting to search initial references', 1);
+                    // получить начальные связи
+                    $message = sprintf(
+                        'Refresh initial references or get from cache %s? [y/n] ',
+                        $refsFile
+                    );
+                    if ($filesystem->askToRewrite(
+                        $refsFile,
+                        $message,
+                        function () use ($schemaRewrited) {
+                            return $schemaRewrited;
+                        }
+                    )
+                    ) {
+                        $this->references = $this->container->getDb()->getInitialReferences($queries);
+                        $refsWriter       = new References($this->references, $this->hash);
+                        $filesystem->writeInFile($refsFile, $refsWriter);
+                    } else {
+                        $classname        = sprintf('%s\References%s', $ns, $this->hash);
+                        $refsObj          = new $classname;
+                        $this->references = $refsObj->getRefs();
+                        unset($refsObj);
+                    }
+                }
+            } else {
+                $this->output(
+                    'No initial revisions and references found',
+                    1
+                );
+            }
+            unset($queries);
+        }
+        $this->output('Collecting maps of revisions and references', 1);
+        if ($full) {
+            $minRevision = 0;
+        }
+        $this->parseMigrations(true, $minRevision);
+
+        foreach ($this->migrations as &$data) {
+            ksort($data);
+        }
+        $this->output('Collecting completed', 1);
+    }
+
+    /**
+     * Возвращает картину миграций
+     * @param bool $loadSQL
+     * @param bool $getRefs
+     * @param bool $full
+     * @return array
+     */
+    public function getAllMigrations($loadSQL = true, $getRefs = true, $full = false)
+    {
+        if (empty($this->migrations)) {
+            $this->prepareMap($loadSQL, $getRefs, $full);
+        }
+
+        return $this->migrations;
+    }
+
+    /**
+     * Возвращает карту ссылок
+     * @return array
+     */
+    public function getAllReferences()
+    {
+        if (empty($this->references)) {
+            $this->prepareMap();
+        }
+
+        return $this->references;
+    }
+
+    /**
+     * Сбрасывает кеши связей и миграций
+     */
+    public function resetAll()
+    {
+        $this->references = array();
+        $this->migrations = array();
+    }
+
+
+    /**
+     * Возвращает связанные со списком таблицы
+     * @param array $refs       Хеш, где ключ - имя таблицы, значение - хеш вида имя_связанной_таблицы => 1
+     * @param array $tablesList Хеш вида имя_таблицы => 1
+     * @return array Связанные таблицы, не входящие в список
+     */
+    public function getTablesReferences(
+        array $refs = array(),
+        array $tablesList = array()
+    )
+    {
+        $res        = array();
+        $existsRefs = array_intersect_key($refs, $tablesList);
+
+        $closure = function ($arr) use (&$closure, &$res, $refs) {
+            foreach ($arr as $table => $value) {
+                if (!isset($res[$table])) {
+                    $res[$table] = 1;
+                    if (isset($refs[$table]) && is_array($refs[$table])) {
+                        $closure($refs[$table]);
+                    }
+                }
+            }
+        };
+
+        $closure($existsRefs);
+
+        return $res;
+    }
+
+    /**
+     * Возвращает информацию о изменениях таблиц в базе с течением времени
+     * @param array $tablesList Список необходимых таблиц
+     * @param bool  $getRefs    Нужно ли получать начальные связи
+     * @param bool  $full       Нужно ли получать все миграции
+     * @return array
+     */
+    public function getTimeline(array $tablesList = array(), $getRefs = true, $full = false)
+    {
+        /**
+         * При необходимости пользователь будет заменен при непосредственном выполнении оператора
+         */
+        $currentReplacement = $this->get('routine_user');
+        $this->set('routine_user', '');
+        $migrations  = $this->getAllMigrations(true, $getRefs, $full);
+        $tablesToAdd = array();
+        if (!empty($tablesList)) {
+            // получить все связи таблиц
+            $refs = $this->getAllReferences();
+            // получить те, которые связаны
+            $tablesToAdd = $this->getTablesReferences($refs, $tablesList);
+            // получить те, которых не хватает. Это не нужно для мержа, но нужно в условии ниже
+            $tablesToAdd = array_diff_key($tablesToAdd, $tablesList);
+            // объединить те, которые были пераданы, с теми, которые с ними связаны
+            $tablesList = array_merge($tablesList, $tablesToAdd);
+        } else {
+            $tablesList = $migrations;
+        }
+        $timeline  = array();
+        $schemaObj = $this->container->getSchema();
+        foreach ($tablesList as $tableName => $t) {
+            if (!isset($migrations[$tableName][0])) {
+                $this->output('Try to get SQL for table ' . $tableName, 3);
+                $currentVerbose = $this->get('verbose');
+                $this->set('verbose', 0);
+                $parsedData = $schemaObj->parseSchemaFiles(array($tableName => 1));
+                if (!empty($parsedData['queries'][$tableName])) {
+                    $isReceived                = true;
+                    $migrations[$tableName][0] = $parsedData['queries'][$tableName];
+                } else {
+                    $isReceived = false;
+                }
+                $this->set('verbose', $currentVerbose);
+                $this->output(
+                    sprintf('SQL for table %s was%sreceived', $tableName, $isReceived ? ' ' : ' NOT '),
+                    3
+                );
+                /**
+                 * Если была получена хоты бы начальная ревизия (SQL), то массив миграций для таблицы уже не пуст
+                 * Если же начальной ревизии нет, но нет и остальных ревизий, то пропустим такую таблицу
+                 * Получить начальную ревизию необходимо для того, чтобы создать таблицы, которые не созданы в
+                 * последующих миграциях, а созданы в рамках начального наполнения БД, в противном случае мы получаем
+                 * ошибку выполнения операций над таблицей, которая не создана
+                 * С другой стороны, нас удовлетворит результат, когда начальной ревизии нет, но есть другие ревизии -
+                 * это означает, что таблица была создана в первой из них
+                 * Однако таблицы, которые были указаны в списке таблиц ошибочно, не могут никак быть обработаны
+                 * корректно по причине простого отсутствия данных по ним, и должны быть пропущены
+                 */
+                if (!$isReceived && !isset($migrations[$tableName])) {
+                    $this->output("There aren't migrations for table {$tableName}", 3);
+                    continue;
+                }
+            }
+            foreach ($migrations[$tableName] as $timestamp => $revision) {
+                /**
+                 * Если были таблицы, которых не хватало, добавим их в таймлайн с меткой времени, равной 1
+                 * Это необходимо для того, чтобы пропустить нулевую ревизию (SQL) и выполнить ревизию SQL для них
+                 */
+                if (!empty($tablesToAdd) && ($timestamp === 0) && isset($tablesToAdd[$tableName])) {
+                    $timestamp = 1;
+                }
+                $timeline[$timestamp][$tableName] = $revision;
+            }
+        }
+        ksort($timeline);
+
+        if ($getRefs) {
+            $this->output(sprintf("Summary of tables:\n--- %s", implode("\n--- ", array_keys($tablesList))), 3);
+            $this->output(
+                sprintf(
+                    "Tables which are referenced:\n--- %s",
+                    implode(
+                        "\n--- ",
+                        empty($tablesToAdd) ? array_keys($this->getAllReferences()) : array_keys($tablesToAdd)
+                    )
+                ),
+                3
+            );
+        }
+        $this->set('routine_user', $currentReplacement);
+
+        return $timeline;
+    }
+
+    /**
+     * Возвращает название класса миграции с определенной ревизией
+     * @param int $revision
+     * @return string
+     */
+    public function getMigrationClassName($revision)
+    {
+        return sprintf(
+            '%s\Migration%d',
+            $this->get('savedir_ns'),
+            $revision
+        );
+    }
+
+    /**
+     * Выполняет миграцию
+     * @param int               $revision   Номер ревизии
+     * @param \lib\MysqliHelper $db         Объект соединения
+     * @param string            $direction  Направление (Up или Down)
+     * @param array             $tablesList Список таблиц, операторы которых необходимо выполнить. Если пуст, выполняются все.
+     */
+    public function applyMigration(
+        $revision,
+        MysqliHelper $db,
+        $direction = 'Up',
+        array $tablesList = array()
+    )
+    {
+        $classname = $this->getMigrationClassName($revision);
+        /**
+         * @var AbstractMigration $migration
+         */
+        $migration = new $classname($db);
+        $migration->setTables($tablesList);
+        $method = 'run' . $direction;
+        $migration->$method($this->container);
+    }
+}

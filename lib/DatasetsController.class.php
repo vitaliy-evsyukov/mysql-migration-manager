@@ -2,12 +2,13 @@
 
 namespace lib;
 
+use lib\Helper\Container;
+
 /**
  * DatasetsController
  * Общий класс для контроллеров, связанных с датасетами
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
-
 abstract class DatasetsController extends AbstractController
 {
 
@@ -17,20 +18,21 @@ abstract class DatasetsController extends AbstractController
      * Список ключей, которые не имеют значения
      * @var array
      */
-    protected $_argKeys = array();
+    protected $argKeys = array();
 
     /**
      *
      * @var ControllersChain
      */
-    protected $_chain = null;
+    protected $chain = null;
 
     /**
      * Создает новый экземпляр контроллера для работы с БД
-     * @param MysqliHelper $db              Враппер адаптера БД
-     * @param array        $args            Аргументы контроллера
+     * @param MysqliHelper $db   Враппер адаптера БД
+     * @param array        $args Аргументы контроллера
+     * @params Container $container
      */
-    public function __construct(MysqliHelper $db, array $args = array())
+    public function __construct(MysqliHelper $db, array $args = array(), Container $container)
     {
         $excludeDatasets = false;
         if (isset($args['excludeDatasets'])) {
@@ -39,17 +41,17 @@ abstract class DatasetsController extends AbstractController
         // вынести в разбор параметров
         foreach ($args as $index => $arg) {
             if (is_string($arg)) {
-                $arg_data   = explode('=', $arg);
-                $param_name = str_replace('-', '', $arg_data[0]);
+                $argData   = explode('=', $arg);
+                $paramName = str_replace('-', '', $argData[0]);
                 /**
                  * Если параметр был передан корректно (в форме имя=значение)
                  */
-                if (sizeof($arg_data) !== 1) {
-                    $param_value       = str_replace('"', '', $arg_data[1]);
-                    $args[$param_name] = $param_value;
+                if (sizeof($argData) !== 1) {
+                    $paramValue       = str_replace('"', '', $argData[1]);
+                    $args[$paramName] = $paramValue;
                 } else {
-                    if (in_array($param_name, $this->_argKeys, true)) {
-                        $args[$param_name] = 1;
+                    if (in_array($paramName, $this->argKeys, true)) {
+                        $args[$paramName] = 1;
                     }
                 }
                 unset($args[$index]);
@@ -73,8 +75,8 @@ abstract class DatasetsController extends AbstractController
             $datasetsList = '(empty list)';
         }
         $className = explode('\\', get_class($this));
-
-        Output::verbose(
+        parent::__construct($db, $args, $container);
+        $this->verbose(
             sprintf(
                 'Executing %s with datasets: %s',
                 end($className),
@@ -82,8 +84,6 @@ abstract class DatasetsController extends AbstractController
             ),
             3
         );
-
-        parent::__construct($db, $args);
     }
 
     /**
@@ -92,9 +92,8 @@ abstract class DatasetsController extends AbstractController
      */
     public function setChain(ControllersChain $chain)
     {
-        $this->_chain = $chain;
+        $this->chain = $chain;
     }
-
 
     /**
      * Переключает проверку внешних ключей
@@ -122,8 +121,8 @@ abstract class DatasetsController extends AbstractController
      */
     protected function loadDatasetInfo()
     {
-        $load_data = (empty($this->args['loadData']) xor true);
-        return Helper::getDatasetInfo($this->args['datasets'], $load_data);
+        $loadData = (empty($this->args['loadData']) xor true);
+        return $this->container->getFileSystem()->getDatasetsInfo($this->args['datasets'], $loadData);
     }
 
     /**
@@ -207,8 +206,8 @@ abstract class DatasetsController extends AbstractController
         }
 
         if (!empty($queries)) {
-            Output::verbose("Views and tables and routines are dropping now", 1);
-            Output::verbose(
+            $this->verbose("Views and tables and routines are dropping now", 1);
+            $this->verbose(
                 sprintf(
                     "--- %s",
                     implode("\n--- ", array_keys($queries))
@@ -225,9 +224,6 @@ abstract class DatasetsController extends AbstractController
      */
     public function getChain()
     {
-        return $this->_chain;
+        return $this->chain;
     }
-
 }
-
-?>

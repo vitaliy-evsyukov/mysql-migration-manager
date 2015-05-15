@@ -5,14 +5,19 @@ namespace lib;
 /**
  * initController
  * Приводит содержимое схемы к начальному
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 class initController extends DatasetsController
 {
-
     public function runStrategy()
     {
-        if ($this->askForRewriteInformation()) {
+        $filesystem = $this->container->getFileSystem();
+        $configure  = $this->container->getInit();
+        if ($filesystem->askToRewrite(
+            ['file' => 'ALL tables', 'virtual' => true],
+            'Are you really sure you want to delete %s in DB [%s] '
+        )
+        ) {
             $datasets = $this->args['datasets'];
             $dshash   = '';
             if (!empty($datasets)) {
@@ -21,58 +26,31 @@ class initController extends DatasetsController
             }
             try {
                 $this->dropAllDBEntities();
-                $classname = sprintf(
-                    '%s\Schema%s',
-                    Helper::get('cachedir_ns'),
-                    $dshash
-                );
-                $schema    = new $classname;
-                $schema->load($this->db);
-                Output::verbose(
+                $classname = $this->container->getSchema()->getSchemaClassName($dshash, false);
+                /**
+                 * @var AbstractSchema $schema
+                 */
+                $schema = new $classname;
+                $schema->load($this->db, $this->container);
+                $this->verbose(
                     sprintf(
                         "Schema %s was successfully deployed",
                         $classname
                     ),
                     1
                 );
-                Helper::writeRevisionFile(0);
+                $filesystem->writeRevisionFile(0);
             } catch (\Exception $e) {
-                Output::verbose('Schema not found', 1);
-                Output::verbose($e->getMessage(), 3);
-                $schema = Helper::getController('schema');
+                $this->verbose('Schema not found', 1);
+                $this->verbose($e->getMessage(), 3);
+                /**
+                 * @var schemaController $schema
+                 */
+                $schema = $configure->getController('schema');
                 $schema->runStrategy();
             }
         } else {
-            Output::verbose("Exit without any changes", 1);
+            $this->verbose("Exit without any changes", 1);
         }
     }
-
-    /**
-     * Запрашивает удаление всех таблиц в БД
-     * @return bool
-     */
-    private function askForRewriteInformation()
-    {
-        if (Helper::get('quiet')) {
-            return true;
-        }
-        $c = '';
-        do {
-            if ($c != "\n") {
-                Output::verbose(
-                    "Are you really sure you want to delete ALL tables in DB [y/n] ",
-                    1
-                );
-            }
-            $c = trim(fgets(STDIN));
-
-            if ($c === 'Y' or $c === 'y') {
-                return true;
-            }
-            if ($c === 'N' or $c === 'n') {
-                return false;
-            }
-        } while (true);
-    }
-
 }

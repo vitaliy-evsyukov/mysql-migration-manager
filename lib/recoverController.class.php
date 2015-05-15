@@ -3,21 +3,20 @@
 /**
  * recoverController
  * Восстанавливает содержимое revisions.txt
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 
 namespace lib;
 
-class recoverController implements IController
+class recoverController extends AbstractController
 {
-
     public function runStrategy()
     {
-        Helper::initDirs();
-        Registry::parseMigrations();
+        $migrations = $this->container->getMigrations();
+        $migrations->parseMigrations();
         $lines        = array();
-        $list         = Registry::getAllMigrations(false);
-        $max_revision = -1;
+        $list         = $migrations->getAllMigrations(false);
+        $maxRevision = -1;
         foreach ($list as $data) {
             foreach ($data as $timestamp => $revision) {
                 if (isset($lines[$timestamp])) {
@@ -29,8 +28,8 @@ class recoverController implements IController
                     date('d.m.Y H:i:s', $timestamp),
                     $timestamp
                 );
-                if ($max_revision < $revision) {
-                    $max_revision = $revision;
+                if ($maxRevision < $revision) {
+                    $maxRevision = $revision;
                 }
             }
         }
@@ -38,13 +37,14 @@ class recoverController implements IController
 
         $content = array(
             'versionfile'    => implode("\n", $lines),
-            'version_marker' => "#{$max_revision}"
+            'version_marker' => "#{$maxRevision}"
         );
 
+        $initHelper = $this->container->getInit();
         foreach ($content as $key => $value) {
-            $filename = Helper::get('savedir') . Helper::get($key);
+            $filename = $initHelper->get('savedir') . $initHelper->get($key);
             file_put_contents($filename, $value);
-            Output::verbose(
+            $this->verbose(
                 sprintf(
                     "File %s was successfully restored",
                     $filename
@@ -53,7 +53,4 @@ class recoverController implements IController
             );
         }
     }
-
 }
-
-?>

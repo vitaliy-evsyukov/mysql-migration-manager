@@ -14,9 +14,6 @@
     <files>
         <directory>../lib</directory>
         <ignore>.git</ignore>
-        <ignore>MyMysqli.class.php</ignore>
-        <ignore>testController.class.php</ignore>
-        <ignore>watchdogController.class.php</ignore>
     </files>
     <logging>
         <level>warn</level>

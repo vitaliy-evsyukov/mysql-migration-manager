@@ -5,17 +5,13 @@ namespace lib;
 /**
  * IController
  * Интерфейс контроллеров
- * @author guyfawkes
+ * @author Виталий Евсюков
  */
 interface IController
 {
-
     /**
      * Запускает основную операцию контроллера
      * @return mixed
      */
     public function runStrategy();
-
 }
-
-?>

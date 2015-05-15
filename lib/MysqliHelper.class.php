@@ -2,12 +2,14 @@
 
 namespace lib;
 
+use lib\Helper\Output;
 use \Mysqli;
 
 /**
  * MysqliHelper
  * Обертка над Mysqli
- * @author guyfawkes
+ * @author Виталий Евсюков
+ * @method query
  */
 class MysqliHelper
 {
@@ -19,66 +21,70 @@ class MysqliHelper
      * Экземпляр Mysqli-адаптера
      * @var Mysqli
      */
-    private $_db = null;
+    private $db = null;
     /**
      * Имя базы данных
      * @var string
      */
-    private $_databaseName = '';
+    private $databaseName = '';
     /**
      * Адрес сервера БД
      * @var string
      */
-    private $_host = '';
+    private $host = '';
     /**
      * Имя пользователя
      * @var string
      */
-    private $_user = '';
+    private $user = '';
     /**
      * Пароль пользователя
      * @var string
      */
-    private $_password = '';
+    private $password = '';
     /**
      * Порт, на котором висит сервер БД
      * @var int
      */
-    private $_port = 3306;
+    private $port = 3306;
     /**
      * Массив обязательных команд при (пере)подключении
      * @var array
      */
-    private $_commands = array();
+    private $commands = array();
     /**
      * Количество попыток переустановить соединение с сервером БД
      * @var int
      */
-    private $_retriesCount = 3;
+    private $retriesCount = 3;
 
     /**
      * Последняя произошедшая ошибка
      * @var string
      */
-    private $_lastError = '';
+    private $lastError = '';
     /**
      * Булевое значение, обозначающее, является ли БД временной
      * @var bool
      */
-    private $_temporary = false;
+    private $temporary = false;
     /**
      * Массив паттернов для замены в запросах
      * @var array
      */
-    private static $_replacements = null;
+    private $replacements = null;
+    /**
+     * @var Output
+     */
+    private $output;
 
     /**
      * Выполняет набор обязательных команд при (пере)подключении
      */
     private function executeCommands()
     {
-        if (!empty($this->_commands)) {
-            foreach ($this->_commands as $command) {
+        if (!empty($this->commands)) {
+            foreach ($this->commands as $command) {
                 $this->query($command);
             }
         }
@@ -88,21 +94,21 @@ class MysqliHelper
      * Устанавливает соединение с сервером БД
      * @throws \Exception
      */
-    private function connect()
+    public function connect()
     {
-        $this->_db = @new Mysqli($this->_host, $this->_user, $this->_password, '', $this->_port);
-        if ($this->_db->connect_errno) {
+        $this->db = @new Mysqli($this->host, $this->user, $this->password, '', $this->port);
+        if ($this->db->connect_errno) {
             throw new \Exception(
                 sprintf(
                     "Database connect error occured: %s (%d)\nCredentials:\n%s",
-                    $this->_db->connect_error,
-                    $this->_db->connect_errno,
+                    $this->db->connect_error,
+                    $this->db->connect_errno,
                     $this->getCredentials()
                 )
             );
         }
-        $this->_db->select_db($this->_databaseName);
-        if (!$this->_db->set_charset("utf8")) {
+        $this->db->select_db($this->databaseName);
+        if (!$this->db->set_charset("utf8")) {
             throw new \Exception(
                 sprintf(
                     'SET CHARACTER SET utf8 error: %s',
@@ -120,7 +126,7 @@ class MysqliHelper
      */
     private function setError($message, $code)
     {
-        $this->_lastError = sprintf('%s (%d)', $message, $code);
+        $this->lastError = sprintf('%s (%d)', $message, $code);
     }
 
     /**
@@ -131,30 +137,19 @@ class MysqliHelper
      */
     private function prepareQ($name, $arguments)
     {
-        if (is_null(self::$_replacements)) {
-            $replace             = Helper::getReplaceVariables();
-            self::$_replacements = array();
-            if (!empty($replace)) {
-                foreach ($replace as $dbName => $replaceName) {
-                    self::$_replacements['p'][] = '/(\b' . $dbName . '\b)/';
-                    self::$_replacements['r'][] = $replaceName;
-                }
-            }
-        }
-
-        if (!empty(self::$_replacements) && (strpos($name, 'query') !== false)) {
+        if (!empty($this->replacements) && (strpos($name, 'query') !== false)) {
             $count = 0;
             if (!empty($arguments[0])) {
                 $preArg       = $arguments[0];
                 $arguments[0] = preg_replace(
-                    self::$_replacements['p'],
-                    self::$_replacements['r'],
+                    $this->replacements['p'],
+                    $this->replacements['r'],
                     $arguments[0],
                     -1,
                     $count
                 );
                 if (!empty($count)) {
-                    Output::verbose(
+                    $this->output->verbose(
                         sprintf("Original statement: %s\nReplaced statement:%s\n", $preArg, $arguments[0]),
                         3
                     );
@@ -174,26 +169,40 @@ class MysqliHelper
      */
     public function __construct($host, $user, $password, $db = '', $port = 3306)
     {
-        $this->_host         = $host;
-        $this->_user         = $user;
-        $this->_password     = $password;
-        $this->_databaseName = $db;
-        $this->_port         = is_null($port) ? 3306 : (int) $port;
+        $this->host         = $host;
+        $this->user         = $user;
+        $this->password     = $password;
+        $this->databaseName = $db;
+        $this->port         = is_null($port) ? 3306 : (int) $port;
         $this->connect();
+    }
+
+    public function setReplacements(array $replacements)
+    {
+        $this->replacements = $replacements;
+    }
+
+    /**
+     * @param Output $output
+     */
+    public function setOutput(Output $output)
+    {
+        $this->output = $output;
     }
 
     /**
      * Возвращает строку с параметрами БД
      * @return string
      */
-    public function getCredentials() {
+    public function getCredentials()
+    {
         return sprintf(
             "Database: %s\nHost: %s\nUser: %s\nPassword: %s\nPort: %d",
-            $this->_databaseName,
-            $this->_host,
-            $this->_user,
-            $this->_password,
-            $this->_port
+            $this->databaseName,
+            $this->host,
+            $this->user,
+            $this->password,
+            $this->port
         );
     }
 
@@ -204,12 +213,12 @@ class MysqliHelper
     public function setCommand($command)
     {
         if (!is_array($command)) {
-            $this->_commands[] = $command;
+            $this->commands[] = $command;
         } else {
-            $this->_commands = $command;
+            $this->commands = $command;
         }
         // почистим список от дубликатов
-        $this->_commands = array_unique($this->_commands);
+        $this->commands = array_unique($this->commands);
         $this->executeCommands();
     }
 
@@ -219,7 +228,7 @@ class MysqliHelper
      */
     public function setRetriesCount($count)
     {
-        $this->_retriesCount = (int) $count;
+        $this->retriesCount = (int) $count;
     }
 
     /**
@@ -229,9 +238,9 @@ class MysqliHelper
      */
     public function select_db($dbname)
     {
-        $r = $this->_db->select_db($dbname);
+        $r = $this->db->select_db($dbname);
         if ($r) {
-            $this->_databaseName = $dbname;
+            $this->databaseName = $dbname;
         }
 
         return $r;
@@ -246,32 +255,25 @@ class MysqliHelper
      */
     public function __call($name, $arguments)
     {
-        if (!method_exists($this->_db, $name)) {
+        if (!method_exists($this->db, $name)) {
             throw new \Exception(sprintf('Method %s does not exists', $name));
         }
-        $callback = array(&$this->_db, $name);
+        $callback = array(&$this->db, $name);
         if (!is_callable($callback)) {
             throw new \Exception(sprintf('Method %s is not callable', $name));
         }
         $counter = 0;
         while (true) {
             $arguments = $this->prepareQ($name, $arguments);
-            $result    = call_user_func_array($callback, $arguments);
-            $errno     = $this->_db->errno;
-            $error     = $this->_db->error;
+            $result    = @call_user_func_array($callback, $arguments);
+            $errno     = $this->db->errno;
+            $error     = $this->db->error;
             $this->setError($error, $errno);
             if ($errno === self::MYSQL_SERVER_HAS_GONE_AWAY) {
-                if (++$counter > $this->_retriesCount) {
+                if (++$counter > $this->retriesCount) {
                     throw new \Exception(sprintf('%s (%d)', $error, $errno));
                 } else {
-                    /*
-                    Output::verbose(
-                        sprintf(
-                            "Method '%s' got arguments %s. Result: error %s, errno %d",
-                            $name, print_r($arguments, true), $error, $errno
-                        ), 3
-                    );*/
-                    Output::verbose(
+                    $this->output->verbose(
                         sprintf(
                             '#%d: Trying to reconnect...',
                             $counter
@@ -293,7 +295,7 @@ class MysqliHelper
      */
     public function __get($name)
     {
-        return $this->_db->$name;
+        return $this->db->$name;
     }
 
     /**
@@ -302,7 +304,7 @@ class MysqliHelper
      */
     public function getLastError()
     {
-        return $this->_lastError;
+        return $this->lastError;
     }
 
     /**
@@ -311,7 +313,7 @@ class MysqliHelper
      */
     public function getDb()
     {
-        return $this->_db;
+        return $this->db;
     }
 
     /**
@@ -320,7 +322,7 @@ class MysqliHelper
      */
     public function getDatabaseName()
     {
-        return $this->_databaseName;
+        return $this->databaseName;
     }
 
     /**
@@ -329,7 +331,7 @@ class MysqliHelper
      */
     public function getHost()
     {
-        return $this->_host;
+        return $this->host;
     }
 
     /**
@@ -338,7 +340,7 @@ class MysqliHelper
      */
     public function getPassword()
     {
-        return $this->_password;
+        return $this->password;
     }
 
     /**
@@ -347,7 +349,7 @@ class MysqliHelper
      */
     public function getUser()
     {
-        return $this->_user;
+        return $this->user;
     }
 
     /**
@@ -356,24 +358,24 @@ class MysqliHelper
      */
     public function getPort()
     {
-        return $this->_port;
+        return $this->port;
     }
 
     /**
      * Устанавливает признак временной БД
      * @param boolean $value
      */
-    public function setIsTemporary($value) {
-        $this->_temporary = (bool)$value;
+    public function setIsTemporary($value)
+    {
+        $this->temporary = (bool) $value;
     }
 
     /**
      * Возвращает булевое значение, является ли БД временной
      * @return bool
      */
-    public function isTemporary() {
-        return $this->_temporary;
+    public function isTemporary()
+    {
+        return $this->temporary;
     }
 }
-
-?>

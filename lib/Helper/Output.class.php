@@ -1,0 +1,40 @@
+<?php
+
+namespace lib\Helper;
+
+/**
+ * Output
+ *
+ * @author  Виталий Евсюков
+ * @package lib\Helper
+ */
+
+class Output extends Helper
+{
+    /**
+     * Распечатывает сообщение в STDOUT
+     * @static
+     * @param string $msg   Текст сообщения
+     * @param int    $level Уровень вывода
+     */
+    public function verbose($msg, $level = 1)
+    {
+        if (!$this->get('quiet') && (int) $this->get('verbose') >= $level) {
+            echo $msg, PHP_EOL;
+        }
+    }
+
+    /**
+     * Распечатывает сообщение в STDERR
+     * @static
+     * @param string $msg Текст сообщения
+     */
+    public function error($msg)
+    {
+        fwrite(STDERR, $msg . PHP_EOL);
+        if ((int) $this->get('stop-on-failure')) {
+            echo "Error occured. Stopping MMM\n";
+            exit(1);
+        }
+    }
+}
