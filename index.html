@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mysql-migration-manager by vitaliy-evsyukov</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Mysql-migration-manager</h1>
+      <h2 class="project-tagline">Утилита для автоматизированного создания миграций MySQL</h2>
+      <a href="https://github.com/vitaliy-evsyukov/mysql-migration-manager" class="btn">View on GitHub</a>
+      <a href="https://github.com/vitaliy-evsyukov/mysql-migration-manager/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/vitaliy-evsyukov/mysql-migration-manager/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h2>
+<a id="mysql-migration-manager" class="anchor" href="#mysql-migration-manager" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mysql Migration Manager</h2>
+
+<p>Mysql Migration Manager - программа, написанная на PHP, которая позволяет <strong>автоматически</strong> создавать миграции 
+структуры базы данных и управлять ими.
+Вы можете разворачивать созданные другими пользователями миграции на вашей локальной машине либо на удаленном сервере, 
+поддерживая таким образом базу в актуальном состоянии. Это полезно в условиях реальной работы множества разработчиков, 
+когда постоянно возникает необходимость создания новых таблиц, изменения колонок, добавления триггеров и прочих 
+сущностей в БД.
+Обратите внимание, что этот способ не связан с созданием миграций в фреймворках, таких как Yii, когда программист сам 
+должен описать желаемые правки в структуре данных, а скорее ближе к автоматическому созданию миграций в Doctrine, 
+но может покрывать некоторые дополнительные нюансы работы с изменениями структуры данных в MySQL. </p>
+
+<p>В условиях активной разработки на production-сервере БД может ежедневно вноситься немалое количество изменений. В этом
+случае можно рассмотреть возможность выделить ответственного за процесс создания миграций, поручить это DBA или сделать
+автоматизированное создание. Затем миграции можно хранить в системе контроля версий, копию файлов из которой каждый 
+разработчик сможет получить на своем локальном ПК и развернуть. Для упрощения описания механизма работы введем<br>
+следующие термины:</p>
+
+<ol>
+<li>Эталонная БД. Это БД, расположенная на production-сервере. Именно с нее снимается начальный слепок схемы данных, и 
+именно к идентичному ей состоянию должна быть приведена структура БД на локальных машинах разработчиков</li>
+<li>Временная БД. Это БД, расположенная на локальной машине лица, создающего новые миграции, либо на локальной машине 
+разработчика или в целом любого окружения, где необходимо, не имея точных сведений о состоянии локальной БД, привести 
+ее к состоянию, идентичному эталонной БД. Временная БД может иметь статичное имя, либо ее может генерироваться на 
+основе текущего времени и префикса</li>
+<li>MMM - непосредственно сокращение от Mysql Migration Manager. Фактически эта программа является фронтендом к форку 
+<a href="https://github.com/vitaliy-evsyukov/mysqldiff">mysqldiff</a>, программы на Perl. Об ее установке будет рассказано ниже</li>
+<li>Датасеты. Наборы данных находятся по умолчанию в папе datasets подмодуля data и лежат в подпапках, имена которых 
+собственно и являются названиями датасетов. Внутри папки должен лежать файл с параметрами датасета в формате JSON 
+и файл с SQL-командами для вставки данных.</li>
+<li>SQL-файлы для построения схемы. Обычные SQL-файлы, лежащие в вашей schemadir и имеющие имена, соответствующие 
+названиям таблиц, описания которых в них находятся. Один файл - одна таблица.</li>
+</ol>
+
+<p>Таким образом, процесс работы может быть построен следующим образом:</p>
+
+<ul>
+<li>автоматически или вручную снимается миграция, в это время <em>никаких</em> операций со структурой данных в БД не должно 
+происходить, равно как и на втором этапе</li>
+<li>для проверки корректности миграции следут сразу же после снятия повторить попытку создания, если создастся еще одна
+миграция, это скажет о том, что обнаружен дефект в mysqldiff, который не позволил создать миграцию с таким содержимым, 
+что его однократное применение приведет к идентичности БД на production-сервере и на сервере, где создается временная 
+БД, используемая для сравнения с эталонной</li>
+<li>на машине разработчика либо на машине, где требуется развернуть БД с идентичной эталонной БД структурой, выполняется 
+очередная полученная миграция или форсированное приведение к эталонной структуре</li>
+</ul>
+
+<p>Обращаю ваше внимание, что:</p>
+
+<ul>
+<li>команда upgrade в большинстве случаев должна выполняться однократно, после разворачивания дампа БД, который могут 
+предоставить для начальной работы, либо в том случае, если отсутствует или утеряна информация о последней примененной 
+миграции</li>
+<li>команда migrate должна выполняться каждый раз, когда получена новая миграция или их набор (если в течение некоторого 
+периода обновления не проводились, но информация о последней примененной миграции сохранена)</li>
+<li>команда deploy должна выполняться только если стоит задача разворачивания тестовой БД с данными
+(для отладки или для создания некоторой песочницы)</li>
+<li>команда init должна выполняться только на тех данных, которые не представляют ценности, так как удаляет все таблицы 
+из базы и создает пустые таблицы из схемы</li>
+</ul>
+
+<h3>
+<a id="Настройка-окружения" class="anchor" href="#%D0%9D%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F" aria-hidden="true"><span class="octicon octicon-link"></span></a>Настройка окружения</h3>
+
+<h4>
+<a id="БД" class="anchor" href="#%D0%91%D0%94" aria-hidden="true"><span class="octicon octicon-link"></span></a>БД</h4>
+
+<p>Для работы c МММ удобнее всего создать нового пользователя БД. Для упрощения настройки вы можете выдать ему 
+все привилегии. Однако, если необходимо, чтобы пользователь имел только реально необходимые ему полномочия, вот они:</p>
+
+<ul>
+<li>Для основой БД, с которой будут сниматься миграции и/или на которую они будут накладываться: 
+<code>CREATE, DROP, LOCK TABLES, ALTER, DELETE, INDEX, INSERT, UPDATE, SELECT, UPDATE, TRIGGER, 
+CREATE VIEW, SHOW VIEW, ALTER ROUTINE, CREATE ROUTINE, EXECUTE, SHOW DATABASES</code>
+</li>
+<li>Для БД mysql: право <code>SELECT</code> на <code>mysql.proc</code>
+</li>
+<li>Для временной БД: все привилегии</li>
+</ul>
+
+<p>В примере далее будем считать, что мы устанавливаем все полномочия. Также примем за данность, что наша локальная база
+называется <code>main_db</code>, эталонная - <code>production_main_db</code>, а временная БД - <code>mmm_tmp</code>.</p>
+
+<p>Выполните на локальном сервере БД следующие операторы (вместо pass следует использовать более безопасный пароль):</p>
+
+<div class="highlight highlight-sql"><pre>CREATE USER <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span> IDENTIFIED BY <span class="pl-s"><span class="pl-pds">'</span>pass<span class="pl-pds">'</span></span>;
+<span class="pl-k">GRANT</span> ALL PRIVILEGES <span class="pl-k">ON</span> mmm_tmp.<span class="pl-k">*</span> TO <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>;
+<span class="pl-k">GRANT</span> ALL PRIVILEGES <span class="pl-k">ON</span> main_db.<span class="pl-k">*</span> TO <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>;
+<span class="pl-k">GRANT</span> <span class="pl-k">SELECT</span> <span class="pl-k">ON</span> <span class="pl-c1">mysq</span>.<span class="pl-c1">proc</span> TO <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>;</pre></div>
+
+<p>На боевом сервере БД выполните следуюшие операторы:</p>
+
+<div class="highlight highlight-sql"><pre>CREATE USER <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span> IDENTIFIED BY <span class="pl-s"><span class="pl-pds">'</span>pass<span class="pl-pds">'</span></span>;
+<span class="pl-k">GRANT</span> <span class="pl-k">SELECT</span>, LOCK TABLES, EXECUTE, SHOW VIEW, 
+      TRIGGER <span class="pl-k">ON</span> production_main_db.<span class="pl-k">*</span> TO <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>
+<span class="pl-k">GRANT</span> <span class="pl-k">SELECT</span> <span class="pl-k">ON</span> <span class="pl-c1">mysq</span>.<span class="pl-c1">proc</span> TO <span class="pl-s"><span class="pl-pds">'</span>mmm-user<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>;</pre></div>
+
+<p>В процессе работы MMM может появиться ошибка</p>
+
+<pre><code>ERROR 1419 (HY000): You do not have the SUPER privilege and
+binary logging is enabled (you *might* want to use the less safe
+log_bin_trust_function_creators variable)
+</code></pre>
+
+<p>В этом случае выполните команду</p>
+
+<div class="highlight highlight-sql"><pre><span class="pl-k">SET</span> GLOBAL log_bin_trust_function_creators <span class="pl-k">=</span> <span class="pl-c1">1</span>;</pre></div>
+
+<h4>
+<a id="mysqldiff" class="anchor" href="#mysqldiff" aria-hidden="true"><span class="octicon octicon-link"></span></a>mysqldiff</h4>
+
+<p>Программа mysqldiff написана на Perl, репозиторий с ней является подмодулем MMM. Вы можете самостоятельно склонировать 
+его с помощью команды </p>
+
+<p><code>git clone https://github.com/vitaliy-evsyukov/mysqldiff</code></p>
+
+<p>Однако более простым способом будет получение непосредственно подмодуля. В папке MMM выполните команды</p>
+
+<pre><code>git submodule init
+git submodule update
+</code></pre>
+
+<p>В комплекте есть скрипты установки для Windows, Debian-like систем и MacOS. </p>
+
+<h5>
+<a id="Установка-для-nix" class="anchor" href="#%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B4%D0%BB%D1%8F-nix" aria-hidden="true"><span class="octicon octicon-link"></span></a>Установка для *nix</h5>
+
+<p>Ввиду некорректных изменений 
+в процессе апгрейда от Fedora 15 до Fedora 16 (или в случае возникновения подобных проблем под другими ОС) можно 
+использовать, отредактировав, файл install_fedora.sh. В нем параметр -I должен иметь значение, равное пути, по которому 
+интерпретатор perl должен искать библиотеки. В моем случае я сталкивался со следующей проблемой:</p>
+
+<pre><code>perl: symbol lookup error: /usr/local/lib/perl5/auto/version/vxs/vxs.so: undefined symbol: Perl_Gthr_key_ptr
+</code></pre>
+
+<p>В общем случае для установки необходимы:</p>
+
+<ul>
+<li>perl &gt;= 5.006</li>
+<li>Module::Build</li>
+<li>Carp</li>
+<li>File::Slurp</li>
+<li>IO::File</li>
+<li>DBI</li>
+<li>DBD::mysql</li>
+</ul>
+
+<p>Они должны установиться автоматически скриптом установщика, однако в случае возникновения проблем можно попробовать 
+сделать это вручную с помощью команд:</p>
+
+<pre><code>$ sudo cpan Module::Build &amp;&amp; cpan Carp &amp;&amp; cpan File::Slurp &amp;&amp; cpan IO::File &amp;&amp; cpan DBI &amp;&amp; cpan DBD::mysql
+$ sudo apt-get install libmysqlclient-dev
+</code></pre>
+
+<p>Автоматическая установка для Debian-like систем производится путем запуска скрипта <code>install_windows_debian.sh</code></p>
+
+<p>Для установки при наличии Percona Server на Fedora вместо "штатного" mysql необходимо установить пакет 
+Percona-Server-devel с помощью команды</p>
+
+<pre><code>$ yum install Percona-Server-devel-55
+</code></pre>
+
+<h5>
+<a id="Установка-для-windows" class="anchor" href="#%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B4%D0%BB%D1%8F-windows" aria-hidden="true"><span class="octicon octicon-link"></span></a>Установка для Windows</h5>
+
+<p>Для установки под Windows (тестировалось на Windows 7 Ultimate x64) необходимо скачать пакет 
+<a href="http://www.activestate.com/activeperl/downloads">ActivePerl</a>. Даже если у вас 64-разрядная ОС, необходимо установить 
+x86 версию, поскольку на момент написания не существует способа установить MinGW "из коробки" для версии под 
+64-разрядные ОС.После установки откройте Perl Package Manager, выберите в меню View пункт All Packages, найдите в 
+списке и установите MinGW (для этого нужно щелкнуть правой кнопкой по MinGW, выбрать единственный пункт меню и 
+выполнить <code>File -&gt; Run marked actions...</code>). Затем перейдите в папку с исходными кодами mysqldiff и выполните команду </p>
+
+<pre><code>perl Build.PL
+</code></pre>
+
+<p>Если вы получите сообщение, что требуются зависимости, выполните </p>
+
+<pre><code>perl Build installdeps 
+</code></pre>
+
+<p>и затем снова </p>
+
+<pre><code>perl Build.PL
+</code></pre>
+
+<p>После этого выполните </p>
+
+<pre><code>perl Build
+perl Build install.
+</code></pre>
+
+<p>По умолчанию mysqldiff установится как <code>C:\Perl\site\bin\mysqldiff</code>.</p>
+
+<h5>
+<a id="Установка-для-macos" class="anchor" href="#%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B4%D0%BB%D1%8F-macos" aria-hidden="true"><span class="octicon octicon-link"></span></a>Установка для MacOS</h5>
+
+<p>Используя штатный Perl:</p>
+
+<pre><code>sudo cpan install Module::Build
+sudo cpan install Carp
+sudo cpan install File::Slurp
+sudo cpan install IO::File
+sudo cpan install DBI
+sudo cpan install DBD::mysql
+</code></pre>
+
+<p>Использя Brew: так же, но без <code>sudo</code>.</p>
+
+<h3>
+<a id="Настройка-mmm" class="anchor" href="#%D0%9D%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-mmm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Настройка MMM</h3>
+
+<p>МММ использует один файл конфига для одной базы данных. Скопируйте дефолтный файл <code>config.ini.tpl</code> с другим именем. 
+Удобной практикой будет создание конфигов с именем БД в названии, например, <code>config_main_db.ini</code>. По умолчанию будет 
+использован файл конфига с именем <code>config.ini</code>. Это поведение может быть изменено путем передачи опции <code>config</code> в 
+командной строке со значением в виде пути к желаемому конфигурационному файлу.</p>
+
+<p>Все указанные в конфиге настройки могут быть перекрыты опциями с такими же именем, кроме опций из секции <code>replace</code>.
+Ниже будет приведен пример файла конфига, а описание опций будет указано в виде <code>--&lt;опция&gt;</code>. 
+В командной строке опции следует передавать в формате <code>--&lt;опция&gt;=&lt;значение&gt;</code>. </p>
+
+<h4>
+<a id="Пример-конфига" class="anchor" href="#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D0%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>Пример конфига</h4>
+
+<div class="highlight highlight-ini"><pre><span class="pl-en">[main]</span>
+<span class="pl-k">host</span>=production.server.com
+<span class="pl-k">user</span>=mmm-user
+<span class="pl-k">password</span>=pass
+<span class="pl-k">db</span>=production_main_db
+<span class="pl-k">cachedir</span>=main_db_data/cache
+<span class="pl-k">savedir</span>=main_db_data/migrations
+<span class="pl-k">datasetsdir</span>=main_db_data/datasets
+<span class="pl-k">schemadir</span>=sotm-db-data/schema
+<span class="pl-k">reqtables</span>=tables.json
+<span class="pl-k">reqdata</span>=data.sql
+<span class="pl-k">routine_user</span>=`root`@`%`
+<span class="pl-k">versionfile</span>=revisions.txt
+<span class="pl-k">version_marker</span>=marker.txt
+<span class="pl-k">verbose</span>=3
+<span class="pl-k">mysqldiff_command</span>=<span class="pl-s"><span class="pl-pds">"</span>mysqldiff --logs-folder=/var/log/mysqldiff<span class="pl-pds">"</span></span>
+
+<span class="pl-en">[tmpdb]</span>
+<span class="pl-k">tmp_db_name</span>=mmm_tmp
+<span class="pl-k">tmp_add_suffix</span>=0
+<span class="pl-k">tmp_host</span>=localhost
+<span class="pl-k">tmp_user</span>=mmm-user
+<span class="pl-k">tmp_password</span>=pass</pre></div>
+
+<p>Данный конфиг может быть использован для съема миграций, однако для применения их на локальной БД достаточно лишь 
+изменить данные подключения и имя базы на локальные.</p>
+
+<h4>
+<a id="Описание-параметров" class="anchor" href="#%D0%9E%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5-%D0%BF%D0%B0%D1%80%D0%B0%D0%BC%D0%B5%D1%82%D1%80%D0%BE%D0%B2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Описание параметров</h4>
+
+<p>Секция <code>main</code> предназначеня для описания основных параметров:</p>
+
+<pre><code> --host                  Имя хоста сервера БД
+ --user                  Имя пользователя
+ --password              Пароль
+ --port                  Порт подключения к БД, по умолчанию 3306
+ --db                    Название БД
+ --savedir               Путь к директории, в которой будут сохраняться 
+                         файлы миграций
+ --cachedir              Путь к директории, в которой будут сохраняться файлы схем
+ --datasetsdir           Путь к директории с наборами данных
+ --schemadir             Путь к директории с начальными описаниями таблиц
+ --reqtables             Файл в формате JSON, в котором хранится 
+                         список нужных для набора данных таблиц
+ --reqdata               Файл с SQL-командами для набора таблиц
+ --versionfile           Файл, в котором будет храниться информация о миграциях
+ --version_marker        Файл, в которой хранится информация о последней 
+                         примененной миграции
+ --mysqldiff_command     Команда для запуска mysqldiff. Должна содержать параметр 
+                         с путем к логам (--logs-folder). По умолчанию логи будут 
+                         созданы в папке, в которую установлен mysqldiff, и у 
+                         текущего пользователя может не быть прав на запись в нее
+ --verbose               Уровень отладки. 
+                         Отладочные сообщения будут выводиться, только если он 
+                         больше либо равен уровню, с которым выводится 
+                         отладочное сообщение
+ --quiet                 Отключает вывод всех сообщений, за исключением ошибок
+ --routine_user          Устанавливает пользователя, который будет использован как 
+                         значение DEFINER у триггеров, хранимых процедур и функций
+</code></pre>
+
+<p>В секции <code>tempdb</code> должны содержаться следующие значения:</p>
+
+<pre><code> --tmp_add_suffix        Если значение кастуется к логической истине, то имена 
+                         временных БД будуть заканчиваться суффиксом в виде 
+                         метки времени UNIX. 
+                         При апгрейде суффиксом имени будет само название временной 
+                         БД, а начальной частью имени - строка 'full_temp_db_'
+ --tmp_db_name           Имя временной БД, в которой будет производиться поиск 
+                         связей и в которой будут разворачиваться миграции и 
+                         схема для сравнения. Если tmp_add_suffix не указан или 
+                         может быть приведен к логическому значению ЛОЖЬ, то к 
+                         имени не будет ничего добавлено, таким образом, вы 
+                         обеспечите статичность имени временной БД. 
+                         Это полезно, если ваши права на сервере БД ограничены, 
+                         так как администратору БД необходимо будет выдать 
+                         права только на две базы данных, оригинальную и временную
+ --tmp_host              Хост, на котором будет развернута временная БД
+ --tmp_user              Имя пользователя на этом хосте
+ --tmp_password          Пароль пользователя на этом хосте
+ --tmp_port              Порт БД на этом хосте
+</code></pre>
+
+<p>В секции <code>replace</code> конфигурация должна выглядеть следующим образом:</p>
+
+<div class="highlight highlight-ini"><pre><span class="pl-en">[replace]</span>
+<span class="pl-k">database.production_main_db</span>=main_db
+<span class="pl-k">database.some_another_production_db</span>=some_local_db</pre></div>
+
+<p>Каждый элемент должен начинаться с подстроки <code>database.</code>, следующая часть имени значения - название БД, которую 
+требуется заменить при нахождении в хранимых процедурах, функциях, триггерах, внешних ключах и т.п. Как правило, эту 
+секцию можно опустить, однако, если в эталонной БД есть захардкоженное наименование ее названия или названия других 
+баз данных, которых нет на локальной машине (напомним, в нашем примере аналогичная эталонной БД база 
+названа <code>main_db</code>), при накатке миграций его нужно автоматически заменять. Эту цель и преследует данная опция. </p>
+
+<h3>
+<a id="Команды" class="anchor" href="#%D0%9A%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D1%8B" aria-hidden="true"><span class="octicon octicon-link"></span></a>Команды</h3>
+
+<p>Для запуска MMM убедитесь, что в переменной окружения Path прописан путь к PHP-интерпретатору. Однако можно запускать 
+команду и непосредственно передавая на вход интерпретатору файл <code>migration.php</code>.</p>
+
+<p>После установки вам требуется выполнить настройку MMM, отредактировав конфигурационный файл программы.
+Краткую справку по программе вы можете получить, запустив программу с параметром help:</p>
+
+<p><code>php migration.php help</code></p>
+
+<h4>
+<a id="Апгрейд-существующей-базы-данных" class="anchor" href="#%D0%90%D0%BF%D0%B3%D1%80%D0%B5%D0%B9%D0%B4-%D1%81%D1%83%D1%89%D0%B5%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B9-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85" aria-hidden="true"><span class="octicon octicon-link"></span></a>Апгрейд существующей базы данных</h4>
+
+<p>Если у вас есть база данных, на которую никогда не накатывались миграции (либо вы не уверены, в каком состоянии 
+находится эта база), вы наверняка захотите ввести ее в нормальный цикл работы с миграциями. 
+Для этого вам необходимо сделать апгрейд, который выполнит накатку временной базы из существующих миграций, 
+сравнит вашу базу со временной и выполнит одну "специальную" миграцию, которая приведет вашу БД к состоянию последней 
+ревизии. Нужно обратить внимание, что в процессе накатывания миграции возможны ошибки как из-за имеющихся в вашей БД 
+данных (например, таблица с неуникальными значениями в определнном поле в результате миграций должна получить 
+уникальный индекс на это поле), так и ввиду возможных проблем с DDL. Все ошибки выводятся на экран по умолчанию.</p>
+
+<p>Для выполнения апгрейда выполниет команду</p>
+
+<p><code>php migration.php upgrade</code></p>
+
+<p>Апгрейд, как правило, занимает продолжительное время. После окончания апгрейда вы можете просто мигрировать до новых 
+миграций при появлении таких в репозитарии. По окончании апгрейда в вашем marker.txt будет номер последней ревизии.</p>
+
+<h4>
+<a id="Схема" class="anchor" href="#%D0%A1%D1%85%D0%B5%D0%BC%D0%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>Схема</h4>
+
+<p><code>php migration.php schema</code>
+При запуске этой команды без параметров MMM пройдется по вашей schemadir и сохранит содержимое файлов в "кеше" - файле 
+схемы (Schema.class.php), после чего применит эти данные на нужной вам базе. Вы можете указать параметр 
+<code>--datasets="список датасетов через запятую"</code>, чтобы получить схему только тех таблиц, которые описаны в нужном вам 
+датасете. В этом случае имя файла схемы будет иметь вид <code>SchemaХЕШ.class.php</code>, где <code>ХЕШ</code> - md5 от конкатенированной 
+отсортированной в алфавитном порядке последовательности имен датасетов.</p>
+
+<h5>
+<a id="Пример-файла-описания-датасета" class="anchor" href="#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D1%8F-%D0%B4%D0%B0%D1%82%D0%B0%D1%81%D0%B5%D1%82%D0%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>Пример файла описания датасета</h5>
+
+<p>Файл, согласно нашему примерному конфигу, может находиться здесь: <code>main_db_data/datasets/main/tables.json</code>. Здесь 
+<code>tables.json</code> - обязательное наименование файла, <code>main_db_data/datasets</code> - значение параметра <code>datasetsdir</code> из конфига, 
+а <code>main</code> - собственно название датасета и при ином наименовании папки может будет равным этому наименованию.</p>
+
+<div class="highlight highlight-json"><pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>tables<span class="pl-pds">"</span></span> : [
+        <span class="pl-s"><span class="pl-pds">"</span>table1<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>table2<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>table3<span class="pl-pds">"</span></span>
+    ]
+}</pre></div>
+
+<h5>
+<a id="Пример-данных-датасета" class="anchor" href="#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85-%D0%B4%D0%B0%D1%82%D0%B0%D1%81%D0%B5%D1%82%D0%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>Пример данных датасета</h5>
+
+<p>Файл аналогично файлу описания датасета должен называться <code>data.sql</code> и должен находиться в 
+<code>main_db_data/datasets/main/data.sql</code>. Его содержимым могут быть любые SQL-операторы (обычно <code>INSERT</code>'ы для собственно 
+наполнения БД).</p>
+
+<div class="highlight highlight-sql"><pre><span class="pl-k">INSERT INTO</span> table1 <span class="pl-k">VALUES</span> (<span class="pl-c1">1</span>, <span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>, <span class="pl-c1">38</span>.<span class="pl-c1">45</span>);
+<span class="pl-k">INSERT INTO</span> table3 <span class="pl-k">VALUES</span> (<span class="pl-c1">100</span>, <span class="pl-c1">1</span>);</pre></div>
+
+<h4>
+<a id="Снятие-ревизии" class="anchor" href="#%D0%A1%D0%BD%D1%8F%D1%82%D0%B8%D0%B5-%D1%80%D0%B5%D0%B2%D0%B8%D0%B7%D0%B8%D0%B8" aria-hidden="true"><span class="octicon octicon-link"></span></a>Снятие ревизии</h4>
+
+<p><code>php migration.php create</code></p>
+
+<p>Эта команда не имеет параметров. Она исполнит <code>mysqldiff</code> и запишет изменения, которые он выдаст, в файле в нужном 
+формате. Файлы имеют имена вида <code>MigrationНОМЕР.class.php</code>, где <code>НОМЕР</code> - идентификатор миграции. Все миграции 
+записываются в файл, описываемый параметром <code>versionfile</code>. Если он утерян, то миграции не могут быть воспроизведены, 
+поэтому для его восстановления используйте команду</p>
+
+<p><code>php migration.php recover</code></p>
+
+<p>Созданный файл ревизии следует по</p>
+
+<h4>
+<a id="Миграции" class="anchor" href="#%D0%9C%D0%B8%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8" aria-hidden="true"><span class="octicon octicon-link"></span></a>Миграции</h4>
+
+<p>Когда вы имеете в распоряжении файлы миграций, вы можете откатиться до нужной миграции или же накатить миграции. </p>
+
+<p><code>php migration.php migrate</code></p>
+
+<p>Без параметров эта команда накатит вам все миграции от текущей. Текущая миграция берется из файла, описываемого 
+параметром <code>version_marker</code>. Если по каким-либо причинам это нужно изменить, используйте параметр 
+<code>--revision="номер текущей миграции"</code>, либо напрямую изменить содержимое данного файла. Этот файл не следует 
+отправлять в систему контроля версий, поскольку другим участникам не должно быть известно, с какой версией базы вы 
+работаете.
+Для указания точной миграции, к которой нужно перейти, используйте параметр <code>--m="число"</code>, в противном случае 
+используйте значение этого параметра из списка тех, которые может принимать на вход php-функция <code>strtotime</code>.</p>
+
+<p>Например, вы желаете накатить миграции с 3-ей по 27-ю. В таком случае выполните команду</p>
+
+<p><code>php migration.php migrate --revision=3 --m=27</code></p>
+
+<p>В случае, если вы хотите откатиться с текущей (к примеру, 190-й миграции, однако это не играет никакой роли) до 
+более старой, например, 137-й, выполните</p>
+
+<p><code>php migration.php migrate --m=137</code></p>
+
+<p>Список миграций и текущую миграцию вы можете увидеть, выполнив команду</p>
+
+<p><code>php migration.php list</code></p>
+
+<h4>
+<a id="Применение-наборов-данных" class="anchor" href="#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BD%D0%B0%D0%B1%D0%BE%D1%80%D0%BE%D0%B2-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85" aria-hidden="true"><span class="octicon octicon-link"></span></a>Применение наборов данных</h4>
+
+<p><code>php migration.php applyds --datasets="набор данных"</code></p>
+
+<p>Эта команда выполняет вставки данных из датасетов. Параметр <code>--datasets</code> должен быть указан обязательно.</p>
+
+<h4>
+<a id="Деплой" class="anchor" href="#%D0%94%D0%B5%D0%BF%D0%BB%D0%BE%D0%B9" aria-hidden="true"><span class="octicon octicon-link"></span></a>Деплой</h4>
+
+<p><code>php migration.php deploy</code></p>
+
+<p>Разворачивание выполнит следующие действия по порядку: создание и разворачивание схемы, миграции (до последней, 
+если не указано иное) и разворачивание наборов данных. Будьте внимательны: 
+<strong>эта команда уничтожит все таблицы в вашей БД!</strong>
+Вы можете указать датасеты, которые нужно развернуть, и дать указания по поводу того, до какой миграции нужно обновить 
+структуру БД.</p>
+
+<h4>
+<a id="Возврат-к-схеме" class="anchor" href="#%D0%92%D0%BE%D0%B7%D0%B2%D1%80%D0%B0%D1%82-%D0%BA-%D1%81%D1%85%D0%B5%D0%BC%D0%B5" aria-hidden="true"><span class="octicon octicon-link"></span></a>Возврат к схеме</h4>
+
+<p>Иногда нужно выполнить возврат к схеме, которая была создана. Используйте для этого </p>
+
+<p><code>php migration.php init</code></p>
+
+<p>Вы также можете указать, для каких датасетов будет развернута схема.</p>
+
+<h4>
+<a id="Проверка-актуальности-состояния-локальной-БД" class="anchor" href="#%D0%9F%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B0%D0%BA%D1%82%D1%83%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8F-%D0%BB%D0%BE%D0%BA%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B9-%D0%91%D0%94" aria-hidden="true"><span class="octicon octicon-link"></span></a>Проверка актуальности состояния локальной БД</h4>
+
+<p>Если вы хотите просто узнать, не выполняя никаких изменений в БД, насколько она отличается от эталонной, вы можете 
+сделать это с помощью команды </p>
+
+<p><code>php migration.php verify</code></p>
+
+<p>На экране появится набор полученных различий либо информация о том, что отличий не обнаружено.</p>
+
+<h4>
+<a id="Очистка" class="anchor" href="#%D0%9E%D1%87%D0%B8%D1%81%D1%82%D0%BA%D0%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>Очистка</h4>
+
+<p>Для удаления временных баз данных, которые могли остаться, к примеру, после аварийного завершения работы,
+используйте команду</p>
+
+<p><code>php migration.php gc</code></p>
+
+<p>Все временные БД будут удалены.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/vitaliy-evsyukov/mysql-migration-manager">Mysql-migration-manager</a> is maintained by <a href="https://github.com/vitaliy-evsyukov">vitaliy-evsyukov</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+            <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-63059909-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
+
